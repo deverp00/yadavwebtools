@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Convert length, mass, volume, and temperature units instantly. Free, private, no uploads." />
+  <title>Unit Converter — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* Category tabs */
+    .uc-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+    }
+    .uc-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      justify-content: center;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s var(--ease), color .2s var(--ease);
+      white-space: nowrap;
+    }
+    .uc-tab svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+    .uc-tab:hover { color: var(--brand); }
+    .uc-tab.active {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
+    }
+
+    /* Converter layout */
+    .uc-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 4px;
+    }
+    .uc-col { display: flex; flex-direction: column; gap: 8px; }
+    .uc-label {
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+    }
+    .uc-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 1.2rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+    }
+    .uc-input:focus {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26, 92, 58, .12);
+    }
+    .uc-input[readonly] {
+      background: var(--bg-result);
+      cursor: default;
+    }
+    .uc-select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .95rem;
+      cursor: pointer;
+      transition: border-color .2s var(--ease);
+    }
+    .uc-select:focus { outline: 0; border-color: var(--brand); }
+
+    .uc-swap {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-result);
+      border: 2px solid var(--brand-line);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background .2s var(--ease), transform .3s var(--ease), border-color .2s var(--ease);
+    }
+    .uc-swap:hover {
+      background: var(--brand-soft-2);
+      border-color: var(--brand);
+      transform: rotate(180deg);
+    }
+    .uc-swap svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--brand);
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* Result bar */
+    .uc-result {
+      margin-top: 22px;
+      padding: 20px 22px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .uc-equation {
+      font-size: clamp(.95rem, 2vw, 1.1rem);
+      color: var(--text-2);
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+    .uc-equation strong { color: var(--text); font-weight: 600; }
+    .uc-big {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      color: var(--brand);
+      line-height: 1.15;
+      word-break: break-all;
+      font-variant-numeric: tabular-nums;
+    }
+    .uc-big-unit {
+      font-size: .5em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    /* Quick reference */
+    .uc-ref {
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .uc-ref-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+    }
+    .uc-ref-header svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .uc-ref-header[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .uc-ref-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease-out);
+    }
+    .uc-ref-body.open { max-height: 2000px; }
+    .uc-ref-list { padding: 4px 0; }
+    .uc-ref-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 9px 16px;
+      border-top: 1px solid var(--border);
+      font-size: .88rem;
+    }
+    .uc-ref-row:first-child { border-top: 0; }
+    .uc-ref-row .uc-ref-name { color: var(--text); }
+    .uc-ref-row .uc-ref-val {
+      color: var(--brand);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    /* Quick chips under result */
+    .uc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .uc-chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .uc-chip:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    @media (max-width: 640px) {
+      .uc-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .uc-swap {
+        margin: 4px auto;
+        transform: rotate(90deg);
+      }
+      .uc-swap:hover { transform: rotate(270deg); }
+      .uc-tab { font-size: .82rem; padding: 9px 10px; }
+      .uc-tab span.tab-label { display: none; }
+      .uc-tab svg { width: 18px; height: 18px; }
+      .uc-tab.active span.tab-label { display: inline; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="uc-heading">
+    <div class="section-title-bar">
+      <h2 id="uc-heading">Unit Converter</h2>
+      <p class="section-sub">Convert length, mass, volume, and temperature instantly.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Pick a category, enter a value, and choose your units. The result updates as you
+        type. Every conversion runs locally with well-defined factors — no rounding
+        surprises, no server round-trips.
+      </p>
+
+      <form class="unit-form" id="ucForm" novalidate onsubmit="return false;">
+
+        <!-- Category tabs -->
+        <div class="uc-tabs" role="tablist" aria-label="Conversion category">
+          <button type="button" class="uc-tab active" data-category="length" role="tab" aria-selected="true">
+            <svg viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M10 8v4"/><path d="M14 8v8"/><path d="M18 8v4"/></svg>
+            <span class="tab-label">Length</span>
+          </button>
+          <button type="button" class="uc-tab" data-category="mass" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4"/><path d="M8 7a4 4 0 0 1 8 0"/><path d="M5 21h14l-2-10H7z"/></svg>
+            <span class="tab-label">Mass</span>
+          </button>
+          <button type="button" class="uc-tab" data-category="volume" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24"><path d="M8 3h8"/><path d="M9 3v18a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V3"/><path d="M9 12h6"/></svg>
+            <span class="tab-label">Volume</span>
+          </button>
+          <button type="button" class="uc-tab" data-category="temperature" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+            <span class="tab-label">Temp</span>
+          </button>
+        </div>
+
+        <!-- Converter grid -->
+        <div class="uc-grid">
+          <div class="uc-col">
+            <span class="uc-label" id="fromLabel">From</span>
+            <input type="number" class="uc-input" id="ucFrom" value="1" step="any" inputmode="decimal" aria-labelledby="fromLabel" />
+            <select class="uc-select" id="ucFromUnit" aria-label="From unit"></select>
+          </div>
+
+          <button type="button" class="uc-swap" id="ucSwap" aria-label="Swap units">
+            <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+
+          <div class="uc-col">
+            <span class="uc-label" id="toLabel">To</span>
+            <input type="number" class="uc-input" id="ucTo" step="any" readonly aria-labelledby="toLabel" />
+            <select class="uc-select" id="ucToUnit" aria-label="To unit"></select>
+          </div>
+        </div>
+
+        <div class="error-msg" id="ucError" role="alert"></div>
+
+        <!-- Result bar -->
+        <div class="uc-result" id="ucResult" aria-live="polite">
+          <div class="uc-equation" id="ucEquation">1 metre = 3.28084 feet</div>
+          <div class="uc-big"><span id="ucBigValue">3.28084</span><span class="uc-big-unit" id="ucBigUnit">ft</span></div>
+
+          <div class="uc-chips" id="ucChips"></div>
+        </div>
+
+        <!-- Quick reference -->
+        <div class="uc-ref">
+          <div class="uc-ref-header" id="ucRefHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="ucRefBody">
+            <span id="ucRefTitle">Quick Reference</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="uc-ref-body" id="ucRefBody">
+            <div class="uc-ref-list" id="ucRefList"></div>
+          </div>
+        </div>
+
+        <div class="btn-group" style="margin-top:18px;">
+          <button type="button" class="btn btn-secondary" id="ucReset">Reset</button>
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How conversions work</h3>
+        <p>
+          Length, mass, and volume use fixed conversion factors relative to a base unit
+          (metre, kilogram, litre). A value is first converted to the base unit, then to
+          the target unit — so chained conversions never accumulate rounding error.
+        </p>
+        <p>
+          Temperature is handled separately because the scales have different zero points.
+          Celsius and Fahrenheit are converted with the standard formulas, and Kelvin uses
+          absolute zero offsets. Negative Kelvin is physically impossible, so the tool
+          clamps the displayed value and shows an inline note if you enter one.
+        </p>
+        <p>
+          The quick-reference panel lists the most common conversions for the currently
+          selected category, updated live from your input value. Handy when you need a
+          few related figures at once.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var fromInput   = document.getElementById('ucFrom');
+  var toInput     = document.getElementById('ucTo');
+  var fromUnitSel = document.getElementById('ucFromUnit');
+  var toUnitSel   = document.getElementById('ucToUnit');
+  var swapBtn     = document.getElementById('ucSwap');
+  var errorBox    = document.getElementById('ucError');
+  var resetBtn    = document.getElementById('ucReset');
+
+  var equation    = document.getElementById('ucEquation');
+  var bigValue    = document.getElementById('ucBigValue');
+  var bigUnit     = document.getElementById('ucBigUnit');
+  var chipsBox    = document.getElementById('ucChips');
+
+  var refHeader   = document.getElementById('ucRefHeader');
+  var refBody     = document.getElementById('ucRefBody');
+  var refList     = document.getElementById('ucRefList');
+  var refTitle    = document.getElementById('ucRefTitle');
+
+  var tabs        = document.querySelectorAll('.uc-tab');
+
+  // ---------- UNIT DATA ----------
+  // factor = value in base unit
+  var CATEGORIES = {
+    length: {
+      label: 'Length',
+      base: 'm',
+      units: {
+        mm:   { name: 'Millimetre',  symbol: 'mm',  factor: 0.001 },
+        cm:   { name: 'Centimetre',  symbol: 'cm',  factor: 0.01 },
+        m:    { name: 'Metre',       symbol: 'm',   factor: 1 },
+        km:   { name: 'Kilometre',   symbol: 'km',  factor: 1000 },
+        in:   { name: 'Inch',        symbol: 'in',  factor: 0.0254 },
+        ft:   { name: 'Foot',        symbol: 'ft',  factor: 0.3048 },
+        yd:   { name: 'Yard',        symbol: 'yd',  factor: 0.9144 },
+        mi:   { name: 'Mile',        symbol: 'mi',  factor: 1609.344 },
+        nmi:  { name: 'Nautical mile', symbol: 'nmi', factor: 1852 }
+      },
+      defaults: ['m', 'ft'],
+      refs: ['cm', 'm', 'km', 'ft', 'mi', 'nmi']
+    },
+    mass: {
+      label: 'Mass',
+      base: 'kg',
+      units: {
+        mg:   { name: 'Milligram',   symbol: 'mg',  factor: 0.000001 },
+        g:    { name: 'Gram',        symbol: 'g',   factor: 0.001 },
+        kg:   { name: 'Kilogram',    symbol: 'kg',  factor: 1 },
+        t:    { name: 'Metric tonne', symbol: 't',  factor: 1000 },
+        oz:   { name: 'Ounce',       symbol: 'oz',  factor: 0.028349523125 },
+        lb:   { name: 'Pound',       symbol: 'lb',  factor: 0.45359237 },
+        st:   { name: 'Stone',       symbol: 'st',  factor: 6.35029318 }
+      },
+      defaults: ['kg', 'lb'],
+      refs: ['g', 'kg', 'oz', 'lb', 'st']
+    },
+    volume: {
+      label: 'Volume',
+      base: 'L',
+      units: {
+        ml:   { name: 'Millilitre',   symbol: 'ml',  factor: 0.001 },
+        l:    { name: 'Litre',        symbol: 'L',   factor: 1 },
+        m3:   { name: 'Cubic metre',  symbol: 'm³',  factor: 1000 },
+        cup:  { name: 'Cup (US)',     symbol: 'cup', factor: 0.2365882365 },
+        pt:   { name: 'Pint (US)',    symbol: 'pt',  factor: 0.473176473 },
+        qt:   { name: 'Quart (US)',   symbol: 'qt',  factor: 0.946352946 },
+        gal:  { name: 'Gallon (US)',  symbol: 'gal', factor: 3.785411784 },
+        galuk:{ name: 'Gallon (UK)',  symbol: 'gal UK', factor: 4.54609 },
+        floz: { name: 'Fluid ounce (US)', symbol: 'fl oz', factor: 0.0295735295625 }
+      },
+      defaults: ['l', 'gal'],
+      refs: ['ml', 'l', 'cup', 'pt', 'qt', 'gal']
+    },
+    temperature: {
+      label: 'Temperature',
+      base: 'C',
+      special: true,
+      units: {
+        c: { name: 'Celsius',    symbol: '°C', factor: 1 },
+        f: { name: 'Fahrenheit', symbol: '°F', factor: 1 },
+        k: { name: 'Kelvin',     symbol: 'K',  factor: 1 }
+      },
+      defaults: ['c', 'f'],
+      refs: ['c', 'f', 'k']
+    }
+  };
+
+  var currentCategory = 'length';
+
+  // ---------- TEMPERATURE HELPERS ----------
+  function toCelsius(value, unit) {
+    if (unit === 'c') return value;
+    if (unit === 'f') return (value - 32) * 5 / 9;
+    if (unit === 'k') return value - 273.15;
+    return value;
+  }
+  function fromCelsius(celsius, unit) {
+    if (unit === 'c') return celsius;
+    if (unit === 'f') return celsius * 9 / 5 + 32;
+    if (unit === 'k') return celsius + 273.15;
+    return celsius;
+  }
+
+  // ---------- CONVERSION ----------
+  function convert(value, fromUnit, toUnit, categoryKey) {
+    var cat = CATEGORIES[categoryKey];
+    if (!cat) return NaN;
+
+    if (cat.special) {
+      var c = toCelsius(value, fromUnit);
+      return fromCelsius(c, toUnit);
+    }
+
+    var fromFactor = cat.units[fromUnit].factor;
+    var toFactor   = cat.units[toUnit].factor;
+    var baseValue  = value * fromFactor;
+    return baseValue / toFactor;
+  }
+
+  // ---------- FORMATTING ----------
+  function formatNumber(n) {
+    if (!isFinite(n)) return '—';
+    var abs = Math.abs(n);
+    if (abs === 0) return '0';
+    if (abs >= 1e12 || (abs < 1e-6 && abs > 0)) {
+      return n.toExponential(6).replace(/\.?0+e/, 'e');
+    }
+    var decimals;
+    if (abs >= 1000) decimals = 4;
+    else if (abs >= 1) decimals = 6;
+    else if (abs >= 0.001) decimals = 8;
+    else decimals = 10;
+
+    var s = n.toFixed(decimals);
+    // Trim trailing zeros but keep at least 1 decimal if not integer
+    if (s.indexOf('.') !== -1) {
+      s = s.replace(/0+$/, '').replace(/\.$/, '');
+    }
+    return s;
+  }
+
+  function formatGrouped(n) {
+    var s = formatNumber(n);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
+
+  // ---------- POPULATE SELECTS ----------
+  function populateUnits() {
+    var cat = CATEGORIES[currentCategory];
+    var fromVal = fromUnitSel.value;
+    var toVal = toUnitSel.value;
+
+    fromUnitSel.innerHTML = '';
+    toUnitSel.innerHTML = '';
+
+    var keys = Object.keys(cat.units);
+    keys.forEach(function (k) {
+      var u = cat.units[k];
+      var optFrom = document.createElement('option');
+      optFrom.value = k;
+      optFrom.textContent = u.name + ' (' + u.symbol + ')';
+      fromUnitSel.appendChild(optFrom);
+
+      var optTo = document.createElement('option');
+      optTo.value = k;
+      optTo.textContent = u.name + ' (' + u.symbol + ')';
+      toUnitSel.appendChild(optTo);
+    });
+
+    // Restore if valid, otherwise use defaults
+    if (cat.units[fromVal]) fromUnitSel.value = fromVal;
+    else fromUnitSel.value = cat.defaults[0];
+
+    if (cat.units[toVal]) toUnitSel.value = toVal;
+    else toUnitSel.value = cat.defaults[1];
+
+    // Ensure different units
+    if (fromUnitSel.value === toUnitSel.value && keys.length > 1) {
+      var alt = keys.filter(function (k) { return k !== fromUnitSel.value; })[0];
+      toUnitSel.value = alt;
+    }
+  }
+
+  // ---------- RENDER ----------
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function update() {
+    clearError();
+
+    var raw = fromInput.value;
+    if (raw === '' || raw === '-') {
+      toInput.value = '';
+      bigValue.textContent = '0';
+      bigUnit.textContent = '';
+      equation.textContent = 'Enter a value to convert.';
+      chipsBox.innerHTML = '';
+      renderRef(NaN);
+      return;
+    }
+
+    var value = parseFloat(raw);
+    if (!isFinite(value)) {
+      showError('Please enter a valid number.');
+      toInput.value = '';
+      return;
+    }
+
+    var cat = CATEGORIES[currentCategory];
+    var fromKey = fromUnitSel.value;
+    var toKey = toUnitSel.value;
+
+    // Temperature guard: negative Kelvin
+    if (cat.special && fromKey === 'k' && value < 0) {
+      showError('Kelvin cannot be negative.');
+    }
+
+    var result = convert(value, fromKey, toKey, currentCategory);
+
+    // Clamp / guard result for Kelvin
+    if (cat.special && toKey === 'k' && result < 0) {
+      result = 0;
+    }
+
+    toInput.value = isFinite(result) ? formatNumber(result) : '';
+
+    var fromUnit = cat.units[fromKey];
+    var toUnit = cat.units[toKey];
+
+    equation.innerHTML =
+      '<strong>' + formatGrouped(value) + ' ' + escapeHtml(fromUnit.symbol) + '</strong>' +
+      ' = ' +
+      '<strong>' + formatGrouped(result) + ' ' + escapeHtml(toUnit.symbol) + '</strong>';
+
+    bigValue.textContent = formatGrouped(result);
+    bigUnit.textContent = toUnit.symbol;
+
+    renderChips(value);
+    renderRef(value);
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ---------- CHIPS (top 3 other units) ----------
+  function renderChips(value) {
+    chipsBox.innerHTML = '';
+    var cat = CATEGORIES[currentCategory];
+    var fromKey = fromUnitSel.value;
+    var toKey = toUnitSel.value;
+    var keys = Object.keys(cat.units).filter(function (k) {
+      return k !== fromKey && k !== toKey;
+    }).slice(0, 4);
+
+    keys.forEach(function (k) {
+      var u = cat.units[k];
+      var v = convert(value, fromKey, k, currentCategory);
+      if (cat.special && k === 'k' && v < 0) v = 0;
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'uc-chip';
+      chip.textContent = formatGrouped(v) + ' ' + u.symbol;
+      chip.addEventListener('click', function () {
+        toUnitSel.value = k;
+        update();
+      });
+      chipsBox.appendChild(chip);
+    });
+  }
+
+  // ---------- REFERENCE TABLE ----------
+  function renderRef(value) {
+    refList.innerHTML = '';
+    refTitle.textContent = CATEGORIES[currentCategory].label + ' Quick Reference';
+
+    if (!isFinite(value)) {
+      var empty = document.createElement('div');
+      empty.style.cssText = 'padding:14px 16px;color:var(--text-muted);font-size:.85rem;text-align:center;';
+      empty.textContent = 'Enter a value to see reference conversions.';
+      refList.appendChild(empty);
+      return;
+    }
+
+    var cat = CATEGORIES[currentCategory];
+    var fromKey = fromUnitSel.value;
+    var refKeys = cat.refs.filter(function (k) { return k !== fromKey; });
+
+    refKeys.forEach(function (k) {
+      var u = cat.units[k];
+      var v = convert(value, fromKey, k, currentCategory);
+      if (cat.special && k === 'k' && v < 0) v = 0;
+
+      var row = document.createElement('div');
+      row.className = 'uc-ref-row';
+      row.innerHTML =
+        '<span class="uc-ref-name">' + escapeHtml(u.name) + '</span>' +
+        '<span class="uc-ref-val">' + formatGrouped(v) + ' ' + escapeHtml(u.symbol) + '</span>';
+      refList.appendChild(row);
+    });
+  }
+
+  // ---------- EVENTS ----------
+  fromInput.addEventListener('input', update);
+  fromUnitSel.addEventListener('change', update);
+  toUnitSel.addEventListener('change', update);
+
+  swapBtn.addEventListener('click', function () {
+    var f = fromUnitSel.value;
+    fromUnitSel.value = toUnitSel.value;
+    toUnitSel.value = f;
+
+    // Swap values too if a result exists
+    var toVal = toInput.value;
+    if (toVal !== '') {
+      fromInput.value = toVal;
+    }
+    update();
+  });
+
+  // Category tabs
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      currentCategory = tab.getAttribute('data-category');
+      populateUnits();
+      update();
+    });
+  });
+
+  // Reference toggle
+  refHeader.addEventListener('click', function () {
+    var open = refBody.classList.toggle('open');
+    refHeader.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  refHeader.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      refHeader.click();
+    }
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', function () {
+    currentCategory = 'length';
+    tabs.forEach(function (t) {
+      var isActive = t.getAttribute('data-category') === 'length';
+      t.classList.toggle('active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    populateUnits();
+    fromInput.value = '1';
+    refBody.classList.remove('open');
+    refHeader.setAttribute('aria-expanded', 'false');
+    update();
+    fromInput.focus();
+  });
+
+  // ---------- INIT ----------
+  populateUnits();
+  update();
+
+})();
+</script>
+
+</body>
+</html>
