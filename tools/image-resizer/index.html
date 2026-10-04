@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Resize, compress, and convert images to JPG, PNG, or WebP entirely in your browser. No uploads, no tracking." />
+  <title>Image Resizer — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* Tool-local range styling (only for this page) */
+    .image-resizer-form .quality-range {
+      flex: 1 1 200px; min-width: 140px; height: 6px; cursor: pointer;
+      background: var(--brand-line); border-radius: 4px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .image-resizer-form .quality-range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--brand); cursor: pointer;
+      border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .image-resizer-form .quality-range::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--brand); cursor: pointer;
+      border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .image-resizer-form .quality-value {
+      min-width: 44px; text-align: center; font-weight: 600;
+      color: var(--brand); font-size: .9rem;
+    }
+    .image-resizer-form .hidden { display: none !important; }
+    .image-resizer-form .field-group.aspect-group { gap: 8px; }
+    .image-resizer-form .checkbox-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-weight: 500; font-size: .9rem; cursor: pointer;
+      min-width: auto;
+    }
+    .image-resizer-form .checkbox-label input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--brand);
+      cursor: pointer; flex-shrink: 0; margin: 0;
+    }
+    .image-resizer-form .controls-disabled { opacity: .45; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="resizer-heading">
+    <div class="section-title-bar">
+      <h2 id="resizer-heading">Image Resizer</h2>
+      <p class="section-sub">Resize, compress, and convert images right in your browser.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Drop an image, choose a size and format, and download the result. Everything is
+        processed locally with the Canvas API — your file never leaves your device.
+      </p>
+
+      <form class="image-resizer-form" id="resizerForm" novalidate>
+
+        <div class="resizer-grid">
+
+          <!-- ===== CONTROLS ===== -->
+          <div class="controls-column">
+
+            <div class="drop-zone" id="dropZone">
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span class="drop-text">Click to choose an image, or drag one here</span>
+              <input type="file" id="fileInput" accept="image/*" aria-label="Choose an image file">
+            </div>
+
+            <div class="file-info" id="fileInfo" hidden>
+              <span><strong>Name:</strong> <span id="infoName">-</span></span>
+              <span><strong>Size:</strong> <span id="infoSize">-</span></span>
+              <span><strong>Dimensions:</strong> <span id="infoDims">-</span></span>
+            </div>
+
+            <div id="controlsGroup" class="controls-disabled">
+
+              <div class="field-group" style="margin-top:14px;">
+                <label for="presetSelect">Preset</label>
+                <select id="presetSelect" class="resizer-select">
+                  <option value="original">Original size</option>
+                  <option value="75">Scale to 75%</option>
+                  <option value="50">Scale to 50%</option>
+                  <option value="25">Scale to 25%</option>
+                  <option value="custom">Custom size</option>
+                </select>
+              </div>
+
+              <div class="custom-size-fields" id="customSizeFields">
+                <div class="field-group">
+                  <label for="imgWidth">Width (px)</label>
+                  <input type="number" id="imgWidth" min="1" max="12000" step="1" />
+                </div>
+                <div class="field-group">
+                  <label for="imgHeight">Height (px)</label>
+                  <input type="number" id="imgHeight" min="1" max="12000" step="1" />
+                </div>
+              </div>
+
+              <div class="field-group aspect-group" style="margin-top:10px;">
+                <label class="checkbox-label" for="lockAspect">
+                  <input type="checkbox" id="lockAspect" checked />
+                  Maintain aspect ratio
+                </label>
+                <span class="helper-text" id="aspectHint"></span>
+              </div>
+
+              <div class="field-group" style="margin-top:14px;">
+                <label for="formatSelect">Format</label>
+                <select id="formatSelect" class="resizer-select">
+                  <option value="image/jpeg">JPEG (.jpg)</option>
+                  <option value="image/png">PNG (.png)</option>
+                  <option value="image/webp">WebP (.webp)</option>
+                </select>
+              </div>
+
+              <div class="field-group" id="qualityGroup" style="margin-top:6px;">
+                <label for="qualityRange">Quality</label>
+                <input type="range" id="qualityRange" class="quality-range" min="40" max="100" step="1" value="90" />
+                <span class="quality-value" id="qualityValue">90%</span>
+              </div>
+
+              <div class="error-msg" id="resizerError" role="alert"></div>
+
+              <div class="btn-group">
+                <button type="submit" class="btn" id="resizeBtn">Resize Image</button>
+                <button type="button" class="btn btn-secondary" id="downloadBtn" disabled>Download</button>
+                <button type="button" class="btn btn-secondary" id="resetBtn">Reset</button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ===== PREVIEW ===== -->
+          <div class="preview-column">
+            <div class="preview-panel" id="previewPanel">
+
+              <div class="preview-placeholder" id="previewPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span>Your image preview will appear here</span>
+              </div>
+
+              <div class="preview-image" id="previewImage">
+                <img id="originalPreview" alt="Original image preview" />
+                <span class="preview-dims" id="originalDims"></span>
+              </div>
+
+              <div class="resized-overlay" id="resizedOverlay">
+                <span class="resized-badge">Result</span>
+                <img id="resizedPreview" alt="Resized image preview" />
+                <span class="preview-dims" id="resizedDims"></span>
+                <span class="preview-size" id="resizedSize"></span>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">About this tool</h3>
+        <p>
+          The Image Resizer uses the browser's native Canvas API to redraw your picture at
+          the dimensions you choose, then re-encodes it in the format you select. Because
+          the work happens entirely on your device, files stay private and processing is
+          immediate — even for large images.
+        </p>
+        <p>
+          PNG keeps transparency and lossless quality but produces larger files. JPEG is
+          smaller and universally supported but does not support transparency. WebP offers
+          the best compression-to-quality ratio in modern browsers and also supports
+          transparency. The quality slider only affects JPEG and WebP output; PNG ignores it.
+        </p>
+        <p>
+          Animated GIFs are flattened to their first frame since Canvas does not preserve
+          animation. SVG files that reference external resources may not render correctly
+          for the same reason. For best results, use PNG, JPEG, or WebP source files.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var dropZone     = document.getElementById('dropZone');
+  var fileInput    = document.getElementById('fileInput');
+  var fileInfo     = document.getElementById('fileInfo');
+  var infoName     = document.getElementById('infoName');
+  var infoSize     = document.getElementById('infoSize');
+  var infoDims     = document.getElementById('infoDims');
+
+  var controlsGroup = document.getElementById('controlsGroup');
+  var presetSelect  = document.getElementById('presetSelect');
+  var customFields  = document.getElementById('customSizeFields');
+  var imgWidth      = document.getElementById('imgWidth');
+  var imgHeight     = document.getElementById('imgHeight');
+  var lockAspect    = document.getElementById('lockAspect');
+  var aspectHint    = document.getElementById('aspectHint');
+  var formatSelect  = document.getElementById('formatSelect');
+  var qualityGroup  = document.getElementById('qualityGroup');
+  var qualityRange  = document.getElementById('qualityRange');
+  var qualityValue  = document.getElementById('qualityValue');
+
+  var previewPlaceholder = document.getElementById('previewPlaceholder');
+  var previewImage       = document.getElementById('previewImage');
+  var originalPreview    = document.getElementById('originalPreview');
+  var originalDims       = document.getElementById('originalDims');
+  var resizedOverlay     = document.getElementById('resizedOverlay');
+  var resizedPreview     = document.getElementById('resizedPreview');
+  var resizedDims        = document.getElementById('resizedDims');
+  var resizedSize        = document.getElementById('resizedSize');
+
+  var form         = document.getElementById('resizerForm');
+  var resizeBtn    = document.getElementById('resizeBtn');
+  var downloadBtn  = document.getElementById('downloadBtn');
+  var resetBtn     = document.getElementById('resetBtn');
+  var errorBox     = document.getElementById('resizerError');
+
+  // ====== STATE ======
+  var state = {
+    file: null,
+    originalUrl: null,
+    resizedUrl: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+    aspectRatio: 1,
+    imgEl: null,
+    resizedBlob: null,
+    resizedName: ''
+  };
+
+  // ====== HELPERS ======
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(2) + ' MB';
+  }
+
+  function extFor(mime) {
+    if (mime === 'image/jpeg') return 'jpg';
+    if (mime === 'image/png')  return 'png';
+    if (mime === 'image/webp') return 'webp';
+    return 'png';
+  }
+
+  function outputFilename(original, mime) {
+    var base = (original || 'image').replace(/\.[^.]+$/, '');
+    return base + '-resized.' + extFor(mime);
+  }
+
+  function revoke(url) {
+    if (url) { try { URL.revokeObjectURL(url); } catch (e) {} }
+  }
+
+  function resetResult() {
+    revoke(state.resizedUrl);
+    state.resizedUrl = null;
+    state.resizedBlob = null;
+    state.resizedName = '';
+    resizedOverlay.style.display = 'none';
+    resizedPreview.removeAttribute('src');
+    resizedDims.textContent = '';
+    resizedSize.textContent = '';
+    downloadBtn.disabled = true;
+  }
+
+  function updateQualityVisibility() {
+    var mime = formatSelect.value;
+    if (mime === 'image/png') {
+      qualityGroup.style.visibility = 'hidden';
+      qualityGroup.style.height = '0';
+      qualityGroup.style.marginTop = '0';
+      qualityGroup.style.overflow = 'hidden';
+    } else {
+      qualityGroup.style.visibility = '';
+      qualityGroup.style.height = '';
+      qualityGroup.style.marginTop = '';
+      qualityGroup.style.overflow = '';
+    }
+  }
+
+  function computeDimensions() {
+    var preset = presetSelect.value;
+    if (preset === 'original') {
+      return { w: state.naturalWidth, h: state.naturalHeight };
+    }
+    if (preset === 'custom') {
+      var w = parseInt(imgWidth.value, 10);
+      var h = parseInt(imgHeight.value, 10);
+      if (!w || w < 1) w = state.naturalWidth;
+      if (!h || h < 1) h = state.naturalHeight;
+      return { w: w, h: h };
+    }
+    var pct = parseInt(preset, 10) / 100;
+    return {
+      w: Math.max(1, Math.round(state.naturalWidth * pct)),
+      h: Math.max(1, Math.round(state.naturalHeight * pct))
+    };
+  }
+
+  function syncAspect(source) {
+    if (!lockAspect.checked || !state.aspectRatio) return;
+    var ratio = state.aspectRatio;
+    if (source === 'w') {
+      var w = parseFloat(imgWidth.value);
+      if (w > 0) imgHeight.value = Math.max(1, Math.round(w / ratio));
+    } else if (source === 'h') {
+      var h = parseFloat(imgHeight.value);
+      if (h > 0) imgWidth.value = Math.max(1, Math.round(h * ratio));
+    }
+  }
+
+  function setControlsEnabled(enabled) {
+    if (enabled) controlsGroup.classList.remove('controls-disabled');
+    else controlsGroup.classList.add('controls-disabled');
+  }
+
+  // ====== LOAD FILE ======
+  function loadFile(file) {
+    clearError();
+    resetResult();
+
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      showError('Please choose a valid image file (JPEG, PNG, WebP, GIF, BMP, or SVG).');
+      return;
+    }
+
+    // Clean previous
+    revoke(state.originalUrl);
+    state.file = file;
+
+    var url = URL.createObjectURL(file);
+    state.originalUrl = url;
+
+    var img = new Image();
+    img.onload = function () {
+      state.imgEl = img;
+      state.naturalWidth  = img.naturalWidth;
+      state.naturalHeight = img.naturalHeight;
+      state.aspectRatio   = img.naturalWidth / img.naturalHeight;
+
+      // File info
+      infoName.textContent = file.name;
+      infoSize.textContent = formatBytes(file.size);
+      infoDims.textContent = img.naturalWidth + ' x ' + img.naturalHeight + ' px';
+      fileInfo.hidden = false;
+
+      // Preview
+      originalPreview.src = url;
+      originalDims.textContent = img.naturalWidth + ' x ' + img.naturalHeight;
+      previewPlaceholder.style.display = 'none';
+      previewImage.style.display = 'flex';
+
+      // Defaults
+      presetSelect.value = 'original';
+      customFields.style.display = 'none';
+      imgWidth.value = img.naturalWidth;
+      imgHeight.value = img.naturalHeight;
+      lockAspect.checked = true;
+      aspectHint.textContent = 'Ratio ' + state.aspectRatio.toFixed(3);
+
+      setControlsEnabled(true);
+      updateQualityVisibility();
+    };
+    img.onerror = function () {
+      showError('That image could not be loaded. The file may be corrupted or unsupported.');
+    };
+    img.src = url;
+  }
+
+  // ====== DRAG & DROP + CLICK ======
+  dropZone.addEventListener('click', function () { fileInput.click(); });
+
+  dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', function () {
+    dropZone.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) loadFile(files[0]);
+  });
+
+  fileInput.addEventListener('change', function () {
+    if (this.files && this.files[0]) loadFile(this.files[0]);
+  });
+
+  // Prevent page navigation when dropping outside the zone
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+
+  // ====== FORM INTERACTIONS ======
+  presetSelect.addEventListener('change', function () {
+    if (this.value === 'custom') {
+      customFields.style.display = 'flex';
+      // Preload current dims if empty
+      if (!imgWidth.value)  imgWidth.value = state.naturalWidth;
+      if (!imgHeight.value) imgHeight.value = state.naturalHeight;
+    } else {
+      customFields.style.display = 'none';
+    }
+  });
+
+  imgWidth.addEventListener('input', function () { syncAspect('w'); });
+  imgHeight.addEventListener('input', function () { syncAspect('h'); });
+  lockAspect.addEventListener('change', function () {
+    if (this.checked) syncAspect('w');
+  });
+
+  formatSelect.addEventListener('change', updateQualityVisibility);
+
+  qualityRange.addEventListener('input', function () {
+    qualityValue.textContent = this.value + '%';
+  });
+
+  // ====== RESIZE ======
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearError();
+
+    if (!state.imgEl) {
+      showError('Please choose an image first.');
+      return;
+    }
+
+    var dims = computeDimensions();
+    var mime = formatSelect.value;
+    var quality = parseInt(qualityRange.value, 10) / 100;
+
+    var w = Math.max(1, Math.round(dims.w));
+    var h = Math.max(1, Math.round(dims.h));
+
+    if (w > 12000 || h > 12000) {
+      showError('Target size is too large. Please choose width and height under 12000 px.');
+      return;
+    }
+
+    resizeBtn.disabled = true;
+    resizeBtn.textContent = 'Processing…';
+
+    // Defer to let the button update visually
+    setTimeout(function () {
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+
+        // For JPEG (no transparency), fill with white so transparent PNGs don't turn black
+        if (mime === 'image/jpeg') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        // Smooth downscale
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(state.imgEl, 0, 0, w, h);
+
+        canvas.toBlob(function (blob) {
+          if (!blob) {
+            showError('The browser could not encode this image. Try a different format.');
+            resizeBtn.disabled = false;
+            resizeBtn.textContent = 'Resize Image';
+            return;
+          }
+
+          resetResult();
+
+          state.resizedBlob = blob;
+          state.resizedName = outputFilename(state.file.name, mime);
+          state.resizedUrl  = URL.createObjectURL(blob);
+
+          resizedPreview.src = state.resizedUrl;
+          resizedDims.textContent = w + ' x ' + h + ' px';
+          resizedSize.textContent = formatBytes(blob.size);
+          resizedOverlay.style.display = 'flex';
+
+          downloadBtn.disabled = false;
+          resizeBtn.disabled = false;
+          resizeBtn.textContent = 'Resize Image';
+
+          if (blob.size > state.file.size * 1.05 && mime !== 'image/png') {
+            // Result is larger than original — informational only
+            // (still a valid resize, e.g. upscaling small images)
+          }
+        }, mime, mime === 'image/png' ? undefined : quality);
+      } catch (err) {
+        showError('Something went wrong while processing the image.');
+        resizeBtn.disabled = false;
+        resizeBtn.textContent = 'Resize Image';
+      }
+    }, 20);
+  });
+
+  // ====== DOWNLOAD ======
+  downloadBtn.addEventListener('click', function () {
+    if (!state.resizedUrl || !state.resizedBlob) return;
+    var a = document.createElement('a');
+    a.href = state.resizedUrl;
+    a.download = state.resizedName || 'image-resized.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  // ====== RESET ======
+  resetBtn.addEventListener('click', function () {
+    clearError();
+    resetResult();
+
+    // Revoke and clear
+    revoke(state.originalUrl);
+    state.originalUrl = null;
+    state.file = null;
+    state.imgEl = null;
+    state.naturalWidth = 0;
+    state.naturalHeight = 0;
+    state.aspectRatio = 1;
+
+    fileInput.value = '';
+    fileInfo.hidden = true;
+    infoName.textContent = '-';
+    infoSize.textContent = '-';
+    infoDims.textContent = '-';
+
+    originalPreview.removeAttribute('src');
+    originalDims.textContent = '';
+    previewImage.style.display = 'none';
+    previewPlaceholder.style.display = 'flex';
+
+    presetSelect.value = 'original';
+    customFields.style.display = 'none';
+    imgWidth.value = '';
+    imgHeight.value = '';
+    lockAspect.checked = true;
+    aspectHint.textContent = '';
+    formatSelect.value = 'image/jpeg';
+    qualityRange.value = '90';
+    qualityValue.textContent = '90%';
+
+    setControlsEnabled(false);
+    updateQualityVisibility();
+
+    dropZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // Init
+  updateQualityVisibility();
+  setControlsEnabled(false);
+
+})();
+</script>
+
+</body>
+</html>
