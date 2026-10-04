@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Calculate your exact age in years, months, and days. Free, private, runs entirely in your browser." />
+  <title>Age Calculator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="age-heading">
+    <div class="section-title-bar">
+      <h2 id="age-heading">Age Calculator</h2>
+      <p class="section-sub">Get your exact age in years, months, and days.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter your date of birth to see your exact age, total time lived, and how many
+        days remain until your next birthday. Everything runs locally in your browser —
+        no data is uploaded.
+      </p>
+
+      <form class="age-form" id="ageForm" novalidate>
+        <div class="field-group">
+          <label for="dob">Date of Birth</label>
+          <input type="date" id="dob" name="dob" required />
+        </div>
+
+        <div class="field-group">
+          <label for="ageAsOf">Age as of</label>
+          <input type="date" id="ageAsOf" name="ageAsOf" />
+          <span class="helper-text">Leave blank to use today</span>
+        </div>
+
+        <div class="error-msg" id="ageError" role="alert"></div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn">Calculate Age</button>
+          <button type="button" class="btn btn-secondary" id="ageReset">Reset</button>
+        </div>
+      </form>
+
+      <div class="age-result" id="ageResult" hidden>
+
+        <div class="age-breakdown">
+          <div class="age-item">
+            <span class="age-label">Years</span>
+            <span class="age-value" id="yearsOut">0</span>
+          </div>
+          <div class="age-item">
+            <span class="age-label">Months</span>
+            <span class="age-value" id="monthsOut">0</span>
+          </div>
+          <div class="age-item">
+            <span class="age-label">Days</span>
+            <span class="age-value" id="daysOut">0</span>
+          </div>
+        </div>
+
+        <div class="result-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-top:14px;">
+          <div class="result-card">
+            <span class="result-label">Total Months</span>
+            <span class="result-value" id="totalMonths">0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Total Weeks</span>
+            <span class="result-value" id="totalWeeks">0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Total Days</span>
+            <span class="result-value" id="totalDays">0</span>
+          </div>
+          <div class="result-card highlight">
+            <span class="result-label">Total Hours</span>
+            <span class="result-value" id="totalHours">0</span>
+          </div>
+        </div>
+
+        <div class="result-detail" id="extraInfo"></div>
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How the age is calculated</h3>
+        <p>
+          The calculator first finds the difference in calendar years, months, and days
+          between your date of birth and the reference date (today, or the date you choose).
+          If the current day-of-month is smaller than your birth day, one month is borrowed
+          and the days of the previous month are added — the same method used by official
+          age-certification forms.
+        </p>
+        <p>
+          Totals such as weeks, days, and hours are computed from the exact millisecond
+          difference, so they remain accurate across leap years and month-length changes.
+          The next-birthday countdown is calculated from today's date and correctly rolls
+          over to the following year once the birthday has passed.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var form       = document.getElementById('ageForm');
+  var dobInput   = document.getElementById('dob');
+  var asOfInput  = document.getElementById('ageAsOf');
+  var errorBox   = document.getElementById('ageError');
+  var resultBox  = document.getElementById('ageResult');
+  var resetBtn   = document.getElementById('ageReset');
+
+  var out = {
+    years:       document.getElementById('yearsOut'),
+    months:      document.getElementById('monthsOut'),
+    days:        document.getElementById('daysOut'),
+    totalMonths: document.getElementById('totalMonths'),
+    totalWeeks:  document.getElementById('totalWeeks'),
+    totalDays:   document.getElementById('totalDays'),
+    totalHours:  document.getElementById('totalHours'),
+    extra:       document.getElementById('extraInfo')
+  };
+
+  var MS_PER_DAY = 86400000;
+  var MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+  var WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  // Prevent future dates in the picker
+  var today = new Date();
+  var todayISO = toISO(today);
+  dobInput.max = todayISO;
+  asOfInput.max = todayISO;
+
+  function toISO(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function parseLocalDate(iso) {
+    // Parse YYYY-MM-DD as a local date (avoids UTC drift)
+    var parts = iso.split('-');
+    if (parts.length !== 3) return null;
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10) - 1;
+    var d = parseInt(parts[2], 10);
+    var date = new Date(y, m, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m || date.getDate() !== d) return null;
+    return date;
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+    resultBox.hidden = true;
+  }
+
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function formatNumber(n) {
+    return n.toLocaleString('en-US');
+  }
+
+  function computeAge(dob, asOf) {
+    var years  = asOf.getFullYear() - dob.getFullYear();
+    var months = asOf.getMonth()    - dob.getMonth();
+    var days   = asOf.getDate()     - dob.getDate();
+
+    if (days < 0) {
+      months -= 1;
+      // days in the month prior to asOf
+      var prevMonth = new Date(asOf.getFullYear(), asOf.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+    return { years: years, months: months, days: days };
+  }
+
+  function nextBirthdayInfo(dob, asOf) {
+    // Clone asOf at midnight
+    var ref = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate());
+    var next = new Date(asOf.getFullYear(), dob.getMonth(), dob.getDate());
+
+    // Handle Feb-29 birthdays falling in non-leap years
+    if (dob.getMonth() === 1 && dob.getDate() === 29 && next.getMonth() !== 1) {
+      next = new Date(asOf.getFullYear(), 2, 1);
+    }
+
+    if (next.getTime() <= ref.getTime()) {
+      next = new Date(asOf.getFullYear() + 1, dob.getMonth(), dob.getDate());
+      if (dob.getMonth() === 1 && dob.getDate() === 29 && next.getMonth() !== 1) {
+        next = new Date(asOf.getFullYear() + 1, 2, 1);
+      }
+    }
+
+    var days = Math.round((next.getTime() - ref.getTime()) / MS_PER_DAY);
+    return { date: next, days: days };
+  }
+
+  function zodiacSign(month, day) {
+    var signs = [
+      [1, 20, 'Capricorn', 'Aquarius'],
+      [2, 19, 'Aquarius', 'Pisces'],
+      [3, 21, 'Pisces', 'Aries'],
+      [4, 20, 'Aries', 'Taurus'],
+      [5, 21, 'Taurus', 'Gemini'],
+      [6, 21, 'Gemini', 'Cancer'],
+      [7, 23, 'Cancer', 'Leo'],
+      [8, 23, 'Leo', 'Virgo'],
+      [9, 23, 'Virgo', 'Libra'],
+      [10, 23, 'Libra', 'Scorpio'],
+      [11, 22, 'Scorpio', 'Sagittarius'],
+      [12, 22, 'Sagittarius', 'Capricorn']
+    ];
+    var m = month + 1;
+    for (var i = 0; i < signs.length; i++) {
+      if (signs[i][0] === m) {
+        return day < signs[i][1] ? signs[i][2] : signs[i][3];
+      }
+    }
+    return '';
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearError();
+
+    var dobValue = dobInput.value;
+    var asOfValue = asOfInput.value || todayISO;
+
+    if (!dobValue) {
+      showError('Please enter your date of birth.');
+      dobInput.focus();
+      return;
+    }
+
+    var dob = parseLocalDate(dobValue);
+    var asOf = parseLocalDate(asOfValue);
+
+    if (!dob) {
+      showError('That date of birth is not valid.');
+      return;
+    }
+    if (!asOf) {
+      showError('The reference date is not valid.');
+      return;
+    }
+
+    var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (dob.getTime() > todayMidnight.getTime()) {
+      showError('Date of birth cannot be in the future.');
+      return;
+    }
+    if (asOf.getTime() < dob.getTime()) {
+      showError('The reference date must be on or after your date of birth.');
+      return;
+    }
+
+    // Core calculation
+    var age = computeAge(dob, asOf);
+    out.years.textContent  = age.years;
+    out.months.textContent = age.months;
+    out.days.textContent   = age.days;
+
+    // Totals
+    var diffMs      = asOf.getTime() - dob.getTime();
+    var totalDays   = Math.floor(diffMs / MS_PER_DAY);
+    var totalWeeks  = Math.floor(totalDays / 7);
+    var totalMonths = age.years * 12 + age.months;
+    var totalHours  = totalDays * 24;
+
+    out.totalMonths.textContent = formatNumber(totalMonths);
+    out.totalWeeks.textContent  = formatNumber(totalWeeks);
+    out.totalDays.textContent   = formatNumber(totalDays);
+    out.totalHours.textContent  = formatNumber(totalHours);
+
+    // Extra info
+    var bornOn = WEEKDAYS[dob.getDay()];
+    var sign = zodiacSign(dob.getMonth(), dob.getDate());
+    var nb = nextBirthdayInfo(dob, asOf);
+
+    var birthdayLine;
+    if (nb.days === 0) {
+      birthdayLine = 'Happy birthday — today is the day.';
+    } else if (nb.days === 1) {
+      birthdayLine = 'Your next birthday is tomorrow.';
+    } else {
+      birthdayLine = 'Your next birthday is in ' + nb.days + ' days (' +
+        nb.date.getDate() + ' ' + MONTHS[nb.date.getMonth()] + ' ' + nb.date.getFullYear() + ').';
+    }
+
+    out.extra.innerHTML =
+      'You were born on a <strong>' + bornOn + '</strong>. ' +
+      'Your zodiac sign is <strong>' + sign + '</strong>. ' +
+      birthdayLine;
+
+    resultBox.hidden = false;
+    // Smooth scroll to the result
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+  });
+
+  resetBtn.addEventListener('click', function () {
+    form.reset();
+    clearError();
+    resultBox.hidden = true;
+    out.extra.textContent = '';
+    dobInput.focus();
+  });
+
+})();
+</script>
+
+</body>
+</html>
