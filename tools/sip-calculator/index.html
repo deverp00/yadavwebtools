@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Calculate mutual fund SIP returns, invested amount, and maturity value with a year-by-year growth table. Free and private." />
+  <title>SIP Calculator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* Split bar */
+    .sip-split-bar {
+      display: flex;
+      height: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--border);
+      margin: 4px 0 10px;
+    }
+    .sip-split-bar .split-invested { background: var(--brand); transition: width .5s cubic-bezier(.22,.61,.36,1); }
+    .sip-split-bar .split-returns  { background: #52c98a; transition: width .5s cubic-bezier(.22,.61,.36,1); }
+
+    .sip-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      justify-content: center;
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .sip-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .sip-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .sip-legend .dot-invested { background: var(--brand); }
+    .sip-legend .dot-returns  { background: #52c98a; }
+
+    /* Year-by-year table */
+    .sip-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      margin-top: 4px;
+    }
+    .sip-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      min-width: 480px;
+    }
+    .sip-table thead th {
+      background: var(--brand);
+      color: #fff;
+      font-weight: 600;
+      text-align: right;
+      padding: 10px 14px;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+    .sip-table thead th:first-child { text-align: left; }
+    .sip-table tbody td {
+      padding: 9px 14px;
+      text-align: right;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .sip-table tbody td:first-child {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .sip-table tbody tr:hover td { background: var(--brand-soft); }
+    .sip-table tbody tr:last-child td { font-weight: 700; color: var(--brand); }
+
+    .sip-detail-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      margin: 12px auto 0;
+    }
+    .sip-detail-toggle:hover { border-color: var(--brand); color: var(--brand); }
+    .sip-detail-toggle svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.4; transition: transform .3s var(--ease); }
+    .sip-detail-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .sip-table-collapse { max-height: 0; overflow: hidden; transition: max-height .5s var(--ease-out); }
+    .sip-table-collapse.open { max-height: 3000px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="sip-heading">
+    <div class="section-title-bar">
+      <h2 id="sip-heading">SIP Calculator</h2>
+      <p class="section-sub">Project your mutual fund SIP returns year by year.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter your monthly investment, expected annual return, and tenure to see the
+        projected maturity value. The calculation uses the standard SIP compound growth
+        formula with monthly compounding. Results are estimates, not guarantees.
+      </p>
+
+      <form class="sip-form" id="sipForm" novalidate>
+
+        <div class="form-section-title">Investment Details</div>
+
+        <div class="field-group">
+          <label for="sipAmount">Monthly Investment</label>
+          <input type="number" id="sipAmount" min="100" max="10000000" step="100" value="5000" inputmode="numeric" />
+          <input type="range" class="sip-range" id="sipAmountRange" min="100" max="200000" step="100" value="5000" aria-label="Monthly investment slider" />
+          <span class="range-value" id="sipAmountVal">₹5,000</span>
+        </div>
+
+        <div class="field-group">
+          <label for="sipRate">Expected Return (p.a.)</label>
+          <input type="number" id="sipRate" min="0.1" max="50" step="0.1" value="12" inputmode="decimal" />
+          <input type="range" class="sip-range" id="sipRateRange" min="0.5" max="30" step="0.1" value="12" aria-label="Expected return slider" />
+          <span class="range-value" id="sipRateVal">12%</span>
+        </div>
+
+        <div class="field-group">
+          <label for="sipYears">Investment Period</label>
+          <input type="number" id="sipYears" min="1" max="50" step="1" value="10" inputmode="numeric" />
+          <input type="range" class="sip-range" id="sipYearsRange" min="1" max="40" step="1" value="10" aria-label="Investment period slider" />
+          <span class="range-value" id="sipYearsVal">10 yr</span>
+        </div>
+
+        <div class="error-msg" id="sipError" role="alert"></div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn">Calculate</button>
+          <button type="button" class="btn btn-secondary" id="sipReset">Reset</button>
+        </div>
+      </form>
+
+      <!-- ===== RESULT ===== -->
+      <div class="sip-result" id="sipResult" hidden>
+
+        <div class="result-grid">
+          <div class="result-card">
+            <span class="result-label">Invested</span>
+            <span class="result-value" id="sipInvested">₹0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Est. Returns</span>
+            <span class="result-value" id="sipReturns">₹0</span>
+          </div>
+          <div class="result-card highlight">
+            <span class="result-label">Total Value</span>
+            <span class="result-value" id="sipTotal">₹0</span>
+          </div>
+        </div>
+
+        <div class="sip-split-bar" aria-hidden="true">
+          <span class="split-invested" id="splitInvested"></span>
+          <span class="split-returns"  id="splitReturns"></span>
+        </div>
+        <div class="sip-legend">
+          <span><span class="dot dot-invested"></span> Invested</span>
+          <span><span class="dot dot-returns"></span> Estimated Returns</span>
+        </div>
+
+        <div class="result-detail" id="sipDetail"></div>
+
+        <div style="text-align:center;">
+          <button type="button" class="sip-detail-toggle" id="sipTableToggle" aria-expanded="false" aria-controls="sipTableWrap">
+            <span>Year-by-year breakdown</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <div class="sip-table-collapse" id="sipTableWrap">
+          <div class="sip-table-wrap">
+            <table class="sip-table">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Invested</th>
+                  <th>Returns</th>
+                  <th>Total Value</th>
+                </tr>
+              </thead>
+              <tbody id="sipTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How SIP returns are calculated</h3>
+        <p>
+          A Systematic Investment Plan invests a fixed amount every month into a mutual
+          fund. Each instalment compounds for the number of months it stays invested, so
+          earlier contributions grow more than later ones. The maturity value uses the
+          standard SIP formula: M = P x ((1 + i)^n - 1) / i x (1 + i), where P is the
+          monthly amount, i is the monthly rate (annual return divided by 12), and n is
+          the total number of monthly instalments.
+        </p>
+        <p>
+          The year-by-year table shows the value at the end of each completed year, with
+          the final row reflecting the maturity value. The invested column always grows
+          linearly because each instalment is a fixed cash outflow; the returns column
+          accelerates over time because of compounding.
+        </p>
+        <p>
+          Mutual fund returns are not guaranteed. Actual results depend on market
+          performance, expense ratios, exit loads, and taxes. Use this calculator as a
+          planning tool, not a promise of future value.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form        = document.getElementById('sipForm');
+  var amountInput = document.getElementById('sipAmount');
+  var amountRange = document.getElementById('sipAmountRange');
+  var amountVal   = document.getElementById('sipAmountVal');
+
+  var rateInput   = document.getElementById('sipRate');
+  var rateRange   = document.getElementById('sipRateRange');
+  var rateVal     = document.getElementById('sipRateVal');
+
+  var yearsInput  = document.getElementById('sipYears');
+  var yearsRange  = document.getElementById('sipYearsRange');
+  var yearsVal    = document.getElementById('sipYearsVal');
+
+  var errorBox    = document.getElementById('sipError');
+  var resultBox   = document.getElementById('sipResult');
+  var resetBtn    = document.getElementById('sipReset');
+
+  var investedOut = document.getElementById('sipInvested');
+  var returnsOut  = document.getElementById('sipReturns');
+  var totalOut    = document.getElementById('sipTotal');
+  var detailOut   = document.getElementById('sipDetail');
+
+  var splitInvested = document.getElementById('splitInvested');
+  var splitReturns  = document.getElementById('splitReturns');
+
+  var tableToggle = document.getElementById('sipTableToggle');
+  var tableWrap   = document.getElementById('sipTableWrap');
+  var tableBody   = document.getElementById('sipTableBody');
+
+  // ---------- HELPERS ----------
+  var inr = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  });
+
+  var inrPlain = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
+
+  function formatINR(n) {
+    if (!isFinite(n)) return '₹0';
+    return inr.format(Math.round(n));
+  }
+
+  function formatINRShort(n) {
+    n = Math.round(n);
+    if (n >= 10000000) return '₹' + (n / 10000000).toFixed(2) + ' Cr';
+    if (n >= 100000)   return '₹' + (n / 100000).toFixed(2) + ' L';
+    return '₹' + inrPlain.format(n);
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  // Clamp helper
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  // ---------- SLIDER <-> INPUT SYNC ----------
+  function bindPair(inputEl, rangeEl, onUpdate) {
+    inputEl.addEventListener('input', function () {
+      var v = parseFloat(inputEl.value);
+      if (isFinite(v)) rangeEl.value = clamp(v, parseFloat(rangeEl.min), parseFloat(rangeEl.max));
+      if (onUpdate) onUpdate();
+    });
+    rangeEl.addEventListener('input', function () {
+      inputEl.value = rangeEl.value;
+      if (onUpdate) onUpdate();
+    });
+    if (onUpdate) onUpdate();
+  }
+
+  bindPair(amountInput, amountRange, function () {
+    var v = parseFloat(amountInput.value) || 0;
+    amountVal.textContent = formatINR(v);
+  });
+
+  bindPair(rateInput, rateRange, function () {
+    var v = parseFloat(rateInput.value) || 0;
+    rateVal.textContent = v + '%';
+  });
+
+  bindPair(yearsInput, yearsRange, function () {
+    var v = parseInt(yearsInput.value, 10) || 0;
+    yearsVal.textContent = v + ' yr';
+  });
+
+  // ---------- CORE MATH ----------
+  // SIP with monthly compounding:
+  // M = P * ((1 + i)^n - 1) / i * (1 + i)
+  // i = annual / 12 / 100
+  // n = years * 12
+  function computeSIP(P, annualRate, years) {
+    var n = years * 12;
+    var i = annualRate / 12 / 100;
+
+    if (i === 0) {
+      var total = P * n;
+      return { invested: total, total: total, returns: 0 };
+    }
+
+    var factor = (Math.pow(1 + i, n) - 1) / i * (1 + i);
+    var totalValue = P * factor;
+    var invested = P * n;
+    return {
+      invested: invested,
+      total: totalValue,
+      returns: totalValue - invested
+    };
+  }
+
+  // Yearly rows for the table
+  function computeYearlyRows(P, annualRate, years) {
+    var i = annualRate / 12 / 100;
+    var rows = [];
+    var cumulative = 0;
+
+    for (var y = 1; y <= years; y++) {
+      var monthsThisYear = 12;
+      // Grow previous value for 12 months, then add this year's instalments
+      // Simpler & accurate: simulate month by month for the row snapshots
+      if (y === 1) {
+        // first year: fresh start
+        cumulative = 0;
+      }
+      // We'll recompute from scratch for each year to keep accuracy simple
+      // Actually simulate cumulatively:
+      rows.push(y);
+    }
+
+    // Proper month-by-month simulation for year-end snapshots
+    var value = 0;
+    var investedCum = 0;
+    var snapshots = [];
+    for (var m = 1; m <= years * 12; m++) {
+      // monthly instalment at start of month, then growth
+      value = (value + P) * (1 + i);
+      investedCum += P;
+      if (m % 12 === 0) {
+        snapshots.push({
+          year: m / 12,
+          invested: investedCum,
+          total: value,
+          returns: value - investedCum
+        });
+      }
+    }
+    return snapshots;
+  }
+
+  // ---------- RENDER ----------
+  function render(years, invested, returns, total) {
+    investedOut.textContent = formatINR(invested);
+    returnsOut.textContent  = formatINR(returns);
+    totalOut.textContent    = formatINR(total);
+
+    // Split bar widths
+    var safeTotal = total > 0 ? total : 1;
+    var investedPct = (invested / safeTotal) * 100;
+    var returnsPct  = (returns  / safeTotal) * 100;
+    splitInvested.style.width = investedPct.toFixed(2) + '%';
+    splitReturns.style.width  = returnsPct.toFixed(2) + '%';
+
+    // Detail line
+    var multiple = invested > 0 ? (total / invested).toFixed(2) : '0.00';
+    detailOut.textContent =
+      'Your monthly investment of ' + formatINR(parseFloat(amountInput.value)) +
+      ' over ' + years + ' year' + (years > 1 ? 's' : '') +
+      ' at ' + parseFloat(rateInput.value) + '% p.a. is estimated to grow to ' +
+      formatINRShort(total) + ' — about ' + multiple + 'x your invested amount.';
+
+    // Table
+    var rows = computeYearlyRows(
+      parseFloat(amountInput.value),
+      parseFloat(rateInput.value),
+      years
+    );
+
+    tableBody.innerHTML = '';
+    rows.forEach(function (row, idx) {
+      var tr = document.createElement('tr');
+      var isLast = idx === rows.length - 1;
+      var yearLabel = 'Year ' + row.year + (isLast ? ' (maturity)' : '');
+      tr.innerHTML =
+        '<td>' + yearLabel + '</td>' +
+        '<td>' + formatINR(row.invested) + '</td>' +
+        '<td>' + formatINR(row.returns) + '</td>' +
+        '<td>' + formatINR(row.total) + '</td>';
+      tableBody.appendChild(tr);
+    });
+
+    resultBox.hidden = false;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+  }
+
+  // ---------- SUBMIT ----------
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearError();
+
+    var P = parseFloat(amountInput.value);
+    var r = parseFloat(rateInput.value);
+    var y = parseInt(yearsInput.value, 10);
+
+    if (!isFinite(P) || P < 100) {
+      showError('Monthly investment must be at least ₹100.');
+      amountInput.focus();
+      return;
+    }
+    if (P > 10000000) {
+      showError('Monthly investment is unrealistically large. Please enter a value under ₹1,00,00,000.');
+      amountInput.focus();
+      return;
+    }
+    if (!isFinite(r) || r <= 0) {
+      showError('Expected return must be greater than 0%.');
+      rateInput.focus();
+      return;
+    }
+    if (r > 50) {
+      showError('Expected return above 50% p.a. is not supported.');
+      rateInput.focus();
+      return;
+    }
+    if (!isFinite(y) || y < 1) {
+      showError('Investment period must be at least 1 year.');
+      yearsInput.focus();
+      return;
+    }
+    if (y > 50) {
+      showError('Investment period above 50 years is not supported.');
+      yearsInput.focus();
+      return;
+    }
+
+    var res = computeSIP(P, r, y);
+    render(y, res.invested, res.returns, res.total);
+  });
+
+  // ---------- RESET ----------
+  resetBtn.addEventListener('click', function () {
+    clearError();
+    amountInput.value = 5000;  amountRange.value = 5000;
+    rateInput.value   = 12;    rateRange.value   = 12;
+    yearsInput.value  = 10;    yearsRange.value  = 10;
+
+    amountVal.textContent = formatINR(5000);
+    rateVal.textContent   = '12%';
+    yearsVal.textContent  = '10 yr';
+
+    resultBox.hidden = true;
+    tableWrap.classList.remove('open');
+    tableToggle.setAttribute('aria-expanded', 'false');
+    tableBody.innerHTML = '';
+    splitInvested.style.width = '0%';
+    splitReturns.style.width  = '0%';
+
+    amountInput.focus();
+  });
+
+  // ---------- TABLE TOGGLE ----------
+  tableToggle.addEventListener('click', function () {
+    var open = tableWrap.classList.toggle('open');
+    tableToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+})();
+</script>
+
+</body>
+</html>
