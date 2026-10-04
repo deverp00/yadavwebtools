@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#1a5c3a" />
+<meta name="description" content="Yadav Web Tools — 21+ free, private, browser-based utilities. Calculators, converters, PDF and image tools. No uploads, no tracking." />
+<title>Yadav Web Tools — Free Online Utilities</title>
+
+<!-- Prevent theme flash -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('ywt-theme');
+      if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html" aria-current="page">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <!-- SEARCH -->
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- THEME TOGGLE -->
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <!-- HAMBURGER -->
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-orbs" aria-hidden="true">
+      <span class="orb orb-1"></span>
+      <span class="orb orb-2"></span>
+      <span class="orb orb-3"></span>
+    </div>
+
+    <div class="hero-inner">
+      <span class="hero-badge reveal" data-reveal>
+        <span class="pulse-dot" aria-hidden="true"></span>
+        100% Free · Runs entirely in your browser
+      </span>
+
+      <h1 class="hero-title reveal" data-reveal id="hero-heading">
+        Simple tools for
+        <span class="grad-text">everyday tasks</span>
+      </h1>
+
+      <p class="hero-sub reveal" data-reveal>
+        Calculators, converters, PDF and image utilities — fast, private and dependency-free.
+        Nothing you type ever leaves your device.
+      </p>
+
+      <div class="hero-actions reveal" data-reveal>
+        <a href="#tools" class="btn btn-primary">
+          Browse all tools
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="/dav/about/index.html" class="btn btn-ghost">Learn more</a>
+      </div>
+
+      <dl class="hero-stats reveal" data-reveal>
+        <div class="stat">
+          <dt class="stat-num" data-count="21" data-suffix="+">0</dt>
+          <dd class="stat-label">Free tools</dd>
+        </div>
+        <div class="stat">
+          <dt class="stat-num" data-count="0">0</dt>
+          <dd class="stat-label">Data uploaded</dd>
+        </div>
+        <div class="stat">
+          <dt class="stat-num" data-count="100" data-suffix="%">0</dt>
+          <dd class="stat-label">Client-side</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ===== TOOLS SECTION ===== -->
+  <section class="section tools-section" id="tools" aria-labelledby="tools-heading">
+    <div class="section-title-bar reveal" data-reveal>
+      <h2 id="tools-heading">All Available Tools</h2>
+      <p class="section-sub">Pick a tool and get straight to work — no sign-up required.</p>
+    </div>
+
+    <div class="section-body">
+      <div class="tools-grid" role="list">
+
+        <a href="tools/age-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:0">
+          <span class="tool-name">Age Calculator</span>
+          <span class="tool-desc">Calculate exact age in years, months and days</span>
+        </a>
+
+        <a href="tools/image-resizer/index.html" class="tool-card" role="listitem" data-reveal style="--i:1">
+          <span class="tool-name">Image Resizer</span>
+          <span class="tool-desc">Resize, compress, and convert images to JPG format for government forms &amp; social media</span>
+        </a>
+
+        <a href="tools/sip-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:2">
+          <span class="tool-name">SIP Calculator</span>
+          <span class="tool-desc">Project your mutual-fund returns and wealth growth</span>
+        </a>
+
+        <a href="tools/text-counter/index.html" class="tool-card" role="listitem" data-reveal style="--i:3">
+          <span class="tool-name">Text Counter</span>
+          <span class="tool-desc">Count characters, words, sentences and paragraphs</span>
+        </a>
+
+        <a href="tools/unit-converter/index.html" class="tool-card" role="listitem" data-reveal style="--i:4">
+          <span class="tool-name">Unit Converter</span>
+          <span class="tool-desc">Convert length, mass, volume and temperature</span>
+        </a>
+
+        <a href="tools/password-generator/index.html" class="tool-card" role="listitem" data-reveal style="--i:5">
+          <span class="tool-name">Password Generator</span>
+          <span class="tool-desc">Generate strong and secure random passwords</span>
+        </a>
+
+        <a href="tools/qr-generator/index.html" class="tool-card" role="listitem" data-reveal style="--i:6">
+          <span class="tool-name">QR Generator</span>
+          <span class="tool-desc">Create QR codes from any text or URL</span>
+        </a>
+
+        <a href="tools/gst-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:7">
+          <span class="tool-name">GST Calculator</span>
+          <span class="tool-desc">Calculate GST amount, CGST/SGST or IGST breakdown</span>
+        </a>
+
+        <a href="tools/number-converter/index.html" class="tool-card" role="listitem" data-reveal style="--i:8">
+          <span class="tool-name">Number Converter</span>
+          <span class="tool-desc">Convert between binary, octal, decimal and hex</span>
+        </a>
+
+        <a href="tools/image-corner-curve/index.html" class="tool-card" role="listitem" data-reveal style="--i:9">
+          <span class="tool-name">Image Corner Curve</span>
+          <span class="tool-desc">Apply uniform rounded corners to any image and download in PNG, WebP, or JPG</span>
+        </a>
+
+        <a href="tools/percentage-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:10">
+          <span class="tool-name">Percentage Calculator</span>
+          <span class="tool-desc">Calculate percentages quickly and accurately</span>
+        </a>
+
+        <a href="tools/bmi-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:11">
+          <span class="tool-name">BMI Calculator</span>
+          <span class="tool-desc">Calculate body mass index from height and weight</span>
+        </a>
+
+        <a href="tools/loan-calculator/index.html" class="tool-card" role="listitem" data-reveal style="--i:12">
+          <span class="tool-name">Loan Calculator</span>
+          <span class="tool-desc">Estimate monthly payments and total interest</span>
+        </a>
+
+        <a href="tools/pdf-editor/index.html" class="tool-card" role="listitem" data-reveal style="--i:13">
+          <span class="tool-name">PDF Editor</span>
+          <span class="tool-desc">Reorder, delete, and crop pages – all in your browser</span>
+        </a>
+
+        <a href="tools/accessibility-tool/index.html" class="tool-card" role="listitem" data-reveal style="--i:14">
+          <span class="tool-name">Accessibility Tool</span>
+          <span class="tool-desc">Voice-to-text, font size controls, contrast modes, and reading assistance</span>
+        </a>
+
+        <a href="tools/currency-converter/index.html" class="tool-card" role="listitem" data-reveal style="--i:15">
+          <span class="tool-name">Currency Converter</span>
+          <span class="tool-desc">Convert 200+ currencies, crypto, and metals with live real-time rates</span>
+        </a>
+
+        <a href="tools/forex-dashboard/index.html" class="tool-card" role="listitem" data-reveal style="--i:16">
+          <span class="tool-name">Forex Dashboard</span>
+          <span class="tool-desc">Live candlestick chart &amp; price cards for major currency pairs</span>
+        </a>
+
+        <a href="tools/file-archiver/index.html" class="tool-card" role="listitem" data-reveal style="--i:17">
+          <span class="tool-name">File Archiver</span>
+          <span class="tool-desc">Compress files and folders into a secure ZIP archive</span>
+        </a>
+
+        <a href="tools/pdf-merger/index.html" class="tool-card" role="listitem" data-reveal style="--i:18">
+          <span class="tool-name">PDF Merger</span>
+          <span class="tool-desc">Combine multiple PDFs into a single document</span>
+        </a>
+
+        <a href="tools/hosting-checker/index.html" class="tool-card" role="listitem" data-reveal style="--i:19">
+          <span class="tool-name">Hosting Checker</span>
+          <span class="tool-desc">Check domain DNS, IP address, hosting provider &amp; location</span>
+        </a>
+
+        <a href="tools/json-editor/index.html" class="tool-card" role="listitem" data-reveal style="--i:20">
+          <span class="tool-name">JSON Editor</span>
+          <span class="tool-desc">Edit, validate, format, minify and download your JSON data</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT SECTION ===== -->
+  <section class="section about-section" aria-labelledby="about-heading">
+    <div class="section-title-bar reveal" data-reveal>
+      <h2 id="about-heading">About Yadav Web Tools</h2>
+    </div>
+
+    <div class="section-body">
+      <div class="content-box reveal" data-reveal>
+        <p>
+          Yadav Web Tools is a collection of free, client-side utilities designed to help you
+          accomplish everyday tasks quickly and efficiently. Every tool runs entirely in your
+          browser — no data is ever sent to a server, so your information remains private and
+          secure.
+        </p>
+        <p>
+          Whether you need to calculate your exact age, resize an image, convert colors between
+          different formats, or generate a strong password, you will find a simple and reliable
+          tool here. The interface is intentionally clean and minimal, allowing you to focus on
+          the task at hand without distractions.
+        </p>
+        <p>
+          All tools are built with vanilla HTML, CSS and JavaScript — no frameworks, no external
+          dependencies, and no tracking. The source code is open and transparent, so you can
+          verify exactly how each tool works. New tools are added regularly based on user
+          feedback and practical needs.
+        </p>
+        <p>
+          Thank you for using Yadav Web Tools. If you have suggestions or encounter any issues,
+          please reach out through the contact page. Your input helps make these tools better
+          for everyone.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<!-- ===== BACK TO TOP ===== -->
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<!-- ===== SCROLL PROGRESS ===== -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
