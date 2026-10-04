@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Count characters, words, sentences, and paragraphs in real time. Includes reading time and keyword density. Free and private." />
+  <title>Text Counter — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* Text Counter local styles */
+    .tc-textarea {
+      width: 100%;
+      min-height: 240px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-family: inherit;
+      line-height: 1.7;
+      resize: vertical;
+      background: var(--bg-input);
+      color: var(--text);
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+    }
+    .tc-textarea:focus {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26, 92, 58, .12);
+    }
+    .tc-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 12px 0 4px;
+    }
+    .tc-toolbar-left,
+    .tc-toolbar-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .tc-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .88rem;
+      color: var(--text-2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .tc-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+      cursor: pointer;
+      margin: 0;
+    }
+    .tc-limit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+    .tc-limit input[type="number"] {
+      width: 84px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .85rem;
+    }
+    .tc-limit input[type="number"]:focus {
+      outline: 0;
+      border-color: var(--brand);
+    }
+    .tc-limit.over input[type="number"] {
+      border-color: #e74c3c;
+      background: rgba(231, 76, 60, .08);
+    }
+
+    .tc-progress {
+      height: 6px;
+      border-radius: 6px;
+      background: var(--border);
+      overflow: hidden;
+      margin: 10px 0 4px;
+    }
+    .tc-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--brand);
+      transition: width .25s var(--ease), background .25s var(--ease);
+    }
+    .tc-progress-bar.warn { background: #f39c12; }
+    .tc-progress-bar.over { background: #e74c3c; }
+
+    /* Big primary stat */
+    .tc-hero-stat {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 16px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+    }
+    .tc-hero-stat .tc-hero-num {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--brand);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .tc-hero-stat .tc-hero-label {
+      font-size: .95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Detail rows (keyword density) */
+    .tc-keywords {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .tc-keywords-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+    }
+    .tc-keywords-header svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .tc-keywords-header[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .tc-keywords-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease-out);
+    }
+    .tc-keywords-body.open { max-height: 1200px; }
+    .tc-keyword-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 4px 0;
+    }
+    .tc-keyword-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+      font-size: .88rem;
+    }
+    .tc-keyword-row:first-child { border-top: 0; }
+    .tc-keyword-word {
+      color: var(--text);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tc-keyword-count {
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      font-size: .82rem;
+    }
+    .tc-keyword-pct {
+      color: var(--brand);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      min-width: 54px;
+      text-align: right;
+      font-size: .82rem;
+    }
+    .tc-empty {
+      padding: 18px 14px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .85rem;
+    }
+
+    /* Controls row for case tools */
+    .tc-tool-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tc-tool-row .btn {
+      padding: 8px 16px;
+      font-size: .85rem;
+      min-width: auto;
+    }
+
+    @media (max-width: 640px) {
+      .tc-hero-stat .tc-hero-num { font-size: 1.9rem; }
+      .tc-toolbar { flex-direction: column; align-items: stretch; }
+      .tc-toolbar-left, .tc-toolbar-right { justify-content: flex-start; }
+      .tc-tool-row .btn { flex: 1 1 auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="tc-heading">
+    <div class="section-title-bar">
+      <h2 id="tc-heading">Text Counter</h2>
+      <p class="section-sub">Count characters, words, sentences, and paragraphs as you type.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Paste or type your text below. Every stat updates instantly as you write, and a
+        keyword density panel shows which words appear most often. Nothing is sent to a
+        server.
+      </p>
+
+      <form class="text-counter-form" id="tcForm" novalidate onsubmit="return false;">
+
+        <div class="field-group" style="display:block;">
+          <textarea
+            id="tcText"
+            class="tc-textarea"
+            placeholder="Start typing or paste your text here…"
+            aria-label="Text to count"
+            spellcheck="false"
+          ></textarea>
+        </div>
+
+        <div class="tc-progress" aria-hidden="true">
+          <div class="tc-progress-bar" id="tcProgressBar"></div>
+        </div>
+
+        <div class="tc-toolbar">
+          <div class="tc-toolbar-left">
+            <label class="tc-checkbox">
+              <input type="checkbox" id="tcIgnoreSpaces" checked />
+              Exclude spaces from character count
+            </label>
+            <label class="tc-checkbox">
+              <input type="checkbox" id="tcIgnoreCommon" checked />
+              Exclude common words from keyword density
+            </label>
+          </div>
+
+          <div class="tc-toolbar-right">
+            <label class="tc-limit" id="tcLimitWrap">
+              Character limit
+              <input type="number" id="tcLimit" min="0" max="100000" step="10" value="0" aria-label="Character limit" />
+            </label>
+          </div>
+        </div>
+
+        <!-- ===== RESULT ===== -->
+        <div class="text-counter-result" id="tcResult" style="margin-top:18px;">
+
+          <div class="tc-hero-stat">
+            <span class="tc-hero-num" id="tcWords">0</span>
+            <span class="tc-hero-label">words</span>
+          </div>
+
+          <div class="result-grid" id="tcGrid">
+            <div class="result-card">
+              <span class="result-label">Characters</span>
+              <span class="result-value" id="tcChars">0</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">No Spaces</span>
+              <span class="result-value" id="tcCharsNoSpace">0</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Sentences</span>
+              <span class="result-value" id="tcSentences">0</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Paragraphs</span>
+              <span class="result-value" id="tcParagraphs">0</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Reading Time</span>
+              <span class="result-value" id="tcReadTime">0s</span>
+            </div>
+            <div class="result-card highlight">
+              <span class="result-label">Speaking Time</span>
+              <span class="result-value" id="tcSpeakTime">0s</span>
+            </div>
+          </div>
+
+          <div class="result-detail" id="tcDetail"></div>
+
+          <!-- ===== KEYWORD DENSITY ===== -->
+          <div class="tc-keywords">
+            <div class="tc-keywords-header" id="tcKwHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="tcKwBody">
+              <span>Keyword Density (Top 10)</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="tc-keywords-body" id="tcKwBody">
+              <div class="tc-keyword-list" id="tcKeywordList">
+                <div class="tc-empty">No keywords yet — start typing above.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===== TEXT TOOLS ===== -->
+        <div class="tc-tool-row">
+          <button type="button" class="btn btn-secondary" id="tcUpper">UPPERCASE</button>
+          <button type="button" class="btn btn-secondary" id="tcLower">lowercase</button>
+          <button type="button" class="btn btn-secondary" id="tcTitle">Title Case</button>
+          <button type="button" class="btn btn-secondary" id="tcSentence">Sentence case</button>
+          <button type="button" class="btn btn-secondary" id="tcTrim">Trim Spaces</button>
+          <button type="button" class="btn btn-secondary" id="tcCopy">Copy Text</button>
+          <button type="button" class="btn btn-secondary" id="tcClear">Clear</button>
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How these counts are defined</h3>
+        <p>
+          Characters are counted with or without spaces, depending on the toggle. The
+          no-spaces figure removes every whitespace character, which is what platforms
+          like Twitter and SMS limits typically use. Words are counted by splitting on
+          any run of whitespace, so hyphenated or slashed phrases count as a single word.
+        </p>
+        <p>
+          Sentences are detected by punctuation marks (. ! ?) and by paragraph breaks.
+          Paragraphs are separated by one or more blank lines. Reading time assumes an
+          average speed of 200 words per minute; speaking time uses 130 words per minute.
+          Both figures round up to the nearest second.
+        </p>
+        <p>
+          Keyword density ignores common stop words (the, a, and, of, etc.) when the
+          toggle is on, and shows the ten most frequent words along with their percentage
+          share of the total. Useful for SEO audits, headline checks, and quick
+          readability reviews.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var textarea       = document.getElementById('tcText');
+  var ignoreSpaces   = document.getElementById('tcIgnoreSpaces');
+  var ignoreCommon   = document.getElementById('tcIgnoreCommon');
+  var limitInput     = document.getElementById('tcLimit');
+  var limitWrap      = document.getElementById('tcLimitWrap');
+  var progressBar    = document.getElementById('tcProgressBar');
+
+  var wordsOut       = document.getElementById('tcWords');
+  var charsOut       = document.getElementById('tcChars');
+  var charsNoSpOut   = document.getElementById('tcCharsNoSpace');
+  var sentencesOut   = document.getElementById('tcSentences');
+  var paragraphsOut  = document.getElementById('tcParagraphs');
+  var readTimeOut    = document.getElementById('tcReadTime');
+  var speakTimeOut   = document.getElementById('tcSpeakTime');
+  var detailOut      = document.getElementById('tcDetail');
+
+  var kwHeader       = document.getElementById('tcKwHeader');
+  var kwBody         = document.getElementById('tcKwBody');
+  var kwList         = document.getElementById('tcKeywordList');
+
+  var btnUpper       = document.getElementById('tcUpper');
+  var btnLower       = document.getElementById('tcLower');
+  var btnTitle       = document.getElementById('tcTitle');
+  var btnSentence    = document.getElementById('tcSentence');
+  var btnTrim        = document.getElementById('tcTrim');
+  var btnCopy        = document.getElementById('tcCopy');
+  var btnClear       = document.getElementById('tcClear');
+
+  // ---------- STOP WORDS ----------
+  var STOP_WORDS = {
+    'a':1,'an':1,'and':1,'or':1,'but':1,'the':1,'of':1,'to':1,'in':1,'on':1,'at':1,
+    'by':1,'for':1,'with':1,'about':1,'as':1,'is':1,'are':1,'was':1,'were':1,'be':1,
+    'been':1,'being':1,'am':1,'i':1,'you':1,'he':1,'she':1,'it':1,'we':1,'they':1,
+    'me':1,'him':1,'her':1,'us':1,'them':1,'my':1,'your':1,'his':1,'its':1,'our':1,
+    'their':1,'this':1,'that':1,'these':1,'those':1,'so':1,'if':1,'then':1,'than':1,
+    'from':1,'into':1,'up':1,'down':1,'out':1,'over':1,'under':1,'again':1,'no':1,
+    'not':1,'do':1,'does':1,'did':1,'have':1,'has':1,'had':1,'will':1,'would':1,
+    'can':1,'could':1,'should':1,'may':1,'might':1,'must':1,'shall':1,'there':1,
+    'here':1,'what':1,'which':1,'who':1,'whom':1,'when':1,'where':1,'why':1,'how':1
+  };
+
+  // ---------- COUNTING ----------
+  function countAll(text) {
+    if (!text) {
+      return {
+        chars: 0, charsNoSpace: 0, words: 0,
+        sentences: 0, paragraphs: 0,
+        readTime: 0, speakTime: 0,
+        keywords: []
+      };
+    }
+
+    var chars = text.length;
+    var charsNoSpace = text.replace(/\s/g, '').length;
+
+    var trimmed = text.trim();
+    var words = trimmed ? trimmed.split(/\s+/).length : 0;
+
+    // Sentences: split on . ! ? plus paragraph breaks, drop empties
+    var sentenceSegments = trimmed
+      .split(/[.!?]+|\n{2,}/)
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; });
+    var sentences = sentenceSegments.length;
+
+    // Paragraphs: non-empty blocks separated by blank lines
+    var paragraphs = trimmed
+      ? trimmed.split(/\n\s*\n/).filter(function (p) { return p.trim().length > 0; }).length
+      : 0;
+
+    // Reading / speaking time (in seconds), rounded up
+    var readTime = words > 0 ? Math.ceil((words / 200) * 60) : 0;
+    var speakTime = words > 0 ? Math.ceil((words / 130) * 60) : 0;
+
+    // Keywords
+    var keywords = [];
+    if (words > 0) {
+      var lower = text.toLowerCase();
+      // Grab word-ish tokens including unicode letters and internal apostrophes/hyphens
+      var tokens = lower.match(/[\p{L}\p{N}][\p{L}\p{N}'\-]*/gu) || [];
+      var freq = Object.create(null);
+      var totalCounted = 0;
+
+      tokens.forEach(function (tok) {
+        if (tok.length < 2) return;
+        if (ignoreCommon.checked && STOP_WORDS[tok]) return;
+        freq[tok] = (freq[tok] || 0) + 1;
+        totalCounted++;
+      });
+
+      var entries = Object.keys(freq).map(function (w) {
+        return { word: w, count: freq[w], pct: totalCounted ? (freq[w] / totalCounted) * 100 : 0 };
+      });
+      entries.sort(function (a, b) {
+        if (b.count !== a.count) return b.count - a.count;
+        return a.word.localeCompare(b.word);
+      });
+      keywords = entries.slice(0, 10);
+    }
+
+    return {
+      chars: chars,
+      charsNoSpace: charsNoSpace,
+      words: words,
+      sentences: sentences,
+      paragraphs: paragraphs,
+      readTime: readTime,
+      speakTime: speakTime,
+      keywords: keywords
+    };
+  }
+
+  // ---------- FORMATTERS ----------
+  var numFmt = new Intl.NumberFormat('en-US');
+
+  function fmt(n) { return numFmt.format(n); }
+
+  function fmtTime(seconds) {
+    if (seconds <= 0) return '0s';
+    if (seconds < 60) return seconds + 's';
+    var m = Math.floor(seconds / 60);
+    var s = seconds % 60;
+    if (m < 60) return m + 'm ' + (s ? s + 's' : '').trim();
+    var h = Math.floor(m / 60);
+    m = m % 60;
+    return h + 'h ' + (m ? m + 'm' : '').trim();
+  }
+
+  // ---------- RENDER ----------
+  function render() {
+    var stats = countAll(textarea.value);
+
+    wordsOut.textContent      = fmt(stats.words);
+    charsOut.textContent      = fmt(stats.chars);
+    charsNoSpOut.textContent  = fmt(stats.charsNoSpace);
+    sentencesOut.textContent  = fmt(stats.sentences);
+    paragraphsOut.textContent = fmt(stats.paragraphs);
+    readTimeOut.textContent   = fmtTime(stats.readTime);
+    speakTimeOut.textContent  = fmtTime(stats.speakTime);
+
+    // Detail line
+    var avgWords = stats.sentences > 0 ? Math.round(stats.words / stats.sentences) : 0;
+    var detail = '';
+    if (stats.words === 0) {
+      detail = 'Start typing to see live counts.';
+    } else {
+      detail =
+        'Average sentence length: ' + avgWords + ' word' + (avgWords === 1 ? '' : 's') + '. ' +
+        'Estimated reading time ' + fmtTime(stats.readTime) + ', speaking time ' + fmtTime(stats.speakTime) + '.';
+    }
+    detailOut.textContent = detail;
+
+    // Character limit progress
+    var limit = parseInt(limitInput.value, 10) || 0;
+    if (limit > 0) {
+      var used = ignoreSpaces.checked ? stats.charsNoSpace : stats.chars;
+      var pct = Math.min(100, (used / limit) * 100);
+      progressBar.style.width = pct + '%';
+      progressBar.classList.remove('warn', 'over');
+      if (used > limit) {
+        progressBar.classList.add('over');
+        limitWrap.classList.add('over');
+      } else if (pct >= 80) {
+        progressBar.classList.add('warn');
+        limitWrap.classList.remove('over');
+      } else {
+        limitWrap.classList.remove('over');
+      }
+    } else {
+      progressBar.style.width = '0%';
+      progressBar.classList.remove('warn', 'over');
+      limitWrap.classList.remove('over');
+    }
+
+    // Keywords
+    kwList.innerHTML = '';
+    if (!stats.keywords.length) {
+      var empty = document.createElement('div');
+      empty.className = 'tc-empty';
+      empty.textContent = stats.words === 0
+        ? 'No keywords yet — start typing above.'
+        : 'Not enough distinct words to rank keywords.';
+      kwList.appendChild(empty);
+    } else {
+      stats.keywords.forEach(function (k) {
+        var row = document.createElement('div');
+        row.className = 'tc-keyword-row';
+        row.innerHTML =
+          '<span class="tc-keyword-word" title="' + escapeHtml(k.word) + '">' + escapeHtml(k.word) + '</span>' +
+          '<span class="tc-keyword-count">' + fmt(k.count) + 'x</span>' +
+          '<span class="tc-keyword-pct">' + k.pct.toFixed(2) + '%</span>';
+        kwList.appendChild(row);
+      });
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ---------- EVENTS ----------
+  var rafPending = false;
+  function scheduleRender() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () {
+      rafPending = false;
+      render();
+    });
+  }
+
+  textarea.addEventListener('input', scheduleRender);
+  ignoreSpaces.addEventListener('change', render);
+  ignoreCommon.addEventListener('change', render);
+  limitInput.addEventListener('input', render);
+
+  // Keyword collapse
+  kwHeader.addEventListener('click', function () {
+    var open = kwBody.classList.toggle('open');
+    kwHeader.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  kwHeader.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      kwHeader.click();
+    }
+  });
+
+  // Text transforms
+  function applyTransform(fn) {
+    var start = textarea.selectionStart;
+    var end = textarea.selectionEnd;
+    var val = textarea.value;
+    var hasSelection = start !== end;
+    var selected = hasSelection ? val.slice(start, end) : val;
+    var transformed = fn(selected);
+
+    if (hasSelection) {
+      textarea.value = val.slice(0, start) + transformed + val.slice(end);
+      textarea.selectionStart = start;
+      textarea.selectionEnd = start + transformed.length;
+    } else {
+      textarea.value = transformed;
+      textarea.selectionStart = textarea.selectionEnd = transformed.length;
+    }
+    scheduleRender();
+    textarea.focus();
+  }
+
+  btnUpper.addEventListener('click', function () {
+    applyTransform(function (s) { return s.toUpperCase(); });
+  });
+
+  btnLower.addEventListener('click', function () {
+    applyTransform(function (s) { return s.toLowerCase(); });
+  });
+
+  btnTitle.addEventListener('click', function () {
+    applyTransform(function (s) {
+      return s.replace(/\w\S*/g, function (w) {
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      });
+    });
+  });
+
+  btnSentence.addEventListener('click', function () {
+    applyTransform(function (s) {
+      return s.toLowerCase().replace(/(^\s*\w|[.!?]\s+\w)/g, function (m) {
+        return m.toUpperCase();
+      });
+    });
+  });
+
+  btnTrim.addEventListener('click', function () {
+    applyTransform(function (s) {
+      return s
+        .replace(/[ \t]+/g, ' ')
+        .replace(/ *\n */g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    });
+  });
+
+  btnCopy.addEventListener('click', function () {
+    var text = textarea.value;
+    if (!text) return;
+    var btn = this;
+    var original = btn.textContent;
+
+    var done = function () {
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1200);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  btnClear.addEventListener('click', function () {
+    textarea.value = '';
+    render();
+    textarea.focus();
+  });
+
+  // ---------- INIT ----------
+  render();
+
+})();
+</script>
+
+</body>
+</html>
