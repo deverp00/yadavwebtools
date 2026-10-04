@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Generate strong, cryptographically secure passwords in your browser. Custom length, character sets, batch generation, and strength meter. Nothing leaves your device." />
+  <title>Password Generator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Password Generator local styles --- */
+    .pg-strength-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .pg-strength-label {
+      font-weight: 500;
+      min-width: 120px;
+      font-size: .95rem;
+    }
+
+    .pg-batch {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .pg-batch-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--brand);
+    }
+    .pg-batch-list {
+      display: flex;
+      flex-direction: column;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s var(--ease-out);
+    }
+    .pg-batch-list.open {
+      max-height: 900px;
+      overflow-y: auto;
+    }
+    .pg-batch-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+      font-family: 'Courier New', monospace;
+      font-size: .9rem;
+    }
+    .pg-batch-row:first-child { border-top: 0; }
+    .pg-batch-pw {
+      color: var(--text);
+      word-break: break-all;
+      letter-spacing: .5px;
+    }
+    .pg-batch-copy {
+      background: var(--brand);
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s var(--ease);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .pg-batch-copy:hover { background: var(--brand-hover); }
+    .pg-batch-copy.copied { background: #27ae60; }
+
+    /* Character-set label grid uses .checkbox-grid from base CSS */
+
+    .pg-preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .pg-preset {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .pg-preset:hover { border-color: var(--brand); color: var(--brand); }
+    .pg-preset.active {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    .pg-error { margin-top: 10px; }
+
+    .pg-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-line);
+      color: var(--brand);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+    .pg-badge svg {
+      width: 12px; height: 12px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+    }
+
+    .pg-entropy {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
+    .pg-entropy strong { color: var(--brand); }
+
+    /* Batch count row */
+    .pg-batch-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .88rem;
+      color: var(--text-muted);
+    }
+    .pg-batch-count input[type="number"] {
+      width: 68px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .88rem;
+      text-align: center;
+    }
+    .pg-batch-count input[type="number"]:focus {
+      outline: 0;
+      border-color: var(--brand);
+    }
+
+    @media (max-width: 640px) {
+      .pg-strength-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      .pg-strength-label { min-width: 0; }
+      .pg-batch-row { font-size: .82rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="pg-heading">
+    <div class="section-title-bar">
+      <h2 id="pg-heading">Password Generator</h2>
+      <p class="section-sub">Create strong, cryptographically secure passwords in your browser.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Passwords are generated locally using the Web Crypto API — the same randomness
+        source browsers trust for encryption. Nothing is sent over the network, and no
+        password is ever stored or logged.
+      </p>
+
+      <form class="password-form" id="pgForm" novalidate onsubmit="return false;">
+
+        <!-- Presets -->
+        <div class="field-group" style="align-items:flex-start;">
+          <label>Preset</label>
+          <div class="pg-preset-row" id="pgPresets">
+            <button type="button" class="pg-preset" data-preset="easy">Easy to type</button>
+            <button type="button" class="pg-preset active" data-preset="strong">Strong</button>
+            <button type="button" class="pg-preset" data-preset="paranoid">Paranoid</button>
+            <button type="button" class="pg-preset" data-preset="pin">PIN digits</button>
+          </div>
+        </div>
+
+        <!-- Length -->
+        <div class="field-group">
+          <label for="pgLength">Length</label>
+          <input type="range" id="pgLengthRange" class="password-range" min="4" max="64" step="1" value="16" aria-label="Password length slider" />
+          <span class="range-value" id="pgLengthVal">16</span>
+        </div>
+
+        <!-- Character sets -->
+        <div class="field-group">
+          <label>Characters</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-label"><input type="checkbox" id="pgUpper" checked /> Uppercase (A-Z)</label>
+            <label class="checkbox-label"><input type="checkbox" id="pgLower" checked /> Lowercase (a-z)</label>
+            <label class="checkbox-label"><input type="checkbox" id="pgNumbers" checked /> Numbers (0-9)</label>
+            <label class="checkbox-label"><input type="checkbox" id="pgSymbols" checked /> Symbols (!@#$...)</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Options</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-label"><input type="checkbox" id="pgExcludeSimilar" /> Exclude look-alikes (l I 1 O 0 o)</label>
+            <label class="checkbox-label"><input type="checkbox" id="pgExcludeAmbiguous" /> Exclude ambiguous symbols ({}[]()/\'"`~,;:.<>)</label>
+            <label class="checkbox-label"><input type="checkbox" id="pgRequireEach" checked /> Require at least one from each set</label>
+          </div>
+        </div>
+
+        <div class="error-msg pg-error" id="pgError" role="alert"></div>
+
+        <!-- Display -->
+        <div class="field-group password-display-group">
+          <label for="pgOutput">Password</label>
+          <div class="password-display-wrapper">
+            <input type="text" id="pgOutput" class="password-display" readonly aria-label="Generated password" />
+            <button type="button" class="btn-copy" id="pgCopy">Copy</button>
+            <button type="button" class="btn-regenerate" id="pgRegen" aria-label="Regenerate password" title="Regenerate">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strength -->
+        <div class="field-group strength-group pg-strength-row">
+          <label class="pg-strength-label">Strength</label>
+          <div class="strength-meter">
+            <div class="strength-bar" id="pgStrengthBar"></div>
+          </div>
+          <span class="strength-text" id="pgStrengthText">—</span>
+        </div>
+
+        <div class="pg-entropy" id="pgEntropy"></div>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+          <button type="button" class="btn" id="pgGenerate">Generate Password</button>
+          <button type="button" class="btn btn-secondary" id="pgReset">Reset</button>
+        </div>
+
+        <!-- Batch -->
+        <div class="field-group" style="align-items:center;">
+          <label>Generate multiple</label>
+          <div class="pg-batch-count">
+            <input type="number" id="pgBatchCount" min="1" max="20" step="1" value="5" aria-label="Batch count" />
+            <button type="button" class="btn btn-secondary" id="pgBatchBtn" style="padding:8px 16px;font-size:.85rem;min-width:auto;">Create list</button>
+          </div>
+        </div>
+
+        <div class="pg-batch" id="pgBatchWrap" hidden>
+          <div class="pg-batch-header">
+            <span id="pgBatchTitle">Batch (0)</span>
+            <button type="button" class="pg-batch-copy" id="pgBatchCopyAll" style="padding:6px 14px;font-size:.75rem;">Copy all</button>
+          </div>
+          <div class="pg-batch-list open" id="pgBatchList"></div>
+        </div>
+
+      </form>
+
+      <div class="security-notice">
+        <span class="pg-badge" style="margin-right:8px;">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Local-only
+        </span>
+        <strong>Your password never leaves this page.</strong> Generated with
+        <code>crypto.getRandomValues()</code>. Close the tab and it is gone.
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How to choose a password</h3>
+        <p>
+          Length beats complexity. A 16-character password using all four character sets
+          has more than 100 bits of entropy — far beyond what brute-force attacks can
+          reach with current hardware. Adding a symbol or two to a short password does
+          not help nearly as much as making it longer.
+        </p>
+        <p>
+          Every password here is drawn from the browser's cryptographic random number
+          generator. Unlike <code>Math.random()</code>, this source is designed to be
+          unpredictable and is safe for security-sensitive values.
+        </p>
+        <p>
+          When the "require at least one from each set" option is on, the generator
+          guarantees coverage and then shuffles the result so the guaranteed characters
+          are not at predictable positions. Use a different password for every account,
+          and store them in a password manager.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form            = document.getElementById('pgForm');
+  var lengthRange     = document.getElementById('pgLengthRange');
+  var lengthVal       = document.getElementById('pgLengthVal');
+  var cbUpper         = document.getElementById('pgUpper');
+  var cbLower         = document.getElementById('pgLower');
+  var cbNumbers       = document.getElementById('pgNumbers');
+  var cbSymbols       = document.getElementById('pgSymbols');
+  var cbExcludeSim    = document.getElementById('pgExcludeSimilar');
+  var cbExcludeAmb    = document.getElementById('pgExcludeAmbiguous');
+  var cbRequireEach   = document.getElementById('pgRequireEach');
+  var errorBox        = document.getElementById('pgError');
+  var output          = document.getElementById('pgOutput');
+  var copyBtn         = document.getElementById('pgCopy');
+  var regenBtn        = document.getElementById('pgRegen');
+  var strengthBar     = document.getElementById('pgStrengthBar');
+  var strengthText    = document.getElementById('pgStrengthText');
+  var entropyBox      = document.getElementById('pgEntropy');
+  var generateBtn     = document.getElementById('pgGenerate');
+  var resetBtn        = document.getElementById('pgReset');
+
+  var batchCountInput = document.getElementById('pgBatchCount');
+  var batchBtn        = document.getElementById('pgBatchBtn');
+  var batchWrap       = document.getElementById('pgBatchWrap');
+  var batchTitle      = document.getElementById('pgBatchTitle');
+  var batchList       = document.getElementById('pgBatchList');
+  var batchCopyAll    = document.getElementById('pgBatchCopyAll');
+
+  var presetBtns      = document.querySelectorAll('.pg-preset');
+
+  // ---------- CHARACTER SETS ----------
+  var SETS = {
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    numbers: '0123456789',
+    symbols: '!@#$%^&*()-_=+[]{};:,.<>?/~'
+  };
+
+  var SIMILAR_CHARS   = 'lI1O0o';
+  var AMBIGUOUS_CHARS = '{}[]()/\\\'"`~,;:.<>';
+
+  // ---------- CRYPTO RANDOM ----------
+  // Uniform random int in [0, max) using rejection sampling — avoids modulo bias.
+  function secureRandomInt(max) {
+    if (max <= 0) return 0;
+    if (max === 1) return 0;
+
+    var cryptoObj = window.crypto || window.msCrypto;
+    if (!cryptoObj || !cryptoObj.getRandomValues) {
+      throw new Error('Secure random not available in this browser.');
+    }
+
+    // Smallest number of bytes needed
+    var bytesNeeded = Math.ceil(Math.log2(max) / 8) || 1;
+    var maxValid = Math.floor(256 / max) * max; // largest multiple of `max` that fits in 2^(8*bytesNeeded)
+    // For > 1 byte we use 16-bit reads to keep the range wide enough.
+    var bytes = new Uint8Array(bytesNeeded);
+    var limit = Math.pow(256, bytesNeeded);
+    var maxValidBig = Math.floor(limit / max) * max;
+
+    for (var attempt = 0; attempt < 1000; attempt++) {
+      cryptoObj.getRandomValues(bytes);
+      var v = 0;
+      for (var i = 0; i < bytesNeeded; i++) v = v * 256 + bytes[i];
+      if (v < maxValidBig) return v % max;
+    }
+
+    // Fallback — astronomically unlikely
+    cryptoObj.getRandomValues(bytes);
+    var v2 = 0;
+    for (var j = 0; j < bytesNeeded; j++) v2 = v2 * 256 + bytes[j];
+    return v2 % max;
+  }
+
+  // Fisher-Yates shuffle using secure random
+  function secureShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = secureRandomInt(i + 1);
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  // ---------- PASSWORD GENERATION ----------
+  function buildPoolAndRequired() {
+    var required = [];
+    var pools = [];
+
+    if (cbUpper.checked)   { pools.push(applyFilters(SETS.upper));   required.push('upper'); }
+    if (cbLower.checked)   { pools.push(applyFilters(SETS.lower));   required.push('lower'); }
+    if (cbNumbers.checked) { pools.push(applyFilters(SETS.numbers)); required.push('numbers'); }
+    if (cbSymbols.checked) { pools.push(applyFilters(SETS.symbols)); required.push('symbols'); }
+
+    // Remove empty pools (all chars filtered out)
+    var nonEmpty = [];
+    for (var i = 0; i < pools.length; i++) {
+      if (pools[i].length > 0) nonEmpty.push(pools[i]);
+    }
+
+    if (!nonEmpty.length) return null;
+
+    var combined = nonEmpty.join('');
+    return { combined: combined, pools: nonEmpty };
+  }
+
+  function applyFilters(chars) {
+    var out = chars;
+    if (cbExcludeSim.checked) {
+      out = filterOut(out, SIMILAR_CHARS);
+    }
+    if (cbExcludeAmb.checked) {
+      out = filterOut(out, AMBIGUOUS_CHARS);
+    }
+    return out;
+  }
+
+  function filterOut(str, removeSet) {
+    var result = '';
+    for (var i = 0; i < str.length; i++) {
+      if (removeSet.indexOf(str[i]) === -1) result += str[i];
+    }
+    return result;
+  }
+
+  function generateOne(length) {
+    var poolInfo = buildPoolAndRequired();
+    if (!poolInfo) return null;
+
+    var combined = poolInfo.combined;
+    var pools = poolInfo.pools;
+    var chars = [];
+
+    // Guarantee at least one from each non-empty set
+    if (cbRequireEach.checked && pools.length <= length) {
+      for (var p = 0; p < pools.length; p++) {
+        chars.push(pools[p][secureRandomInt(pools[p].length)]);
+      }
+    }
+
+    // Fill the rest from the combined pool
+    while (chars.length < length) {
+      chars.push(combined[secureRandomInt(combined.length)]);
+    }
+
+    // Shuffle to avoid predictable positions of guaranteed chars
+    secureShuffle(chars);
+    return chars.join('');
+  }
+
+  // ---------- STRENGTH ----------
+  function computeStrength(pw) {
+    if (!pw) return { score: 0, label: '—', color: 'transparent', bits: 0 };
+
+    // Estimate entropy from actual pool composition
+    var poolSize = 0;
+    if (/[A-Z]/.test(pw)) poolSize += 26;
+    if (/[a-z]/.test(pw)) poolSize += 26;
+    if (/[0-9]/.test(pw)) poolSize += 10;
+    if (/[^A-Za-z0-9]/.test(pw)) poolSize += 33;
+
+    var bits = Math.round(pw.length * Math.log2(poolSize || 1));
+
+    var score, label, color;
+    if (bits < 28)       { score = 1; label = 'Very weak'; color = '#e74c3c'; }
+    else if (bits < 40)  { score = 2; label = 'Weak';      color = '#e67e22'; }
+    else if (bits < 60)  { score = 3; label = 'Fair';      color = '#f1c40f'; }
+    else if (bits < 80)  { score = 4; label = 'Strong';    color = '#2ecc71'; }
+    else                 { score = 5; label = 'Very strong'; color = '#1a5c3a'; }
+
+    return {
+      score: score,
+      label: label,
+      color: color,
+      bits: bits,
+      pct: (score / 5) * 100
+    };
+  }
+
+  function renderStrength(pw) {
+    var s = computeStrength(pw);
+    strengthBar.style.width = s.pct + '%';
+    strengthBar.style.background = s.color;
+    strengthText.textContent = s.label;
+    strengthText.style.color = s.color;
+
+    if (s.bits > 0) {
+      entropyBox.innerHTML = 'Estimated entropy <strong>' + s.bits + ' bits</strong>';
+    } else {
+      entropyBox.textContent = '';
+    }
+  }
+
+  // ---------- ERROR ----------
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  // ---------- MAIN GENERATE ----------
+  function refreshOutput() {
+    clearError();
+    var length = parseInt(lengthRange.value, 10);
+    lengthVal.textContent = length;
+
+    if (!cbUpper.checked && !cbLower.checked && !cbNumbers.checked && !cbSymbols.checked) {
+      showError('Select at least one character set.');
+      output.value = '';
+      renderStrength('');
+      return;
+    }
+
+    var pw;
+    try {
+      pw = generateOne(length);
+    } catch (e) {
+      showError(e.message || 'Could not generate a secure password.');
+      output.value = '';
+      renderStrength('');
+      return;
+    }
+
+    if (!pw) {
+      showError('All characters in the selected sets were filtered out. Loosen the exclusions.');
+      output.value = '';
+      renderStrength('');
+      return;
+    }
+
+    output.value = pw;
+    renderStrength(pw);
+  }
+
+  // ---------- CLIPBOARD ----------
+  function copyText(text, btn, doneText, doneClass) {
+    var origText = btn.textContent;
+    var done = function () {
+      btn.textContent = doneText || 'Copied';
+      if (doneClass) btn.classList.add(doneClass);
+      setTimeout(function () {
+        btn.textContent = origText;
+        if (doneClass) btn.classList.remove(doneClass);
+      }, 1200);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- PRESETS ----------
+  function applyPreset(name) {
+    presetBtns.forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-preset') === name);
+    });
+
+    if (name === 'easy') {
+      lengthRange.value = 20;
+      cbUpper.checked = true;
+      cbLower.checked = true;
+      cbNumbers.checked = true;
+      cbSymbols.checked = false;
+      cbExcludeSim.checked = true;
+      cbExcludeAmb.checked = true;
+      cbRequireEach.checked = true;
+    } else if (name === 'strong') {
+      lengthRange.value = 16;
+      cbUpper.checked = true;
+      cbLower.checked = true;
+      cbNumbers.checked = true;
+      cbSymbols.checked = true;
+      cbExcludeSim.checked = false;
+      cbExcludeAmb.checked = false;
+      cbRequireEach.checked = true;
+    } else if (name === 'paranoid') {
+      lengthRange.value = 32;
+      cbUpper.checked = true;
+      cbLower.checked = true;
+      cbNumbers.checked = true;
+      cbSymbols.checked = true;
+      cbExcludeSim.checked = false;
+      cbExcludeAmb.checked = false;
+      cbRequireEach.checked = true;
+    } else if (name === 'pin') {
+      lengthRange.value = 6;
+      cbUpper.checked = false;
+      cbLower.checked = false;
+      cbNumbers.checked = true;
+      cbSymbols.checked = false;
+      cbExcludeSim.checked = false;
+      cbExcludeAmb.checked = false;
+      cbRequireEach.checked = false;
+    }
+
+    refreshOutput();
+  }
+
+  presetBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      applyPreset(b.getAttribute('data-preset'));
+    });
+  });
+
+  // ---------- BATCH ----------
+  function renderBatch() {
+    var count = Math.max(1, Math.min(20, parseInt(batchCountInput.value, 10) || 5));
+    batchCountInput.value = count;
+
+    var length = parseInt(lengthRange.value, 10);
+    var list = [];
+    for (var i = 0; i < count; i++) {
+      try {
+        var pw = generateOne(length);
+        if (pw) list.push(pw);
+      } catch (e) { /* skip */ }
+    }
+
+    if (!list.length) {
+      showError('Could not generate a batch. Check your character-set selection.');
+      batchWrap.hidden = true;
+      return;
+    }
+
+    batchList.innerHTML = '';
+    list.forEach(function (pw) {
+      var row = document.createElement('div');
+      row.className = 'pg-batch-row';
+
+      var span = document.createElement('span');
+      span.className = 'pg-batch-pw';
+      span.textContent = pw;
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pg-batch-copy';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        copyText(pw, btn, 'Copied', 'copied');
+      });
+
+      row.appendChild(span);
+      row.appendChild(btn);
+      batchList.appendChild(row);
+    });
+
+    batchTitle.textContent = 'Batch (' + list.length + ')';
+    batchWrap.hidden = false;
+    batchList.classList.add('open');
+  }
+
+  // ---------- EVENTS ----------
+  lengthRange.addEventListener('input', function () {
+    lengthVal.textContent = this.value;
+    refreshOutput();
+  });
+
+  [cbUpper, cbLower, cbNumbers, cbSymbols,
+   cbExcludeSim, cbExcludeAmb, cbRequireEach].forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      // Clear active preset when user customizes
+      presetBtns.forEach(function (b) { b.classList.remove('active'); });
+      refreshOutput();
+    });
+  });
+
+  generateBtn.addEventListener('click', refreshOutput);
+  regenBtn.addEventListener('click', refreshOutput);
+
+  copyBtn.addEventListener('click', function () {
+    if (!output.value) return;
+    copyText(output.value, copyBtn, 'Copied', 'copied');
+  });
+
+  resetBtn.addEventListener('click', function () {
+    clearError();
+    applyPreset('strong');
+    batchWrap.hidden = true;
+    batchList.innerHTML = '';
+    batchCountInput.value = 5;
+    output.focus();
+  });
+
+  batchBtn.addEventListener('click', function () {
+    clearError();
+    renderBatch();
+  });
+
+  batchCopyAll.addEventListener('click', function () {
+    var pwEls = batchList.querySelectorAll('.pg-batch-pw');
+    if (!pwEls.length) return;
+    var lines = [];
+    pwEls.forEach(function (el) { lines.push(el.textContent); });
+    copyText(lines.join('\n'), batchCopyAll, 'Copied', 'copied');
+  });
+
+  // ---------- INIT ----------
+  refreshOutput();
+
+})();
+</script>
+
+</body>
+</html>
