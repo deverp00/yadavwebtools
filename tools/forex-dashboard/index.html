@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Live forex candlestick charts and price cards for major currency pairs. Powered by TradingView. Free and private." />
+  <title>Forex Dashboard — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <!-- TradingView charting library (no API key required) -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
+
+  <style>
+    /* --- Forex Dashboard local styles --- */
+
+    /* Status bar */
+    .fx-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 14px;
+      padding: 10px 14px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .fx-status .fx-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #95a5a6;
+      flex-shrink: 0;
+    }
+    .fx-status.ok .fx-dot { background: #27ae60; }
+    .fx-status.error .fx-dot { background: #e74c3c; }
+    .fx-status.loading .fx-dot { background: #f39c12; animation: fxBlink 1s infinite; }
+    @keyframes fxBlink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    .fx-status strong { color: var(--brand); font-weight: 600; }
+
+    /* Controls */
+    .forex-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .pair-selector,
+    .timeframe-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .pair-selector .pair-btn,
+    .timeframe-selector .tf-btn {
+      padding: 7px 14px;
+      border: 1px solid var(--brand-line);
+      border-radius: 6px;
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .pair-selector .pair-btn:hover,
+    .timeframe-selector .tf-btn:hover {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+    }
+    .pair-selector .pair-btn.active,
+    .timeframe-selector .tf-btn.active {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    /* Refresh button */
+    .fx-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 1px solid var(--brand);
+      border-radius: 6px;
+      background: var(--brand);
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s var(--ease);
+    }
+    .fx-refresh:hover { background: var(--brand-hover); }
+    .fx-refresh svg {
+      width: 13px; height: 13px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .fx-refresh.spinning svg { animation: fxSpin .8s linear infinite; }
+    @keyframes fxSpin { to { transform: rotate(360deg); } }
+
+    /* Price cards grid */
+    .price-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .price-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+    .price-card::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--brand);
+      opacity: 0;
+      transition: opacity .2s var(--ease);
+    }
+    .price-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+    .price-card:hover::before { opacity: 1; }
+    .price-card.active {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .price-card.active::before { opacity: 1; }
+
+    .price-card .pair-name {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .price-card .pair-rate {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      display: block;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.01em;
+      line-height: 1.2;
+    }
+    .price-card .pair-change {
+      font-size: .78rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .price-card .pair-change.positive { color: #27ae60; }
+    .price-card .pair-change.negative { color: #e74c3c; }
+    .price-card .pair-change.neutral  { color: var(--text-muted); }
+    .price-card .pair-change svg {
+      width: 10px; height: 10px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .price-card .pair-updated {
+      font-size: .65rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 4px;
+      letter-spacing: .2px;
+    }
+
+    /* Chart wrapper */
+    .chart-wrapper {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px;
+      overflow: hidden;
+    }
+    .chart-wrapper #forexChart {
+      width: 100%;
+      height: 520px;
+    }
+
+    /* Loading overlay */
+    #chartLoadingOverlay {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s var(--ease);
+      z-index: 3;
+    }
+    #chartLoadingOverlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #chartLoadingOverlay .spinner {
+      width: 42px; height: 42px;
+      border: 4px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: fxSpin .8s linear infinite;
+    }
+    #chartLoadingOverlay .loading-label {
+      font-size: .85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Pair info strip */
+    .fx-pair-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px 16px;
+      padding: 12px 16px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+    .fx-pair-header .fx-pair-code {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--brand);
+      letter-spacing: -.02em;
+    }
+    .fx-pair-header .fx-pair-desc {
+      font-size: .85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .fx-pair-header .fx-pair-meta {
+      margin-left: auto;
+      font-size: .8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .fx-pair-header .fx-pair-meta svg {
+      width: 12px; height: 12px;
+      stroke: #27ae60; fill: none;
+      stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* Warning if TradingView fails */
+    .fx-fallback {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      background: rgba(243, 156, 18, .08);
+      border: 1px solid rgba(243, 156, 18, .35);
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      color: #8a5a00;
+      line-height: 1.55;
+    }
+    .dark-mode .fx-fallback {
+      background: rgba(243, 156, 18, .12);
+      color: #f0b90b;
+      border-color: rgba(243, 156, 18, .4);
+    }
+    .fx-fallback svg {
+      width: 18px; height: 18px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .fx-fallback strong { color: currentColor; }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .forex-controls { flex-direction: column; align-items: stretch; gap: 10px; }
+      .pair-selector, .timeframe-selector { justify-content: center; }
+      .pair-selector .pair-btn,
+      .timeframe-selector .tf-btn { padding: 6px 11px; font-size: .78rem; }
+      .price-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .price-card { padding: 10px 12px; }
+      .price-card .pair-rate { font-size: 1rem; }
+      .chart-wrapper { padding: 4px; }
+      .chart-wrapper #forexChart { height: 380px; }
+      .fx-pair-header { padding: 10px 12px; gap: 6px 12px; }
+      .fx-pair-header .fx-pair-code { font-size: 1.1rem; }
+      .fx-pair-header .fx-pair-meta { margin-left: 0; width: 100%; }
+    }
+    @media (max-width: 400px) {
+      .price-cards { grid-template-columns: 1fr; }
+      .chart-wrapper #forexChart { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="fx-heading">
+    <div class="section-title-bar">
+      <h2 id="fx-heading">Forex Dashboard</h2>
+      <p class="section-sub">Live candlestick charts and price cards for major currency pairs.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Pick a currency pair to view its live candlestick chart, or tap a price card to
+        switch the chart to that pair. Rates update automatically. Charts are provided by
+        TradingView — professional-grade data, no signup required.
+      </p>
+
+      <!-- ===== STATUS ===== -->
+      <div class="fx-status loading" id="fxStatus">
+        <span class="fx-dot"></span>
+        <span id="fxStatusText">Connecting to market data…</span>
+      </div>
+
+      <!-- ===== CONTROLS ===== -->
+      <div class="forex-controls">
+        <div class="pair-selector" id="pairSelector" role="tablist" aria-label="Currency pair">
+          <button type="button" class="pair-btn active" data-symbol="FX:EURUSD" data-pair="EUR/USD" data-desc="Euro / US Dollar" role="tab" aria-selected="true">EUR/USD</button>
+          <button type="button" class="pair-btn" data-symbol="FX:GBPUSD" data-pair="GBP/USD" data-desc="British Pound / US Dollar" role="tab" aria-selected="false">GBP/USD</button>
+          <button type="button" class="pair-btn" data-symbol="FX:USDJPY" data-pair="USD/JPY" data-desc="US Dollar / Japanese Yen" role="tab" aria-selected="false">USD/JPY</button>
+          <button type="button" class="pair-btn" data-symbol="FX:USDINR" data-pair="USD/INR" data-desc="US Dollar / Indian Rupee" role="tab" aria-selected="false">USD/INR</button>
+          <button type="button" class="pair-btn" data-symbol="FX:AUDUSD" data-pair="AUD/USD" data-desc="Australian Dollar / US Dollar" role="tab" aria-selected="false">AUD/USD</button>
+          <button type="button" class="pair-btn" data-symbol="FX:USDCAD" data-pair="USD/CAD" data-desc="US Dollar / Canadian Dollar" role="tab" aria-selected="false">USD/CAD</button>
+          <button type="button" class="pair-btn" data-symbol="FX:USDCHF" data-pair="USD/CHF" data-desc="US Dollar / Swiss Franc" role="tab" aria-selected="false">USD/CHF</button>
+          <button type="button" class="pair-btn" data-symbol="FX:NZDUSD" data-pair="NZD/USD" data-desc="New Zealand Dollar / US Dollar" role="tab" aria-selected="false">NZD/USD</button>
+        </div>
+
+        <div class="timeframe-selector" id="timeframeSelector" role="tablist" aria-label="Chart timeframe">
+          <button type="button" class="tf-btn" data-interval="1" data-label="1m" role="tab">1m</button>
+          <button type="button" class="tf-btn" data-interval="5" data-label="5m" role="tab">5m</button>
+          <button type="button" class="tf-btn" data-interval="15" data-label="15m" role="tab">15m</button>
+          <button type="button" class="tf-btn active" data-interval="60" data-label="1h" role="tab" aria-selected="true">1h</button>
+          <button type="button" class="tf-btn" data-interval="240" data-label="4h" role="tab">4h</button>
+          <button type="button" class="tf-btn" data-interval="D" data-label="1D" role="tab">1D</button>
+          <button type="button" class="tf-btn" data-interval="W" data-label="1W" role="tab">1W</button>
+        </div>
+      </div>
+
+      <!-- ===== PRICE CARDS ===== -->
+      <div class="price-cards" id="priceCards" aria-label="Live exchange rates">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- ===== PAIR HEADER ===== -->
+      <div class="fx-pair-header">
+        <span class="fx-pair-code" id="fxPairCode">EUR/USD</span>
+        <span class="fx-pair-desc" id="fxPairDesc">Euro / US Dollar</span>
+        <span class="fx-pair-meta">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          <span id="fxPairInterval">1h interval</span>
+          <button type="button" class="fx-refresh" id="fxRefresh" aria-label="Refresh rates">
+            <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </span>
+      </div>
+
+      <!-- ===== CHART ===== -->
+      <div class="chart-wrapper" id="chartWrapper">
+        <div id="forexChart"></div>
+        <div id="chartLoadingOverlay" class="show">
+          <div class="spinner"></div>
+          <div class="loading-label">Loading chart…</div>
+        </div>
+      </div>
+
+      <!-- ===== FALLBACK (shown if TradingView fails) ===== -->
+      <div id="fxFallback" style="display:none;margin-top:14px;">
+        <div class="fx-fallback">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>
+            <strong>Chart could not be loaded.</strong> TradingView may be blocked by
+            your network or browser extension. The price cards above are still live and
+            update independently.
+          </span>
+        </div>
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How to read a candlestick chart</h3>
+        <p>
+          Each candle on the chart represents one interval of time — one hour on the
+          1h timeframe, one day on the 1D timeframe, and so on. The thick part of the
+          candle (the body) shows the opening and closing price for that interval. The
+          thin lines above and below (the wicks or shadows) show the highest and lowest
+          prices reached during the same period.
+        </p>
+        <p>
+          A green candle means the price closed higher than it opened — buyers were in
+          control. A red candle means it closed lower — sellers were in control. Long
+          wicks signal that price moved far in one direction but was pushed back before
+          the interval ended, often a sign of rejection at that level.
+        </p>
+        <p>
+          The pair notation <strong>EUR/USD</strong> means "how many US dollars does one
+          euro buy?" A rising EUR/USD line means the euro is strengthening against the
+          dollar. For <strong>USD/JPY</strong>, the reverse — a rising line means the
+          dollar is strengthening against the yen. The first currency is always the base;
+          the second is the quote.
+        </p>
+        <p>
+          Forex markets are open 24 hours a day, five days a week, from Sunday evening
+          in New York to Friday evening. The most liquid hours are the London and New
+          York sessions overlapping, roughly 8:00 to 12:00 Eastern Time. Spreads are
+          narrowest and volatility is highest during those windows.
+        </p>
+        <p>
+          The price cards above show the mid-market rate — the midpoint between the buy
+          and sell price at the wholesale level. Your bank or broker will quote a
+          slightly worse rate plus fees. Use the dashboard for information, not as a
+          trading signal. Nothing here is financial advice.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var statusBox     = document.getElementById('fxStatus');
+  var statusText    = document.getElementById('fxStatusText');
+  var pairBtns      = document.querySelectorAll('.pair-btn');
+  var tfBtns        = document.querySelectorAll('.tf-btn');
+  var priceCards    = document.getElementById('priceCards');
+  var pairCode      = document.getElementById('fxPairCode');
+  var pairDesc      = document.getElementById('fxPairDesc');
+  var pairInterval  = document.getElementById('fxPairInterval');
+  var refreshBtn    = document.getElementById('fxRefresh');
+  var chartOverlay  = document.getElementById('chartLoadingOverlay');
+  var fxFallback    = document.getElementById('fxFallback');
+
+  // ---------- STATE ----------
+  var state = {
+    symbol: 'FX:EURUSD',
+    pair: 'EUR/USD',
+    description: 'Euro / US Dollar',
+    interval: '60',
+    intervalLabel: '1h',
+    chartWidget: null,
+    chartTimer: null,
+    tvReady: false
+  };
+
+  // ---------- PAIRS FOR PRICE CARDS ----------
+  // Cross rates computed from a USD base
+  var CARD_PAIRS = [
+    { code: 'EUR/USD', symbol: 'FX:EURUSD', type: 'inv', key: 'EUR', decimals: 4, desc: 'Euro / US Dollar' },
+    { code: 'GBP/USD', symbol: 'FX:GBPUSD', type: 'inv', key: 'GBP', decimals: 4, desc: 'British Pound / US Dollar' },
+    { code: 'USD/JPY', symbol: 'FX:USDJPY', type: 'dir', key: 'JPY', decimals: 2, desc: 'US Dollar / Japanese Yen' },
+    { code: 'USD/INR', symbol: 'FX:USDINR', type: 'dir', key: 'INR', decimals: 2, desc: 'US Dollar / Indian Rupee' },
+    { code: 'AUD/USD', symbol: 'FX:AUDUSD', type: 'inv', key: 'AUD', decimals: 4, desc: 'Australian Dollar / US Dollar' },
+    { code: 'USD/CAD', symbol: 'FX:USDCAD', type: 'dir', key: 'CAD', decimals: 4, desc: 'US Dollar / Canadian Dollar' },
+    { code: 'USD/CHF', symbol: 'FX:USDCHF', type: 'dir', key: 'CHF', decimals: 4, desc: 'US Dollar / Swiss Franc' },
+    { code: 'NZD/USD', symbol: 'FX:NZDUSD', type: 'inv', key: 'NZD', decimals: 4, desc: 'New Zealand Dollar / US Dollar' }
+  ];
+
+  // ---------- HELPERS ----------
+  function setStatus(msg, mode) {
+    statusText.textContent = msg;
+    statusBox.classList.remove('ok', 'error', 'loading');
+    if (mode) statusBox.classList.add(mode);
+  }
+
+  function formatRate(n, decimals) {
+    if (!isFinite(n)) return '—';
+    return n.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  function formatChange(n) {
+    if (!isFinite(n)) return '';
+    var sign = n > 0 ? '+' : '';
+    return sign + n.toFixed(3) + '%';
+  }
+
+  // ---------- PRICE CARDS ----------
+  function loadPriceCards() {
+    var url = 'https://open.er-api.com/v6/latest/USD';
+
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.rates) throw new Error('Bad response');
+
+        var rates = data.rates;
+        var updated = data.time_last_update_utc || new Date().toUTCString();
+
+        // Compare against yesterday's cached rates to compute change
+        var yesterday = loadYesterdayCache();
+        var todayISO = new Date().toISOString().slice(0, 10);
+
+        renderPriceCards(rates, yesterday, updated);
+
+        // Save today's rates for tomorrow
+        saveRatesCache(todayISO, rates);
+
+        setStatus('Live rates loaded · updated ' + formatTimestamp(updated), 'ok');
+      })
+      .catch(function () {
+        setStatus('Could not load live rates. Press Refresh to try again.', 'error');
+        // Show placeholder cards so layout stays intact
+        if (!priceCards.children.length) {
+          renderPlaceholderCards();
+        }
+      });
+  }
+
+  function renderPriceCards(rates, yesterday, updated) {
+    priceCards.innerHTML = '';
+
+    CARD_PAIRS.forEach(function (pair) {
+      var todayVal = getRateForPair(pair, rates);
+      var yesterdayVal = yesterday ? getRateForPair(pair, yesterday) : NaN;
+
+      var changePct = (isFinite(todayVal) && isFinite(yesterdayVal) && yesterdayVal !== 0)
+        ? ((todayVal - yesterdayVal) / yesterdayVal) * 100
+        : NaN;
+
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'price-card';
+      card.setAttribute('data-symbol', pair.symbol);
+      card.setAttribute('data-pair', pair.code);
+      card.setAttribute('data-desc', pair.desc);
+
+      var changeClass = 'neutral';
+      var changeIcon = '';
+      if (isFinite(changePct)) {
+        if (changePct > 0.001) {
+          changeClass = 'positive';
+          changeIcon = '<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>';
+        } else if (changePct < -0.001) {
+          changeClass = 'negative';
+          changeIcon = '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+        } else {
+          changeIcon = '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        }
+      }
+
+      var changeHTML = isFinite(changePct)
+        ? '<span class="pair-change ' + changeClass + '">' + changeIcon + formatChange(changePct) + '</span>'
+        : '<span class="pair-change neutral">live rate</span>';
+
+      card.innerHTML =
+        '<span class="pair-name">' + pair.code + '</span>' +
+        '<span class="pair-rate">' + formatRate(todayVal, pair.decimals) + '</span>' +
+        changeHTML +
+        '<span class="pair-updated">' + formatTimestamp(updated) + '</span>';
+
+      // Mark active if it matches the current chart symbol
+      if (pair.symbol === state.symbol) card.classList.add('active');
+
+      card.addEventListener('click', function () {
+        switchPair(pair.symbol, pair.code, pair.desc);
+      });
+
+      priceCards.appendChild(card);
+    });
+  }
+
+  function renderPlaceholderCards() {
+    priceCards.innerHTML = '';
+    CARD_PAIRS.forEach(function (pair) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'price-card';
+      card.setAttribute('data-symbol', pair.symbol);
+      card.innerHTML =
+        '<span class="pair-name">' + pair.code + '</span>' +
+        '<span class="pair-rate">—</span>' +
+        '<span class="pair-change neutral">unavailable</span>';
+      card.addEventListener('click', function () {
+        switchPair(pair.symbol, pair.code, pair.desc);
+      });
+      priceCards.appendChild(card);
+    });
+  }
+
+  function getRateForPair(pair, rates) {
+    var v = rates[pair.key];
+    if (!isFinite(v) || v === 0) return NaN;
+    if (pair.type === 'inv') return 1 / v;
+    return v;
+  }
+
+  function formatTimestamp(ts) {
+    try {
+      var d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      var diff = Math.round((Date.now() - d.getTime()) / 60000);
+      if (diff < 1) return 'just now';
+      if (diff < 60) return diff + ' min ago';
+      if (diff < 1440) return Math.round(diff / 60) + ' hr ago';
+      return d.toLocaleDateString();
+    } catch (e) { return ts; }
+  }
+
+  // ---------- YESTERDAY CACHE (localStorage) ----------
+  var CACHE_KEY = 'ywt-forex-cache';
+
+  function saveRatesCache(dateISO, rates) {
+    try {
+      var cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+      cache[dateISO] = rates;
+      // Keep only last 5 days
+      var keys = Object.keys(cache).sort();
+      while (keys.length > 5) {
+        var oldest = keys.shift();
+        delete cache[oldest];
+      }
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {}
+  }
+
+  function loadYesterdayCache() {
+    try {
+      var cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+      var today = new Date().toISOString().slice(0, 10);
+      var dates = Object.keys(cache).filter(function (d) { return d !== today; }).sort();
+      if (!dates.length) return null;
+      return cache[dates[dates.length - 1]];
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ---------- TRADINGVIEW CHART ----------
+  function waitForTV() {
+    return new Promise(function (resolve) {
+      if (window.TradingView && window.TradingView.widget) {
+        state.tvReady = true;
+        resolve(true);
+        return;
+      }
+      var tries = 0;
+      var timer = setInterval(function () {
+        tries++;
+        if (window.TradingView && window.TradingView.widget) {
+          clearInterval(timer);
+          state.tvReady = true;
+          resolve(true);
+        } else if (tries > 30) {
+          clearInterval(timer);
+          resolve(false);
+        }
+      }, 200);
+    });
+  }
+
+  function buildChart() {
+    if (!state.tvReady) return;
+
+    chartOverlay.classList.add('show');
+    fxFallback.style.display = 'none';
+
+    // Clear any existing widget
+    var container = document.getElementById('forexChart');
+    container.innerHTML = '';
+
+    // Determine theme
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var tvTheme = isDark ? 'dark' : 'light';
+
+    try {
+      state.chartWidget = new window.TradingView.widget({
+        autosize: true,
+        symbol: state.symbol,
+        interval: state.interval,
+        timezone: 'Etc/UTC',
+        theme: tvTheme,
+        style: '1',
+        locale: 'en',
+        toolbar_bg: isDark ? '#17201b' : '#ffffff',
+        enable_publishing: false,
+        allow_symbol_change: true,
+        hide_side_toolbar: false,
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: true,
+        withdateranges: true,
+        details: false,
+        container_id: 'forexChart'
+      });
+
+      // The widget doesn't expose a ready event reliably; hide overlay after a delay
+      clearTimeout(state.chartTimer);
+      state.chartTimer = setTimeout(function () {
+        chartOverlay.classList.remove('show');
+      }, 1400);
+
+    } catch (e) {
+      chartOverlay.classList.remove('show');
+      fxFallback.style.display = 'block';
+      setStatus('Chart failed to load. Price cards still update live.', 'error');
+    }
+  }
+
+  // ---------- PAIR / TIMEFRAME SWITCHES ----------
+  function switchPair(symbol, code, desc) {
+    state.symbol = symbol;
+    state.pair = code;
+    state.description = desc;
+
+    // Update header
+    pairCode.textContent = code;
+    pairDesc.textContent = desc;
+
+    // Update active states
+    pairBtns.forEach(function (b) {
+      var isActive = b.getAttribute('data-symbol') === symbol;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    // Also update price card active states
+    Array.prototype.forEach.call(priceCards.children, function (c) {
+      c.classList.toggle('active', c.getAttribute('data-symbol') === symbol);
+    });
+
+    // Rebuild chart
+    buildChart();
+    setStatus('Showing ' + code + ' · ' + state.intervalLabel + ' interval', 'ok');
+  }
+
+  function switchTimeframe(interval, label) {
+    state.interval = interval;
+    state.intervalLabel = label;
+    pairInterval.textContent = label + ' interval';
+
+    tfBtns.forEach(function (b) {
+      var isActive = b.getAttribute('data-interval') === interval;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    buildChart();
+    setStatus('Showing ' + state.pair + ' · ' + label + ' interval', 'ok');
+  }
+
+  // ---------- EVENT WIRING ----------
+  pairBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      switchPair(
+        btn.getAttribute('data-symbol'),
+        btn.getAttribute('data-pair'),
+        btn.getAttribute('data-desc')
+      );
+    });
+  });
+
+  tfBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      switchTimeframe(
+        btn.getAttribute('data-interval'),
+        btn.getAttribute('data-label')
+      );
+    });
+  });
+
+  refreshBtn.addEventListener('click', function () {
+    refreshBtn.classList.add('spinning');
+    setStatus('Refreshing…', 'loading');
+    loadPriceCards();
+    buildChart();
+    setTimeout(function () {
+      refreshBtn.classList.remove('spinning');
+    }, 1200);
+  });
+
+  // ---------- THEME CHANGE → rebuild chart ----------
+  var themeObserver = new MutationObserver(function () {
+    // Rebuild the chart so its theme matches the page
+    if (state.tvReady) buildChart();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+  // ---------- AUTO REFRESH PRICE CARDS EVERY 5 MIN ----------
+  setInterval(function () {
+    loadPriceCards();
+  }, 5 * 60 * 1000);
+
+  // ---------- INIT ----------
+  setStatus('Connecting to market data…', 'loading');
+  loadPriceCards();
+
+  waitForTV().then(function (ok) {
+    if (!ok) {
+      chartOverlay.classList.remove('show');
+      fxFallback.style.display = 'block';
+      setStatus('Chart library unavailable. Price cards still update live.', 'error');
+      return;
+    }
+    buildChart();
+  });
+
+})();
+</script>
+
+</body>
+</html>
