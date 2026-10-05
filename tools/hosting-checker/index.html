@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Check domain DNS records, IP addresses, hosting provider, and server location. Free, no signup." />
+  <title>Hosting Checker — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Hosting Checker local styles --- */
+
+    /* Search row */
+    .hc-search {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .hc-input-wrap {
+      position: relative;
+      flex: 1 1 260px;
+      min-width: 200px;
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+    }
+    .hc-input-wrap:focus-within {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26, 92, 58, .12);
+    }
+    .hc-input-wrap .hc-prefix {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: var(--text-muted);
+    }
+    .hc-input-wrap .hc-prefix svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .hc-input-wrap input {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 12px 14px 12px 0;
+      font-size: 1rem;
+      color: var(--text);
+      font-family: inherit;
+      outline: 0;
+      min-width: 0;
+    }
+    .hc-input-wrap input::placeholder { color: var(--text-muted); }
+    .hc-input-wrap .hc-clear-input {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px 12px;
+      display: none;
+      font-size: 1.1rem;
+      line-height: 1;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      transition: color .2s var(--ease);
+    }
+    .hc-input-wrap .hc-clear-input.show { display: block; }
+    .hc-input-wrap .hc-clear-input:hover { color: #e74c3c; }
+
+    .hc-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .hc-actions .btn {
+      padding: 12px 22px;
+      min-width: 120px;
+    }
+
+    /* Status bar */
+    .hc-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 14px;
+      padding: 10px 14px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+    .hc-status .hc-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #95a5a6;
+      flex-shrink: 0;
+    }
+    .hc-status.ok .hc-dot { background: #27ae60; }
+    .hc-status.error .hc-dot { background: #e74c3c; }
+    .hc-status.loading .hc-dot { background: #f39c12; animation: hcBlink 1s infinite; }
+    @keyframes hcBlink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    .hc-status strong { color: var(--brand); font-weight: 600; }
+
+    /* Summary card (hero result) */
+    .hc-summary {
+      margin-top: 20px;
+      padding: 20px 22px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius);
+      display: none;
+    }
+    .hc-summary.show { display: block; animation: hcFade .35s var(--ease-out); }
+    @keyframes hcFade {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hc-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .hc-summary-item {
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .hc-summary-label {
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .hc-summary-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.3;
+    }
+    .hc-summary-value.highlight { color: var(--brand); }
+    .hc-summary-value.small { font-size: .88rem; font-weight: 600; }
+    .hc-summary-note {
+      font-size: .82rem;
+      color: var(--text-muted);
+      padding-top: 12px;
+      border-top: 1px solid var(--brand-line);
+      line-height: 1.6;
+    }
+    .hc-summary-note strong { color: var(--brand); }
+
+    /* Section cards for records */
+    .hc-section {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .hc-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+      transition: background .2s var(--ease);
+    }
+    .hc-section-header:hover { background: var(--brand-soft-2); }
+    .hc-section-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hc-section-title svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .hc-section-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 1px solid var(--brand-line);
+      color: var(--brand);
+      font-size: .7rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .hc-section-toggle {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .hc-section-header[aria-expanded="true"] .hc-section-toggle { transform: rotate(180deg); }
+
+    .hc-section-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .45s var(--ease-out);
+    }
+    .hc-section-body.open { max-height: 3000px; }
+
+    /* Record rows */
+    .hc-record {
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      font-size: .86rem;
+      transition: background .15s var(--ease);
+    }
+    .hc-record:first-child { border-top: 0; }
+    .hc-record:hover { background: var(--brand-soft); }
+    .hc-record-type {
+      font-weight: 700;
+      font-size: .7rem;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .hc-record-value {
+      color: var(--text);
+      word-break: break-all;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      letter-spacing: .2px;
+      overflow-wrap: anywhere;
+    }
+    .hc-record-ttl {
+      font-size: .7rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .hc-record-copy {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-family: inherit;
+    }
+    .hc-record-copy:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--bg-card);
+    }
+    .hc-record-copy.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    /* IP detail card (with geolocation) */
+    .hc-ip-detail {
+      padding: 14px 16px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin: 0 16px 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px 18px;
+    }
+    .hc-ip-detail:first-child { margin-top: 14px; }
+    .hc-ip-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hc-ip-field-label {
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .hc-ip-field-value {
+      font-size: .86rem;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .hc-ip-field-value.mono {
+      font-family: 'Courier New', monospace;
+      color: var(--brand);
+      font-weight: 700;
+    }
+    .hc-ip-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hc-ip-flag .hc-flag {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    /* Empty state */
+    .hc-empty {
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .9rem;
+      line-height: 1.7;
+    }
+    .hc-empty svg {
+      width: 44px; height: 44px;
+      stroke: var(--text-muted); fill: none;
+      stroke-width: 1.5; margin: 0 auto 12px;
+      display: block; opacity: .6;
+    }
+
+    /* Loading spinner in section */
+    .hc-loading-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      color: var(--text-muted);
+      font-size: .85rem;
+    }
+    .hc-loading-row .hc-mini-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: hcSpin .8s linear infinite;
+    }
+    @keyframes hcSpin { to { transform: rotate(360deg); } }
+
+    /* Quick examples */
+    .hc-examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .hc-example {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-family: 'Courier New', monospace;
+    }
+    .hc-example:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    /* Spin on the button while loading */
+    .hc-actions .btn .btn-spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: hcSpin .7s linear infinite;
+    }
+    .hc-actions .btn.loading .btn-spinner { display: inline-block; }
+    .hc-actions .btn.loading .btn-label { opacity: .75; }
+
+    @media (max-width: 640px) {
+      .hc-actions { width: 100%; }
+      .hc-actions .btn { flex: 1 1 100%; min-width: 0; }
+      .hc-record {
+        grid-template-columns: 1fr auto;
+        gap: 6px 10px;
+      }
+      .hc-record-type { grid-column: 1 / -1; font-size: .65rem; }
+      .hc-record-value { font-size: .78rem; }
+      .hc-record-ttl { display: none; }
+      .hc-ip-detail { margin: 0 10px 12px; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="hc-heading">
+    <div class="section-title-bar">
+      <h2 id="hc-heading">Hosting Checker</h2>
+      <p class="section-sub">Look up DNS records, IP addresses, hosting provider, and server location for any domain.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter a domain name to see its A, AAAA, NS, MX, TXT, and CNAME records, the IP
+        addresses it resolves to, and where those servers are hosted. Queries go directly
+        from your browser to public DNS resolvers — no tracking, no logs.
+      </p>
+
+      <form class="pdf-merger-form" id="hcForm" novalidate onsubmit="return false;">
+
+        <div class="hc-search">
+          <div class="hc-input-wrap">
+            <span class="hc-prefix">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </span>
+            <input
+              type="text"
+              id="hcDomain"
+              placeholder="example.com or https://example.com"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Domain or URL"
+            />
+            <button type="button" class="hc-clear-input" id="hcClearInput" aria-label="Clear">×</button>
+          </div>
+
+          <div class="hc-actions">
+            <button type="button" class="btn" id="hcCheckBtn">
+              <span class="btn-spinner"></span>
+              <span class="btn-label">Check domain</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hc-examples">
+          <button type="button" class="hc-example" data-domain="google.com">google.com</button>
+          <button type="button" class="hc-example" data-domain="cloudflare.com">cloudflare.com</button>
+          <button type="button" class="hc-example" data-domain="github.com">github.com</button>
+          <button type="button" class="hc-example" data-domain="yadavwebtools.com">yadavwebtools.com</button>
+        </div>
+
+        <!-- Status -->
+        <div class="hc-status" id="hcStatus" style="display:none;">
+          <span class="hc-dot"></span>
+          <span id="hcStatusText">Ready.</span>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="hcError" role="alert"></div>
+
+        <!-- Empty state -->
+        <div class="hc-empty" id="hcEmpty">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Enter a domain above to begin. Results will appear here.
+        </div>
+
+        <!-- ===== RESULTS ===== -->
+        <div id="hcResults" style="display:none;">
+
+          <!-- Summary -->
+          <div class="hc-summary" id="hcSummary">
+            <div class="hc-summary-grid" id="hcSummaryGrid"></div>
+            <div class="hc-summary-note" id="hcSummaryNote"></div>
+          </div>
+
+          <!-- IP details with geolocation -->
+          <div class="hc-section" id="hcIpSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcIpBody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-10 10c0 5.5 10 10 10 10s10-4.5 10-10A10 10 0 0 0 12 2z"/><circle cx="12" cy="10" r="3"/><path d="M12 22v-2"/></svg>
+                Server Location
+                <span class="hc-section-count" id="hcIpCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcIpBody"></div>
+          </div>
+
+          <!-- A records -->
+          <div class="hc-section" id="hcASection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcABody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="6" rx="1"/><rect x="2" y="14" width="20" height="6" rx="1"/><circle cx="6" cy="7" r="1"/><circle cx="6" cy="17" r="1"/></svg>
+                A Records (IPv4)
+                <span class="hc-section-count" id="hcACount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcABody"></div>
+          </div>
+
+          <!-- AAAA records -->
+          <div class="hc-section" id="hcAaaaSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcAaaaBody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="6" rx="1"/><rect x="2" y="14" width="20" height="6" rx="1"/><circle cx="6" cy="7" r="1"/><circle cx="6" cy="17" r="1"/></svg>
+                AAAA Records (IPv6)
+                <span class="hc-section-count" id="hcAaaaCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcAaaaBody"></div>
+          </div>
+
+          <!-- NS records -->
+          <div class="hc-section" id="hcNsSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcNsBody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Name Servers (NS)
+                <span class="hc-section-count" id="hcNsCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcNsBody"></div>
+          </div>
+
+          <!-- MX records -->
+          <div class="hc-section" id="hcMxSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcMxBody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>
+                Mail Servers (MX)
+                <span class="hc-section-count" id="hcMxCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcMxBody"></div>
+          </div>
+
+          <!-- TXT records -->
+          <div class="hc-section" id="hcTxtSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcTxtBody" aria-expanded="false" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h16v3"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                TXT Records
+                <span class="hc-section-count" id="hcTxtCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body" id="hcTxtBody"></div>
+          </div>
+
+          <!-- CNAME records -->
+          <div class="hc-section" id="hcCnameSection" style="display:none;">
+            <div class="hc-section-header" data-toggle="hcCnameBody" aria-expanded="true" role="button" tabindex="0">
+              <span class="hc-section-title">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                CNAME
+                <span class="hc-section-count" id="hcCnameCount">0</span>
+              </span>
+              <svg class="hc-section-toggle" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="hc-section-body open" id="hcCnameBody"></div>
+          </div>
+
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How to read the results</h3>
+        <p>
+          <strong>A records</strong> map a domain to IPv4 addresses — the numeric
+          locations where the website is served from. If you see multiple A records, the
+          site is distributed across several servers (often a CDN like Cloudflare or
+          CloudFront). <strong>AAAA records</strong> do the same thing for IPv6.
+        </p>
+        <p>
+          <strong>NS records</strong> list the authoritative name servers for the domain —
+          the systems that answer "where does this domain point?" for the rest of the
+          internet. The provider listed here is often your DNS host (Cloudflare, Route 53,
+          Google Domains, Namecheap, etc.), which is not necessarily the same company as
+          your web host.
+        </p>
+        <p>
+          <strong>MX records</strong> handle email delivery. If a domain has no MX
+          records, it cannot receive email. Each record has a priority — lower numbers
+          are preferred. <strong>TXT records</strong> store free-form data: SPF and DKIM
+          records used to prove email authenticity, domain verification strings for
+          Google Workspace and Microsoft 365, and various other metadata.
+        </p>
+        <p>
+          <strong>CNAME records</strong> alias one domain to another. They are common for
+          CDNs and for hostnames that should point to the same place — for example,
+          <code>www.example.com</code> may CNAME to <code>example.com</code>, or an app
+          subdomain may CNAME to a provider's load balancer.
+        </p>
+        <p>
+          The server location panel shows the geolocation of each IP address, the ISP
+          that owns it, and its autonomous system number (ASN). This is the physical
+          location where the server actually sits — often not where the company is
+          headquartered, and often not where you are. CDN-hosted sites may show servers
+          that respond from many regions around the world.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form         = document.getElementById('hcForm');
+  var domainIn     = document.getElementById('hcDomain');
+  var clearInput   = document.getElementById('hcClearInput');
+  var checkBtn     = document.getElementById('hcCheckBtn');
+  var exampleBtns  = document.querySelectorAll('.hc-example');
+
+  var statusBox    = document.getElementById('hcStatus');
+  var statusText   = document.getElementById('hcStatusText');
+  var errorBox     = document.getElementById('hcError');
+  var emptyState   = document.getElementById('hcEmpty');
+  var results      = document.getElementById('hcResults');
+
+  var summary      = document.getElementById('hcSummary');
+  var summaryGrid  = document.getElementById('hcSummaryGrid');
+  var summaryNote  = document.getElementById('hcSummaryNote');
+
+  var ipSection    = document.getElementById('hcIpSection');
+  var ipBody       = document.getElementById('hcIpBody');
+  var ipCount      = document.getElementById('hcIpCount');
+
+  var aSection     = document.getElementById('hcASection');
+  var aBody        = document.getElementById('hcABody');
+  var aCount       = document.getElementById('hcACount');
+
+  var aaaaSection  = document.getElementById('hcAaaaSection');
+  var aaaaBody     = document.getElementById('hcAaaaBody');
+  var aaaaCount    = document.getElementById('hcAaaaCount');
+
+  var nsSection    = document.getElementById('hcNsSection');
+  var nsBody       = document.getElementById('hcNsBody');
+  var nsCount      = document.getElementById('hcNsCount');
+
+  var mxSection    = document.getElementById('hcMxSection');
+  var mxBody       = document.getElementById('hcMxBody');
+  var mxCount      = document.getElementById('hcMxCount');
+
+  var txtSection   = document.getElementById('hcTxtSection');
+  var txtBody      = document.getElementById('hcTxtBody');
+  var txtCount     = document.getElementById('hcTxtCount');
+
+  var cnameSection = document.getElementById('hcCnameSection');
+  var cnameBody    = document.getElementById('hcCnameBody');
+  var cnameCount   = document.getElementById('hcCnameCount');
+
+  // ---------- STATE ----------
+  var state = {
+    domain: '',
+    geoCache: {}
+  };
+
+  // DNS record type codes → names
+  var TYPE = {
+    1: 'A', 2: 'NS', 5: 'CNAME', 6: 'SOA', 12: 'PTR',
+    15: 'MX', 16: 'TXT', 28: 'AAAA', 33: 'SRV', 257: 'CAA'
+  };
+
+  // ---------- HELPERS ----------
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function setStatus(msg, mode) {
+    statusText.textContent = msg;
+    statusBox.style.display = 'flex';
+    statusBox.classList.remove('ok', 'error', 'loading');
+    if (mode) statusBox.classList.add(mode);
+  }
+
+  function hideStatus() {
+    statusBox.style.display = 'none';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  // ---------- DOMAIN PARSING ----------
+  function parseDomain(input) {
+    var raw = String(input || '').trim();
+    if (!raw) return null;
+
+    // Strip protocol
+    raw = raw.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, '');
+    // Strip path / query / fragment
+    raw = raw.split('/')[0].split('?')[0].split('#')[0];
+    // Strip port
+    raw = raw.split(':')[0];
+    // Lowercase, strip leading/trailing dots
+    raw = raw.toLowerCase().replace(/^\.+|\.+$/g, '');
+
+    if (!raw) return null;
+
+    // Basic domain shape validation
+    // Allow letters, digits, hyphens, and dots — must have at least one dot
+    if (!/^[a-z0-9.-]+$/.test(raw)) return null;
+    if (raw.indexOf('.') === -1) return null;
+    if (raw.length > 253) return null;
+
+    var labels = raw.split('.');
+    if (labels.some(function (l) { return l.length === 0 || l.length > 63; })) return null;
+    if (labels.some(function (l) { return !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(l); })) return null;
+
+    return raw;
+  }
+
+  // ---------- DNS QUERY ----------
+  // Uses Google's public DNS-over-HTTPS endpoint.
+  // Returns a promise resolving to { Status, Answer: [...], Authority: [...] }
+  function queryDNS(name, type) {
+    var url = 'https://dns.google/resolve?name=' + encodeURIComponent(name) + '&type=' + encodeURIComponent(type);
+
+    return fetch(url, {
+      headers: { 'Accept': 'application/dns-json' },
+      cache: 'no-store'
+    }).then(function (r) {
+      if (!r.ok) throw new Error('DNS query failed: HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  // ---------- IP GEOLOCATION ----------
+  // ipwho.is is free, no key, CORS-enabled.
+  function lookupIP(ip) {
+    if (state.geoCache[ip]) return Promise.resolve(state.geoCache[ip]);
+
+    var url = 'https://ipwho.is/' + encodeURIComponent(ip);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Geo lookup failed');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || data.success === false) throw new Error('Geo lookup failed');
+        state.geoCache[ip] = data;
+        return data;
+      })
+      .catch(function () {
+        // Return a safe placeholder so the UI can continue
+        var placeholder = { ip: ip, success: false };
+        state.geoCache[ip] = placeholder;
+        return placeholder;
+      });
+  }
+
+  // ---------- RENDER RECORDS ----------
+  function renderRecords(body, records, typeLabel) {
+    body.innerHTML = '';
+
+    if (!records || !records.length) {
+      var empty = document.createElement('div');
+      empty.style.cssText = 'padding:14px 16px;color:var(--text-muted);font-size:.85rem;';
+      empty.textContent = 'No ' + typeLabel + ' records found.';
+      body.appendChild(empty);
+      return;
+    }
+
+    records.forEach(function (rec) {
+      var value = rec.data;
+      // Strip trailing dot from names for readability
+      if (typeof value === 'string' && value.endsWith('.')) value = value.slice(0, -1);
+
+      var row = document.createElement('div');
+      row.className = 'hc-record';
+
+      var displayValue = value;
+      // For MX, data is like "10 mail.example.com."
+      if (rec.type === 15 && typeof value === 'string') {
+        var parts = value.split(/\s+/);
+        if (parts.length === 2) {
+          var host = parts[1].endsWith('.') ? parts[1].slice(0, -1) : parts[1];
+          displayValue = host + ' (priority ' + parts[0] + ')';
+        }
+      }
+
+      row.innerHTML =
+        '<span class="hc-record-type">' + (TYPE[rec.type] || '') + '</span>' +
+        '<span class="hc-record-value">' + escapeHtml(displayValue) + '</span>' +
+        '<span class="hc-record-ttl">TTL ' + rec.TTL + 's</span>' +
+        '<button type="button" class="hc-record-copy" data-copy="' + escapeHtml(value) + '">Copy</button>';
+
+      row.querySelector('.hc-record-copy').addEventListener('click', function () {
+        copyText(value, this, 'Copied');
+      });
+
+      body.appendChild(row);
+    });
+  }
+
+  // ---------- RENDER IP DETAILS ----------
+  function renderIPDetails(ips) {
+    ipBody.innerHTML = '';
+    ipCount.textContent = ips.length;
+
+    if (!ips.length) {
+      var empty = document.createElement('div');
+      empty.style.cssText = 'padding:14px 16px;color:var(--text-muted);font-size:.85rem;';
+      empty.textContent = 'No IP addresses found for this domain.';
+      ipBody.appendChild(empty);
+      return;
+    }
+
+    ips.forEach(function (ip) {
+      var wrap = document.createElement('div');
+      wrap.className = 'hc-ip-detail';
+      wrap.innerHTML =
+        '<div class="hc-ip-field"><span class="hc-ip-field-label">IP Address</span>' +
+        '<span class="hc-ip-field-value mono">' + escapeHtml(ip) + '</span></div>' +
+        '<div class="hc-ip-field"><span class="hc-ip-field-label">Location</span>' +
+        '<span class="hc-ip-field-value" data-field="location">Loading…</span></div>' +
+        '<div class="hc-ip-field"><span class="hc-ip-field-label">ISP / Provider</span>' +
+        '<span class="hc-ip-field-value" data-field="isp">Loading…</span></div>' +
+        '<div class="hc-ip-field"><span class="hc-ip-field-label">ASN</span>' +
+        '<span class="hc-ip-field-value" data-field="asn">Loading…</span></div>' +
+        '<div class="hc-ip-field"><span class="hc-ip-field-label">Timezone</span>' +
+        '<span class="hc-ip-field-value" data-field="timezone">Loading…</span></div>';
+      ipBody.appendChild(wrap);
+
+      lookupIP(ip).then(function (data) {
+        var locationEl = wrap.querySelector('[data-field="location"]');
+        var ispEl = wrap.querySelector('[data-field="isp"]');
+        var asnEl = wrap.querySelector('[data-field="asn"]');
+        var tzEl = wrap.querySelector('[data-field="timezone"]');
+
+        if (!data || data.success === false) {
+          locationEl.textContent = 'Unavailable';
+          ispEl.textContent = 'Unavailable';
+          asnEl.textContent = '—';
+          tzEl.textContent = '—';
+          return;
+        }
+
+        var locationParts = [];
+        if (data.city) locationParts.push(data.city);
+        if (data.region) locationParts.push(data.region);
+        if (data.country) locationParts.push(data.country);
+
+        var flagEmoji = '';
+        if (data.country_code) {
+          // Convert country code to flag emoji using regional indicators
+          var code = data.country_code.toUpperCase();
+          if (/^[A-Z]{2}$/.test(code)) {
+            flagEmoji = String.fromCodePoint(
+              0x1F1E6 + code.charCodeAt(0) - 65,
+              0x1F1E6 + code.charCodeAt(1) - 65
+            );
+          }
+        }
+
+        locationEl.innerHTML = flagEmoji
+          ? '<span class="hc-ip-flag"><span class="hc-flag">' + flagEmoji + '</span>' + escapeHtml(locationParts.join(', ') || 'Unknown') + '</span>'
+          : escapeHtml(locationParts.join(', ') || 'Unknown');
+
+        var conn = data.connection || {};
+        ispEl.textContent = conn.isp || conn.org || 'Unknown';
+        asnEl.textContent = conn.asn ? ('AS' + conn.asn) : '—';
+        tzEl.textContent = (data.timezone && data.timezone.id) ? data.timezone.id : '—';
+      });
+    });
+  }
+
+  // ---------- RENDER SUMMARY ----------
+  function renderSummary(domain, aRecords, nsRecords, ipDetails) {
+    summaryGrid.innerHTML = '';
+    summary.classList.add('show');
+
+    var primaryIP = aRecords.length ? aRecords[0].data : '—';
+
+    // Find the first successful geolocation for the "Provider" field
+    var provider = '—';
+    var location = '—';
+    var firstGeo = null;
+    for (var i = 0; i < ipDetails.length; i++) {
+      if (ipDetails[i] && ipDetails[i].success !== false) {
+        firstGeo = ipDetails[i];
+        break;
+      }
+    }
+    if (firstGeo) {
+      var conn = firstGeo.connection || {};
+      provider = conn.isp || conn.org || '—';
+      var locParts = [];
+      if (firstGeo.city) locParts.push(firstGeo.city);
+      if (firstGeo.country) locParts.push(firstGeo.country);
+      location = locParts.join(', ') || '—';
+    }
+
+    // Primary nameserver
+    var primaryNS = nsRecords.length ? nsRecords[0].data : '—';
+    if (typeof primaryNS === 'string' && primaryNS.endsWith('.')) {
+      primaryNS = primaryNS.slice(0, -1);
+    }
+
+    var items = [
+      { label: 'Domain', value: domain, highlight: true },
+      { label: 'Primary IP', value: primaryIP },
+      { label: 'Hosting Provider', value: provider },
+      { label: 'Server Location', value: location },
+      { label: 'Nameserver', value: primaryNS, small: true }
+    ];
+
+    items.forEach(function (item) {
+      var el = document.createElement('div');
+      el.className = 'hc-summary-item';
+      el.innerHTML =
+        '<span class="hc-summary-label">' + escapeHtml(item.label) + '</span>' +
+        '<span class="hc-summary-value' +
+          (item.highlight ? ' highlight' : '') +
+          (item.small ? ' small' : '') + '">' +
+          escapeHtml(item.value) + '</span>';
+      summaryGrid.appendChild(el);
+    });
+
+    // Note
+    var totalIPs = aRecords.length + (ipDetails.length - aRecords.length);
+    summaryNote.innerHTML =
+      'This domain resolves to <strong>' + aRecords.length + '</strong> IPv4 address' +
+      (aRecords.length === 1 ? '' : 'es') + '. ' +
+      'Results are drawn from public DNS and geolocation services and may not reflect ' +
+      'every server behind a load balancer or CDN.';
+  }
+
+  // ---------- COPY ----------
+  function copyText(text, btn, label) {
+    var original = btn.textContent;
+    var done = function () {
+      btn.textContent = label || 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1200);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- LOOKUP ----------
+  function lookup(domain) {
+    clearError();
+    results.style.display = 'none';
+    emptyState.style.display = 'none';
+    setStatus('Querying DNS records for ' + domain + '…', 'loading');
+    setBusy(checkBtn, true);
+
+    // Reset section visibility
+    [ipSection, aSection, aaaaSection, nsSection, mxSection, txtSection, cnameSection].forEach(function (s) {
+      s.style.display = 'none';
+    });
+    summary.classList.remove('show');
+
+    // Query all record types in parallel
+    var queries = {
+      a:     queryDNS(domain, 'A'),
+      aaaa:  queryDNS(domain, 'AAAA'),
+      ns:    queryDNS(domain, 'NS'),
+      mx:    queryDNS(domain, 'MX'),
+      txt:   queryDNS(domain, 'TXT'),
+      cname: queryDNS(domain, 'CNAME')
+    };
+
+    Promise.all([
+      queries.a.catch(function () { return { Status: -1, Answer: [] }; }),
+      queries.aaaa.catch(function () { return { Status: -1, Answer: [] }; }),
+      queries.ns.catch(function () { return { Status: -1, Answer: [] }; }),
+      queries.mx.catch(function () { return { Status: -1, Answer: [] }; }),
+      queries.txt.catch(function () { return { Status: -1, Answer: [] }; }),
+      queries.cname.catch(function () { return { Status: -1, Answer: [] }; })
+    ]).then(function (results) {
+      var aRes = results[0], aaaaRes = results[1], nsRes = results[2];
+      var mxRes = results[3], txtRes = results[4], cnameRes = results[5];
+
+      // If A returned NXDOMAIN (status 3), the domain likely doesn't exist
+      if (aRes.Status === 3 && nsRes.Status === 3 && mxRes.Status === 3) {
+        hideStatus();
+        setBusy(checkBtn, false);
+        showError('No records found for "' + domain + '". The domain may not exist or may not be registered.');
+        emptyState.style.display = 'block';
+        emptyState.innerHTML =
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' +
+          '</svg>' +
+          'No DNS records found for <strong>' + escapeHtml(domain) + '</strong>. ' +
+          'Check the spelling, or try a different domain.';
+        return;
+      }
+
+      var aRecords    = (aRes.Answer    || []).filter(function (r) { return r.type === 1; });
+      var aaaaRecords = (aaaaRes.Answer || []).filter(function (r) { return r.type === 28; });
+      var nsRecords   = (nsRes.Answer   || []).filter(function (r) { return r.type === 2; });
+      var mxRecords   = (mxRes.Answer   || []).filter(function (r) { return r.type === 15; });
+      var txtRecords  = (txtRes.Answer  || []).filter(function (r) { return r.type === 16; });
+      var cnameRecords= (cnameRes.Answer|| []).filter(function (r) { return r.type === 5; });
+
+      // Collect unique IPv4 and IPv6
+      var ipv4List = aRecords.map(function (r) { return r.data; });
+      var ipv6List = aaaaRecords.map(function (r) { return r.data; });
+
+      // Pre-fetch geolocation for all unique IPs
+      var allIPs = ipv4List.concat(ipv6List);
+      var uniqueIPs = [];
+      var seen = {};
+      allIPs.forEach(function (ip) {
+        if (!seen[ip]) { seen[ip] = 1; uniqueIPs.push(ip); }
+      });
+
+      var geoPromises = uniqueIPs.map(function (ip) { return lookupIP(ip); });
+
+      Promise.all(geoPromises).then(function (geoResults) {
+        // Map IP → geolocation for the summary
+        var ipDetails = uniqueIPs.map(function (ip, i) {
+          return Object.assign({ ip: ip }, geoResults[i] || {});
+        });
+
+        // Render sections
+        if (aRecords.length) {
+          renderRecords(aBody, aRecords, 'A');
+          aCount.textContent = aRecords.length;
+          aSection.style.display = 'block';
+        }
+        if (aaaaRecords.length) {
+          renderRecords(aaaaBody, aaaaRecords, 'AAAA');
+          aaaaCount.textContent = aaaaRecords.length;
+          aaaaSection.style.display = 'block';
+        }
+        if (nsRecords.length) {
+          renderRecords(nsBody, nsRecords, 'NS');
+          nsCount.textContent = nsRecords.length;
+          nsSection.style.display = 'block';
+        }
+        if (mxRecords.length) {
+          renderRecords(mxBody, mxRecords, 'MX');
+          mxCount.textContent = mxRecords.length;
+          mxSection.style.display = 'block';
+        }
+        if (txtRecords.length) {
+          renderRecords(txtBody, txtRecords, 'TXT');
+          txtCount.textContent = txtRecords.length;
+          txtSection.style.display = 'block';
+        }
+        if (cnameRecords.length) {
+          renderRecords(cnameBody, cnameRecords, 'CNAME');
+          cnameCount.textContent = cnameRecords.length;
+          cnameSection.style.display = 'block';
+        }
+
+        // IP details
+        if (uniqueIPs.length) {
+          renderIPDetails(uniqueIPs);
+          // We already have geo data — update the fields directly
+          Array.prototype.forEach.call(ipBody.children, function (card, i) {
+            var ip = uniqueIPs[i];
+            var data = geoResults[i];
+            if (!data || !card.querySelector) return;
+            var locEl = card.querySelector('[data-field="location"]');
+            var ispEl = card.querySelector('[data-field="isp"]');
+            var asnEl = card.querySelector('[data-field="asn"]');
+            var tzEl  = card.querySelector('[data-field="timezone"]');
+            if (!locEl) return;
+
+            if (data.success === false) {
+              locEl.textContent = 'Unavailable';
+              ispEl.textContent = 'Unavailable';
+              asnEl.textContent = '—';
+              tzEl.textContent = '—';
+              return;
+            }
+
+            var parts = [];
+            if (data.city) parts.push(data.city);
+            if (data.region) parts.push(data.region);
+            if (data.country) parts.push(data.country);
+
+            var flag = '';
+            if (data.country_code && /^[A-Z]{2}$/i.test(data.country_code)) {
+              var code = data.country_code.toUpperCase();
+              flag = String.fromCodePoint(
+                0x1F1E6 + code.charCodeAt(0) - 65,
+                0x1F1E6 + code.charCodeAt(1) - 65
+              );
+            }
+
+            locEl.innerHTML = flag
+              ? '<span class="hc-ip-flag"><span class="hc-flag">' + flag + '</span>' + escapeHtml(parts.join(', ') || 'Unknown') + '</span>'
+              : escapeHtml(parts.join(', ') || 'Unknown');
+
+            var conn = data.connection || {};
+            ispEl.textContent = conn.isp || conn.org || 'Unknown';
+            asnEl.textContent = conn.asn ? ('AS' + conn.asn) : '—';
+            tzEl.textContent = (data.timezone && data.timezone.id) ? data.timezone.id : '—';
+          });
+
+          ipSection.style.display = 'block';
+        }
+
+        // Summary
+        renderSummary(domain, aRecords, nsRecords, ipDetails);
+
+        // Show results
+        results.style.display = 'block';
+        hideStatus();
+
+        setStatus('Found ' + aRecords.length + ' A · ' + nsRecords.length + ' NS · ' +
+                  mxRecords.length + ' MX record' + (mxRecords.length === 1 ? '' : 's'), 'ok');
+
+        setBusy(checkBtn, false);
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        summary.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      });
+    }).catch(function (err) {
+      hideStatus();
+      setBusy(checkBtn, false);
+      showError('Lookup failed: ' + (err && err.message ? err.message : 'network error'));
+      emptyState.style.display = 'block';
+    });
+  }
+
+  function setBusy(btn, busy) {
+    if (busy) {
+      btn.classList.add('loading');
+      btn.disabled = true;
+    } else {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- EVENTS ----------
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    doLookup();
+  });
+
+  checkBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    doLookup();
+  });
+
+  domainIn.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      doLookup();
+    }
+  });
+
+  domainIn.addEventListener('input', function () {
+    clearInput.classList.toggle('show', this.value.length > 0);
+  });
+
+  clearInput.addEventListener('click', function () {
+    domainIn.value = '';
+    clearInput.classList.remove('show');
+    domainIn.focus();
+    hideStatus();
+    clearError();
+    results.style.display = 'none';
+    emptyState.style.display = 'block';
+    emptyState.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>' +
+        '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' +
+      '</svg>' +
+      'Enter a domain above to begin. Results will appear here.';
+  });
+
+  exampleBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      domainIn.value = btn.getAttribute('data-domain');
+      clearInput.classList.add('show');
+      doLookup();
+    });
+  });
+
+  function doLookup() {
+    var domain = parseDomain(domainIn.value);
+    if (!domain) {
+      showError('Please enter a valid domain name (for example, example.com).');
+      domainIn.focus();
+      return;
+    }
+    state.domain = domain;
+    domainIn.value = domain;
+    clearInput.classList.add('show');
+    lookup(domain);
+  }
+
+  // Section toggle
+  document.querySelectorAll('.hc-section-header').forEach(function (header) {
+    header.addEventListener('click', function () {
+      var bodyId = header.getAttribute('data-toggle');
+      var body = document.getElementById(bodyId);
+      if (!body) return;
+      var open = body.classList.toggle('open');
+      header.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    header.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        header.click();
+      }
+    });
+  });
+
+  // ---------- INIT ----------
+  hideStatus();
+  emptyState.style.display = 'block';
+
+})();
+</script>
+
+</body>
+</html>
