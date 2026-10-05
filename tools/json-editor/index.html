@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Edit, validate, format, minify, and explore JSON with a live tree view. Everything runs in your browser — no uploads." />
+  <title>JSON Editor — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- JSON Editor local styles --- */
+
+    /* Toolbar */
+    .je-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .je-toolbar .btn {
+      padding: 8px 14px;
+      font-size: .82rem;
+      min-width: auto;
+    }
+    .je-toolbar .btn svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .je-toolbar-spacer { flex: 1 1 auto; }
+
+    .je-validity {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+      border: 1px solid transparent;
+      transition: all .25s var(--ease);
+      font-variant-numeric: tabular-nums;
+    }
+    .je-validity.ok {
+      background: rgba(39, 174, 96, .12);
+      color: #1a7a44;
+      border-color: rgba(39, 174, 96, .35);
+    }
+    .je-validity.err {
+      background: rgba(231, 76, 60, .12);
+      color: #b33a2c;
+      border-color: rgba(231, 76, 60, .35);
+    }
+    .je-validity.idle {
+      background: var(--bg-result);
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+    .dark-mode .je-validity.ok { color: #52c98a; }
+    .dark-mode .je-validity.err { color: #ff8979; }
+
+    .je-validity svg {
+      width: 12px; height: 12px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* Two-pane layout */
+    .je-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .je-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Editor pane */
+    .je-editor-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+      min-width: 0;
+    }
+    .je-pane-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .je-pane-stats {
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: none;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Textarea with line numbers */
+    .je-textarea-wrap {
+      position: relative;
+      display: flex;
+      min-height: 420px;
+      max-height: 620px;
+      background: var(--bg-result);
+    }
+    .je-gutter {
+      width: 48px;
+      flex-shrink: 0;
+      padding: 14px 8px 14px 0;
+      text-align: right;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: .82rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+      background: var(--bg-result);
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .je-textarea {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      resize: none;
+      padding: 14px 16px;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: .82rem;
+      line-height: 1.55;
+      white-space: pre;
+      overflow: auto;
+      tab-size: 2;
+      min-width: 0;
+    }
+    .je-textarea::placeholder { color: var(--text-muted); }
+
+    /* Error banner */
+    .je-error-banner {
+      display: none;
+      margin: 10px 14px 14px;
+      padding: 10px 14px;
+      background: rgba(231, 76, 60, .08);
+      border: 1px solid rgba(231, 76, 60, .35);
+      border-left: 4px solid #e74c3c;
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: #b33a2c;
+      line-height: 1.55;
+      font-family: 'Courier New', monospace;
+    }
+    .dark-mode .je-error-banner { color: #ff8979; }
+    .je-error-banner.show { display: block; }
+    .je-error-banner strong { color: #c0392b; font-weight: 700; }
+
+    /* Right pane tabs */
+    .je-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 4px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+    }
+    .je-tab {
+      flex: 1 1 auto;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s var(--ease), color .2s var(--ease);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .je-tab:hover { color: var(--brand); }
+    .je-tab.active {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .je-panel {
+      display: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+      min-width: 0;
+    }
+    .je-panel.active { display: block; animation: jeFade .28s var(--ease-out); }
+    @keyframes jeFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tree view */
+    .je-tree-wrap {
+      padding: 14px 16px;
+      max-height: 620px;
+      overflow: auto;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: .84rem;
+      line-height: 1.6;
+      background: var(--bg-result);
+    }
+    .je-tree-node {
+      padding-left: 0;
+    }
+    .je-tree-children {
+      padding-left: 18px;
+      border-left: 1px dashed var(--border);
+      margin-left: 6px;
+    }
+    .je-tree-toggle {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 4px;
+      vertical-align: middle;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      color: var(--brand);
+      font-weight: 700;
+      transition: transform .2s var(--ease);
+    }
+    .je-tree-toggle.collapsed { transform: rotate(-90deg); }
+    .je-tree-key {
+      color: var(--brand);
+      font-weight: 600;
+    }
+    .je-tree-key.string { color: #b45309; }
+    .je-tree-colon { color: var(--text-muted); margin: 0 4px; }
+    .je-tree-value {
+      font-weight: 500;
+    }
+    .je-tree-value.string { color: #16a34a; }
+    .je-tree-value.number { color: #2563eb; }
+    .je-tree-value.boolean { color: #9333ea; }
+    .je-tree-value.null { color: #6b7280; font-style: italic; }
+    .je-tree-meta {
+      color: var(--text-muted);
+      font-size: .72rem;
+      margin-left: 6px;
+      font-style: italic;
+    }
+    .je-tree-empty {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .85rem;
+    }
+
+    /* Stats grid */
+    .je-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .je-stat-card {
+      padding: 12px 14px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .je-stat-label {
+      display: block;
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 4px;
+    }
+    .je-stat-value {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+      word-break: break-word;
+    }
+    .je-stat-value.small { font-size: .88rem; font-weight: 600; }
+
+    /* Search box inside tree */
+    .je-search-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      align-items: center;
+    }
+    .je-search-row input {
+      flex: 1;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .85rem;
+      font-family: inherit;
+      outline: 0;
+      min-width: 0;
+    }
+    .je-search-row input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(26, 92, 58, .12);
+    }
+    .je-search-count {
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .je-tree-node.je-match > .je-tree-key,
+    .je-tree-node.je-match > .je-tree-value { background: rgba(243, 156, 18, .28); border-radius: 3px; padding: 1px 3px; }
+
+    /* Actions under editor */
+    .je-editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .je-editor-actions .btn {
+      padding: 8px 14px;
+      font-size: .8rem;
+      min-width: auto;
+    }
+
+    /* Empty state */
+    .je-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .9rem;
+      line-height: 1.7;
+    }
+    .je-empty svg {
+      width: 42px; height: 42px;
+      stroke: var(--text-muted); fill: none;
+      stroke-width: 1.5; margin: 0 auto 10px;
+      display: block; opacity: .55;
+    }
+
+    @media (max-width: 640px) {
+      .je-toolbar { padding: 10px; gap: 6px; }
+      .je-toolbar .btn { padding: 7px 10px; font-size: .75rem; }
+      .je-textarea-wrap { min-height: 320px; max-height: 480px; }
+      .je-gutter { width: 38px; font-size: .74rem; }
+      .je-textarea { font-size: .74rem; padding: 12px; }
+      .je-editor-actions .btn { flex: 1 1 auto; }
+      .je-tab { font-size: .74rem; padding: 7px 8px; }
+      .je-tree-wrap { font-size: .78rem; padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/yadavwebtools/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="je-heading">
+    <div class="section-title-bar">
+      <h2 id="je-heading">JSON Editor</h2>
+      <p class="section-sub">Edit, validate, format, and explore JSON with a live tree view.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Paste or type JSON on the left. It validates as you type, shows clear error
+        messages with line and column, and renders a live tree view on the right.
+        Format, minify, copy, or download — everything runs in your browser.
+      </p>
+
+      <form class="json-form" id="jeForm" novalidate onsubmit="return false;">
+
+        <!-- ===== TOOLBAR ===== -->
+        <div class="je-toolbar">
+          <button type="button" class="btn btn-secondary" id="jeFormat">
+            <svg viewBox="0 0 24 24"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+            Format
+          </button>
+          <button type="button" class="btn btn-secondary" id="jeMinify">
+            <svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="8 6 12 2 16 6"/><polyline points="8 18 12 22 16 18"/></svg>
+            Minify
+          </button>
+          <button type="button" class="btn btn-secondary" id="jeEscape">
+            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Escape string
+          </button>
+          <button type="button" class="btn btn-secondary" id="jeUnescape">
+            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+            Unescape
+          </button>
+          <button type="button" class="btn btn-secondary" id="jeSample">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Sample
+          </button>
+          <button type="button" class="btn btn-secondary" id="jeClear">Clear</button>
+
+          <span class="je-toolbar-spacer"></span>
+
+          <span class="je-validity idle" id="jeValidity">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+            Waiting
+          </span>
+        </div>
+
+        <!-- ===== LAYOUT ===== -->
+        <div class="je-layout">
+
+          <!-- ===== LEFT: EDITOR ===== -->
+          <div class="je-editor-pane">
+
+            <div class="je-pane-header">
+              <span>Editor</span>
+              <span class="je-pane-stats" id="jePaneStats">0 chars · 0 lines</span>
+            </div>
+
+            <div class="je-textarea-wrap">
+              <div class="je-gutter" id="jeGutter" aria-hidden="true">1</div>
+              <textarea
+                class="je-textarea"
+                id="jeTextarea"
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                wrap="off"
+                placeholder='{ "hello": "world" }'
+                aria-label="JSON editor"
+              ></textarea>
+            </div>
+
+            <div class="je-error-banner" id="jeErrorBanner" role="alert"></div>
+
+            <div class="je-editor-actions">
+              <button type="button" class="btn btn-secondary" id="jeCopy">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+              <button type="button" class="btn btn-secondary" id="jePaste">
+                <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                Paste
+              </button>
+              <button type="button" class="btn btn-secondary" id="jeUpload">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Open file
+              </button>
+              <button type="button" class="btn btn-secondary" id="jeDownload">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </button>
+              <input type="file" id="jeFileInput" accept=".json,application/json,text/plain" style="display:none;" />
+            </div>
+          </div>
+
+          <!-- ===== RIGHT: VIEWER ===== -->
+          <div class="je-viewer-pane">
+
+            <div class="je-tabs" role="tablist" aria-label="View mode">
+              <button type="button" class="je-tab active" data-panel="tree" role="tab" aria-selected="true">Tree view</button>
+              <button type="button" class="je-tab" data-panel="stats" role="tab" aria-selected="false">Stats</button>
+            </div>
+
+            <!-- TREE PANEL -->
+            <div class="je-panel active" data-panel-content="tree">
+              <div class="je-search-row">
+                <input type="text" id="jeSearch" placeholder="Search keys or values…" autocomplete="off" aria-label="Search JSON" />
+                <span class="je-search-count" id="jeSearchCount"></span>
+              </div>
+              <div class="je-tree-wrap" id="jeTreeWrap">
+                <div class="je-tree-empty" id="jeTreeEmpty">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="16 3 21 8 16 13"/>
+                    <polyline points="8 21 3 16 8 11"/>
+                    <line x1="21" y1="8" x2="3" y2="8"/>
+                    <line x1="21" y1="16" x2="8" y2="16"/>
+                  </svg>
+                  Valid JSON will render as an interactive tree here.
+                </div>
+                <div id="jeTreeRoot"></div>
+              </div>
+            </div>
+
+            <!-- STATS PANEL -->
+            <div class="je-panel" data-panel-content="stats">
+              <div class="je-stats" id="jeStats">
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Status</span>
+                  <span class="je-stat-value small" id="jeStatStatus">Waiting</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Total keys</span>
+                  <span class="je-stat-value" id="jeStatKeys">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Objects</span>
+                  <span class="je-stat-value" id="jeStatObjects">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Arrays</span>
+                  <span class="je-stat-value" id="jeStatArrays">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Strings</span>
+                  <span class="je-stat-value" id="jeStatStrings">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Numbers</span>
+                  <span class="je-stat-value" id="jeStatNumbers">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Booleans</span>
+                  <span class="je-stat-value" id="jeStatBooleans">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Nulls</span>
+                  <span class="je-stat-value" id="jeStatNulls">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Max depth</span>
+                  <span class="je-stat-value" id="jeStatDepth">0</span>
+                </div>
+                <div class="je-stat-card">
+                  <span class="je-stat-label">Size (minified)</span>
+                  <span class="je-stat-value small" id="jeStatSize">0 B</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">About JSON editing</h3>
+        <p>
+          JSON (JavaScript Object Notation) is a text format for structured data. It
+          supports six value types: strings, numbers, booleans (<code>true</code> or
+          <code>false</code>), <code>null</code>, arrays (ordered lists in square
+          brackets), and objects (key-value pairs in curly braces). The syntax is strict:
+          keys must be double-quoted, no trailing commas, and no comments.
+        </p>
+        <p>
+          This editor validates as you type and reports the exact line and column of the
+          first syntax error. Trailing commas, single quotes, and comments are the most
+          common mistakes — all three are rejected by JSON parsers even though plain
+          JavaScript accepts them.
+        </p>
+        <p>
+          The tree view renders nested structures as an interactive hierarchy. Click the
+          arrow next to any object or array to collapse it. The search box highlights
+          matching keys and values across the whole document, and the tab count shows
+          how many matches were found.
+        </p>
+        <p>
+          The Stats tab counts keys, objects, arrays, strings, numbers, booleans, and
+          nulls recursively, along with the maximum nesting depth and the byte size of
+          the minified output. Useful for spotting unexpectedly large payloads before
+          shipping them over a network.
+        </p>
+        <p>
+          <strong>Format</strong> pretty-prints with 2-space indentation.
+          <strong>Minify</strong> strips all insignificant whitespace.
+          <strong>Escape string</strong> converts the current JSON into a quoted
+          JSON-string (useful for embedding JSON inside another JSON document), and
+          <strong>Unescape</strong> reverses that operation. Everything stays local —
+          nothing is uploaded.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form        = document.getElementById('jeForm');
+  var textarea    = document.getElementById('jeTextarea');
+  var gutter      = document.getElementById('jeGutter');
+  var paneStats   = document.getElementById('jePaneStats');
+  var validity    = document.getElementById('jeValidity');
+  var errorBanner = document.getElementById('jeErrorBanner');
+
+  var formatBtn   = document.getElementById('jeFormat');
+  var minifyBtn   = document.getElementById('jeMinify');
+  var escapeBtn   = document.getElementById('jeEscape');
+  var unescapeBtn = document.getElementById('jeUnescape');
+  var sampleBtn   = document.getElementById('jeSample');
+  var clearBtn    = document.getElementById('jeClear');
+
+  var copyBtn     = document.getElementById('jeCopy');
+  var pasteBtn    = document.getElementById('jePaste');
+  var uploadBtn   = document.getElementById('jeUpload');
+  var downloadBtn = document.getElementById('jeDownload');
+  var fileInput   = document.getElementById('jeFileInput');
+
+  var tabs        = document.querySelectorAll('.je-tab');
+  var panels      = document.querySelectorAll('.je-panel');
+
+  var searchIn    = document.getElementById('jeSearch');
+  var searchCount = document.getElementById('jeSearchCount');
+  var treeWrap    = document.getElementById('jeTreeWrap');
+  var treeEmpty   = document.getElementById('jeTreeEmpty');
+  var treeRoot    = document.getElementById('jeTreeRoot');
+
+  var statStatus  = document.getElementById('jeStatStatus');
+  var statKeys    = document.getElementById('jeStatKeys');
+  var statObjects = document.getElementById('jeStatObjects');
+  var statArrays  = document.getElementById('jeStatArrays');
+  var statStrings = document.getElementById('jeStatStrings');
+  var statNumbers = document.getElementById('jeStatNumbers');
+  var statBooleans= document.getElementById('jeStatBooleans');
+  var statNulls   = document.getElementById('jeStatNulls');
+  var statDepth   = document.getElementById('jeStatDepth');
+  var statSize    = document.getElementById('jeStatSize');
+
+  // ---------- STATE ----------
+  var state = {
+    parsed: null,
+    valid: false,
+    collapsed: new Set(),
+    searchQuery: ''
+  };
+
+  var SAMPLE_JSON = {
+    name: "Yadav Web Tools",
+    version: "1.0.0",
+    description: "Free browser-based utilities — no uploads, no tracking.",
+    tools: [
+      { id: "age-calculator", name: "Age Calculator", category: "utility" },
+      { id: "json-editor", name: "JSON Editor", category: "developer" },
+      { id: "pdf-merger", name: "PDF Merger", category: "productivity" }
+    ],
+    author: {
+      name: "Yadav",
+      url: "https://yadavwebtools.com",
+      contact: {
+        email: "hello@yadavwebtools.com",
+        twitter: "@yadavwebtools"
+      }
+    },
+    features: {
+      offline: true,
+      noSignup: true,
+      maxFileSize: null,
+      supportedBrowsers: ["Chrome", "Firefox", "Edge", "Safari"]
+    },
+    updated: "2026-01-15T10:30:00Z",
+    deprecated: false
+  };
+
+  // ---------- HELPERS ----------
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function formatBytes(b) {
+    if (!isFinite(b) || b < 0) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  }
+
+  function setValidity(mode, text) {
+    validity.className = 'je-validity ' + mode;
+    var icon = '';
+    if (mode === 'ok') icon = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    else if (mode === 'err') icon = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    else icon = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
+    validity.innerHTML = icon + escapeHtml(text);
+  }
+
+  function updateGutter() {
+    var lines = textarea.value.split('\n');
+    var count = lines.length;
+    var html = '';
+    for (var i = 1; i <= count; i++) {
+      html += i + '\n';
+    }
+    gutter.textContent = html;
+    // Sync scroll
+    gutter.scrollTop = textarea.scrollTop;
+  }
+
+  textarea.addEventListener('scroll', function () {
+    gutter.scrollTop = textarea.scrollTop;
+  });
+
+  // ---------- VALIDATION ----------
+  function parseWithErrorInfo(text) {
+    try {
+      var parsed = JSON.parse(text);
+      return { ok: true, value: parsed };
+    } catch (err) {
+      // Extract position from error message when possible
+      var msg = err.message || 'Invalid JSON';
+      var line = null, col = null;
+
+      // Chrome: "Unexpected token } in JSON at position 42"
+      var posMatch = msg.match(/position\s+(\d+)/i);
+      if (posMatch) {
+        var pos = parseInt(posMatch[1], 10);
+        var upto = text.slice(0, pos);
+        var lines = upto.split('\n');
+        line = lines.length;
+        col = lines[lines.length - 1].length + 1;
+      } else {
+        // Firefox: "JSON.parse: unexpected character at line 3 column 5 of the JSON data"
+        var lcMatch = msg.match(/line\s+(\d+)\s+column\s+(\d+)/i);
+        if (lcMatch) {
+          line = parseInt(lcMatch[1], 10);
+          col = parseInt(lcMatch[2], 10);
+        }
+      }
+
+      return { ok: false, error: msg, line: line, col: col };
+    }
+  }
+
+  // ---------- ANALYSIS ----------
+  function analyze(value) {
+    var counts = { keys: 0, objects: 0, arrays: 0, strings: 0, numbers: 0, booleans: 0, nulls: 0 };
+    var maxDepth = 0;
+
+    function walk(v, depth) {
+      if (depth > maxDepth) maxDepth = depth;
+      if (v === null) {
+        counts.nulls++;
+        return;
+      }
+      var t = typeof v;
+      if (t === 'string') { counts.strings++; return; }
+      if (t === 'number') { counts.numbers++; return; }
+      if (t === 'boolean') { counts.booleans++; return; }
+      if (Array.isArray(v)) {
+        counts.arrays++;
+        v.forEach(function (item) { walk(item, depth + 1); });
+        return;
+      }
+      if (t === 'object') {
+        counts.objects++;
+        Object.keys(v).forEach(function (k) {
+          counts.keys++;
+          walk(v[k], depth + 1);
+        });
+      }
+    }
+
+    walk(value, 1);
+
+    var minified;
+    try { minified = JSON.stringify(value); }
+    catch (e) { minified = ''; }
+
+    return { counts: counts, depth: maxDepth, size: minified ? minified.length : 0 };
+  }
+
+  function renderStats(analysis) {
+    statKeys.textContent = analysis.counts.keys;
+    statObjects.textContent = analysis.counts.objects;
+    statArrays.textContent = analysis.counts.arrays;
+    statStrings.textContent = analysis.counts.strings;
+    statNumbers.textContent = analysis.counts.numbers;
+    statBooleans.textContent = analysis.counts.booleans;
+    statNulls.textContent = analysis.counts.nulls;
+    statDepth.textContent = analysis.depth;
+    statSize.textContent = formatBytes(analysis.size);
+  }
+
+  // ---------- TREE RENDERING ----------
+  function renderTree(value) {
+    treeRoot.innerHTML = '';
+    state.collapsed.clear();
+
+    if (value === undefined) {
+      treeEmpty.style.display = 'block';
+      return;
+    }
+    treeEmpty.style.display = 'none';
+
+    var root = buildNode('', value, 0, true);
+    treeRoot.appendChild(root);
+
+    if (state.searchQuery) {
+      applySearch(state.searchQuery);
+    }
+  }
+
+  function valueType(v) {
+    if (v === null) return 'null';
+    if (Array.isArray(v)) return 'array';
+    return typeof v;
+  }
+
+  function buildNode(key, value, depth, isRoot) {
+    var t = valueType(value);
+    var node = document.createElement('div');
+    node.className = 'je-tree-node';
+    node.setAttribute('data-depth', depth);
+
+    // Collapsible?
+    var isCollapsible = (t === 'object' && value !== null) || t === 'array';
+    var childCount = isCollapsible
+      ? (t === 'array' ? value.length : Object.keys(value).length)
+      : 0;
+
+    // Path id for collapse state
+    var path = node.dataset.path || (isRoot ? '$' : '$.' + key);
+    node.setAttribute('data-path', path);
+
+    // Header line
+    var header = document.createElement('div');
+
+    if (isCollapsible) {
+      var toggle = document.createElement('span');
+      toggle.className = 'je-tree-toggle';
+      toggle.textContent = '▼';
+      toggle.setAttribute('role', 'button');
+      toggle.setAttribute('tabindex', '0');
+      toggle.setAttribute('aria-label', 'Toggle ' + (key || 'root'));
+
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleNode(node, toggle);
+      });
+      toggle.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleNode(node, toggle);
+        }
+      });
+
+      header.appendChild(toggle);
+    } else {
+      var spacer = document.createElement('span');
+      spacer.style.display = 'inline-block';
+      spacer.style.width = '14px';
+      header.appendChild(spacer);
+    }
+
+    if (!isRoot) {
+      var keySpan = document.createElement('span');
+      keySpan.className = 'je-tree-key ' + (typeof key === 'string' ? 'string' : '');
+      keySpan.textContent = '"' + key + '"';
+      header.appendChild(keySpan);
+
+      var colon = document.createElement('span');
+      colon.className = 'je-tree-colon';
+      colon.textContent = ':';
+      header.appendChild(colon);
+    }
+
+    // Value or summary
+    if (isCollapsible) {
+      var summary = document.createElement('span');
+      summary.className = 'je-tree-meta';
+      var label = t === 'array' ? 'Array' : 'Object';
+      summary.textContent = label + ' (' + childCount + ')';
+      header.appendChild(summary);
+    } else {
+      var vSpan = document.createElement('span');
+      vSpan.className = 'je-tree-value ' + t;
+      if (t === 'string') vSpan.textContent = '"' + value + '"';
+      else if (t === 'null') vSpan.textContent = 'null';
+      else vSpan.textContent = String(value);
+      header.appendChild(vSpan);
+    }
+
+    node.appendChild(header);
+
+    // Children
+    if (isCollapsible) {
+      var childContainer = document.createElement('div');
+      childContainer.className = 'je-tree-children';
+
+      if (t === 'array') {
+        value.forEach(function (item, i) {
+          childContainer.appendChild(buildNode(String(i), item, depth + 1, false));
+        });
+      } else {
+        Object.keys(value).forEach(function (k) {
+          childContainer.appendChild(buildNode(k, value[k], depth + 1, false));
+        });
+      }
+
+      node.appendChild(childContainer);
+    }
+
+    return node;
+  }
+
+  function toggleNode(node, toggle) {
+    var path = node.getAttribute('data-path');
+    var children = node.querySelector('.je-tree-children');
+    if (!children) return;
+
+    if (state.collapsed.has(path)) {
+      state.collapsed.delete(path);
+      toggle.classList.remove('collapsed');
+      toggle.textContent = '▼';
+      children.style.display = '';
+    } else {
+      state.collapsed.add(path);
+      toggle.classList.add('collapsed');
+      toggle.textContent = '▶';
+      children.style.display = 'none';
+    }
+  }
+
+  // ---------- SEARCH ----------
+  function applySearch(query) {
+    state.searchQuery = query;
+    var q = query.trim().toLowerCase();
+    var matches = 0;
+
+    // Clear previous
+    var prevMatches = treeRoot.querySelectorAll('.je-match');
+    Array.prototype.forEach.call(prevMatches, function (el) {
+      el.classList.remove('je-match');
+    });
+
+    if (!q) {
+      searchCount.textContent = '';
+      return;
+    }
+
+    var nodes = treeRoot.querySelectorAll('.je-tree-node');
+    Array.prototype.forEach.call(nodes, function (node) {
+      var direct = node.firstChild;
+      if (!direct) return;
+      var text = direct.textContent.toLowerCase();
+      if (text.indexOf(q) !== -1) {
+        node.classList.add('je-match');
+        matches++;
+
+        // Expand parents
+        var parent = node.parentElement;
+        while (parent && parent !== treeRoot) {
+          if (parent.classList && parent.classList.contains('je-tree-children')) {
+            parent.style.display = '';
+            var parentNode = parent.parentElement;
+            if (parentNode) {
+              var toggle = parentNode.querySelector('.je-tree-toggle');
+              if (toggle) {
+                toggle.classList.remove('collapsed');
+                toggle.textContent = '▼';
+              }
+              var pPath = parentNode.getAttribute('data-path');
+              if (pPath) state.collapsed.delete(pPath);
+            }
+          }
+          parent = parent.parentElement;
+        }
+      }
+    });
+
+    searchCount.textContent = matches === 0
+      ? 'No matches'
+      : matches + ' match' + (matches === 1 ? '' : 'es');
+  }
+
+  searchIn.addEventListener('input', function () {
+    applySearch(this.value);
+  });
+
+  // ---------- RENDER ----------
+  function render() {
+    var text = textarea.value;
+    var result = parseWithErrorInfo(text);
+
+    updateGutter();
+    var lines = text.split('\n').length;
+    paneStats.textContent = text.length + ' chars · ' + lines + ' line' + (lines === 1 ? '' : 's');
+
+    if (text.trim() === '') {
+      setValidity('idle', 'Waiting');
+      errorBanner.classList.remove('show');
+      statStatus.textContent = 'Waiting';
+      treeRoot.innerHTML = '';
+      treeEmpty.style.display = 'block';
+      statKeys.textContent = '0';
+      statObjects.textContent = '0';
+      statArrays.textContent = '0';
+      statStrings.textContent = '0';
+      statNumbers.textContent = '0';
+      statBooleans.textContent = '0';
+      statNulls.textContent = '0';
+      statDepth.textContent = '0';
+      statSize.textContent = '0 B';
+      state.parsed = null;
+      state.valid = false;
+      searchCount.textContent = '';
+      return;
+    }
+
+    if (result.ok) {
+      state.parsed = result.value;
+      state.valid = true;
+
+      setValidity('ok', 'Valid JSON');
+      errorBanner.classList.remove('show');
+      statStatus.textContent = 'Valid';
+
+      var analysis = analyze(result.value);
+      renderStats(analysis);
+      renderTree(result.value);
+
+      // Re-apply search if any
+      if (state.searchQuery) applySearch(state.searchQuery);
+    } else {
+      state.parsed = null;
+      state.valid = false;
+
+      var pos = '';
+      if (result.line && result.col) pos = ' (line ' + result.line + ', column ' + result.col + ')';
+      setValidity('err', 'Invalid' + (result.line ? ' at ' + result.line + ':' + result.col : ''));
+      errorBanner.classList.add('show');
+      errorBanner.innerHTML = '<strong>Parse error' + escapeHtml(pos) + ':</strong> ' + escapeHtml(result.error);
+
+      statStatus.textContent = 'Invalid';
+      treeRoot.innerHTML = '';
+      treeEmpty.style.display = 'block';
+
+      statKeys.textContent = '0';
+      statObjects.textContent = '0';
+      statArrays.textContent = '0';
+      statStrings.textContent = '0';
+      statNumbers.textContent = '0';
+      statBooleans.textContent = '0';
+      statNulls.textContent = '0';
+      statDepth.textContent = '0';
+      statSize.textContent = '0 B';
+    }
+  }
+
+  // ---------- INPUT EVENTS ----------
+  textarea.addEventListener('input', render);
+
+  // Tab key inserts two spaces
+  textarea.addEventListener('keydown', function (e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      var start = this.selectionStart;
+      var end = this.selectionEnd;
+      this.value = this.value.slice(0, start) + '  ' + this.value.slice(end);
+      this.selectionStart = this.selectionEnd = start + 2;
+      render();
+    }
+  });
+
+  // ---------- ACTIONS ----------
+  formatBtn.addEventListener('click', function () {
+    if (!state.valid || state.parsed === undefined) {
+      // Try to parse first
+      var r = parseWithErrorInfo(textarea.value);
+      if (!r.ok) return;
+      state.parsed = r.value;
+      state.valid = true;
+    }
+    textarea.value = JSON.stringify(state.parsed, null, 2);
+    render();
+  });
+
+  minifyBtn.addEventListener('click', function () {
+    if (!state.valid) {
+      var r = parseWithErrorInfo(textarea.value);
+      if (!r.ok) return;
+      state.parsed = r.value;
+      state.valid = true;
+    }
+    textarea.value = JSON.stringify(state.parsed);
+    render();
+  });
+
+  escapeBtn.addEventListener('click', function () {
+    var text = textarea.value;
+    if (!text.trim()) return;
+    textarea.value = JSON.stringify(text);
+    render();
+  });
+
+  unescapeBtn.addEventListener('click', function () {
+    var text = textarea.value.trim();
+    if (!text) return;
+    try {
+      var parsed = JSON.parse(text);
+      if (typeof parsed === 'string') {
+        textarea.value = parsed;
+        render();
+      }
+    } catch (e) { /* no-op */ }
+  });
+
+  sampleBtn.addEventListener('click', function () {
+    textarea.value = JSON.stringify(SAMPLE_JSON, null, 2);
+    render();
+  });
+
+  clearBtn.addEventListener('click', function () {
+    textarea.value = '';
+    render();
+    textarea.focus();
+  });
+
+  copyBtn.addEventListener('click', function () {
+    if (!textarea.value) return;
+    var original = copyBtn.textContent;
+    var done = function () {
+      copyBtn.textContent = 'Copied';
+      setTimeout(function () { copyBtn.textContent = original; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textarea.value).then(done).catch(function () {
+        fallbackCopy(textarea.value, done);
+      });
+    } else {
+      fallbackCopy(textarea.value, done);
+    }
+  });
+
+  pasteBtn.addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (text) {
+        textarea.value = text;
+        render();
+        textarea.focus();
+      }).catch(function () { textarea.focus(); });
+    } else {
+      textarea.focus();
+    }
+  });
+
+  uploadBtn.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      textarea.value = e.target.result;
+      render();
+      textarea.focus();
+    };
+    reader.readAsText(file);
+    this.value = '';
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    if (!textarea.value.trim()) return;
+
+    // Try to format nicely before download
+    var content = textarea.value;
+    try {
+      var parsed = JSON.parse(content);
+      content = JSON.stringify(parsed, null, 2);
+    } catch (e) { /* keep raw */ }
+
+    var blob = new Blob([content], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- TABS ----------
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+
+      var target = tab.getAttribute('data-panel');
+      panels.forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-panel-content') === target);
+      });
+    });
+  });
+
+  // ---------- KEYBOARD SHORTCUTS ----------
+  document.addEventListener('keydown', function (e) {
+    // Cmd/Ctrl + Enter → format
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      if (document.activeElement === textarea) {
+        e.preventDefault();
+        formatBtn.click();
+      }
+    }
+    // Cmd/Ctrl + Shift + M → minify
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
+      if (document.activeElement === textarea) {
+        e.preventDefault();
+        minifyBtn.click();
+      }
+    }
+  });
+
+  // ---------- INIT ----------
+  // Preload the sample so users see something useful immediately
+  textarea.value = JSON.stringify(SAMPLE_JSON, null, 2);
+  render();
+
+})();
+</script>
+
+</body>
+</html>
