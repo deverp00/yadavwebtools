@@ -337,27 +337,27 @@
   'use strict';
 
   var tools = [
-    { name: 'Access',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>', path: '/dav/tools/accessibility-tool/index.html' },
-    { name: 'Age',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', path: '/dav/tools/age-calculator/index.html' },
-    { name: 'Archive', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1" ry="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', path: '/dav/tools/file-archiver/index.html' },
-    { name: 'Base',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>', path: '/dav/tools/number-converter/index.html' },
-    { name: 'BMI',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="6" x2="16" y2="18"/></svg>', path: '/dav/tools/bmi-calculator/index.html' },
-    { name: 'Curr',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/><polyline points="15 9 18 9 18 12"/><line x1="18" y1="9" x2="14" y2="9"/><polyline points="9 15 6 15 6 12"/><line x1="6" y1="15" x2="10" y2="15"/></svg>', path: '/dav/tools/currency-converter/index.html' },
-    { name: 'Forex',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="4" height="12" rx="1"/><line x1="5" y1="6" x2="5" y2="8"/><line x1="5" y1="20" x2="5" y2="22"/><rect x="10" y="12" width="4" height="8" rx="1"/><line x1="12" y1="10" x2="12" y2="12"/><line x1="12" y1="20" x2="12" y2="22"/><rect x="17" y="6" width="4" height="14" rx="1"/><line x1="19" y1="4" x2="19" y2="6"/><line x1="19" y1="20" x2="19" y2="22"/></svg>', path: '/dav/tools/forex-dashboard/index.html' },
-    { name: 'GST',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', path: '/dav/tools/gst-calculator/index.html' },
+    { name: 'Access',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>', path: '/yadavwebtools/tools/accessibility-tool/index.html' },
+    { name: 'Age',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', path: '/yadavwebtools/tools/age-calculator/index.html' },
+    { name: 'Archive', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1" ry="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', path: '/yadavwebtools/tools/file-archiver/index.html' },
+    { name: 'Base',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>', path: '/yadavwebtools/tools/number-converter/index.html' },
+    { name: 'BMI',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="6" x2="16" y2="18"/></svg>', path: '/yadavwebtools/tools/bmi-calculator/index.html' },
+    { name: 'Curr',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/><polyline points="15 9 18 9 18 12"/><line x1="18" y1="9" x2="14" y2="9"/><polyline points="9 15 6 15 6 12"/><line x1="6" y1="15" x2="10" y2="15"/></svg>', path: '/yadavwebtools/tools/currency-converter/index.html' },
+    { name: 'Forex',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="4" height="12" rx="1"/><line x1="5" y1="6" x2="5" y2="8"/><line x1="5" y1="20" x2="5" y2="22"/><rect x="10" y="12" width="4" height="8" rx="1"/><line x1="12" y1="10" x2="12" y2="12"/><line x1="12" y1="20" x2="12" y2="22"/><rect x="17" y="6" width="4" height="14" rx="1"/><line x1="19" y1="4" x2="19" y2="6"/><line x1="19" y1="20" x2="19" y2="22"/></svg>', path: '/yadavwebtools/tools/forex-dashboard/index.html' },
+    { name: 'GST',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', path: '/yadavwebtools/tools/gst-calculator/index.html' },
     { name: 'Image',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', path: '/yadavwebtools/tools/image-resizer/index.html' },
     { name: 'Corner',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V5a2 2 0 0 1 2-2h4"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M3 15v4a2 2 0 0 0 2 2h4"/><path d="M21 9V5a2 2 0 0 0-2-2h-4"/></svg>', path: '/yadavwebtools/tools/image-corner-curve/index.html' },
-    { name: 'Loan',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>', path: '/dav/tools/loan-calculator/index.html' },
-    { name: 'Merge',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 11 16 8 19"/><polyline points="16 13 13 16 16 19"/></svg>', path: '/dav/tools/pdf-merger/index.html' },
-    { name: 'Pass',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>', path: '/dav/tools/password-generator/index.html' },
-    { name: 'PDF',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', path: '/dav/tools/pdf-editor/index.html' },
-    { name: 'Percent', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><line x1="5" y1="5" x2="19" y2="19"/></svg>', path: '/dav/tools/percentage-calculator/index.html' },
-    { name: 'QR',      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="17" y1="14" x2="17" y2="21"/><line x1="14" y1="17" x2="21" y2="17"/></svg>', path: '/dav/tools/qr-generator/index.html' },
-    { name: 'SIP',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>', path: '/dav/tools/sip-calculator/index.html' },
-    { name: 'Hosting', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.13.12a4 4 0 0 0 5.64 0l.13-.12a4 4 0 0 1 5.64 0l.13.12z"/><path d="M12 12v.01"/></svg>', path: '/dav/tools/hosting-checker/index.html' },
-    { name: 'JSON',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 8 16 13"/><polyline points="8 21 3 16 8 11"/><line x1="16" y1="8" x2="3" y2="8"/><line x1="21" y1="16" x2="8" y2="16"/></svg>', path: '/dav/tools/json-editor/index.html' },
-    { name: 'Text',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>', path: '/dav/tools/text-counter/index.html' },
-    { name: 'Unit',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', path: '/dav/tools/unit-converter/index.html' }
+    { name: 'Loan',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>', path: '/yadavwebtools/tools/loan-calculator/index.html' },
+    { name: 'Merge',   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 11 16 8 19"/><polyline points="16 13 13 16 16 19"/></svg>', path: '/yadavwebtools/tools/pdf-merger/index.html' },
+    { name: 'Pass',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>', path: '/yadavwebtools/tools/password-generator/index.html' },
+    { name: 'PDF',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>', path: '/yadavwebtools/tools/pdf-editor/index.html' },
+    { name: 'Percent', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><line x1="5" y1="5" x2="19" y2="19"/></svg>', path: '/yadavwebtools/tools/percentage-calculator/index.html' },
+    { name: 'QR',      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="17" y1="14" x2="17" y2="21"/><line x1="14" y1="17" x2="21" y2="17"/></svg>', path: '/yadavwebtools/tools/qr-generator/index.html' },
+    { name: 'SIP',     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>', path: '/yadavwebtools/tools/sip-calculator/index.html' },
+    { name: 'Hosting', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.13.12a4 4 0 0 0 5.64 0l.13-.12a4 4 0 0 1 5.64 0l.13.12z"/><path d="M12 12v.01"/></svg>', path: '/yadavwebtools/tools/hosting-checker/index.html' },
+    { name: 'JSON',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 8 16 13"/><polyline points="8 21 3 16 8 11"/><line x1="16" y1="8" x2="3" y2="8"/><line x1="21" y1="16" x2="8" y2="16"/></svg>', path: '/yadavwebtools/tools/json-editor/index.html' },
+    { name: 'Text',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>', path: '/yadavwebtools/tools/text-counter/index.html' },
+    { name: 'Unit',    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', path: '/yadavwebtools/tools/unit-converter/index.html' }
   ];
 
   function getCurrentPath() { return window.location.pathname; }
@@ -499,18 +499,18 @@
 
   // ---- Static pages ----
   var navMap = {
-    '/dav/': 'Home',
-    '/dav/index.html': 'Home',
-    '/dav/about/': 'About',
-    '/dav/about/index.html': 'About',
-    '/dav/contact/': 'Contact',
-    '/dav/contact/index.html': 'Contact',
-    '/dav/privacy-policy/': 'Privacy Policy',
-    '/dav/privacy-policy/index.html': 'Privacy Policy',
-    '/dav/disclaimer/': 'Disclaimer',
-    '/dav/disclaimer/index.html': 'Disclaimer',
-    '/dav/terms/': 'Terms',
-    '/dav/terms/index.html': 'Terms'
+    '/yadavwebtools/': 'Home',
+    '/yadavwebtools/index.html': 'Home',
+    '/yadavwebtools/about/': 'About',
+    '/yadavwebtools/about/index.html': 'About',
+    '/yadavwebtools/contact/': 'Contact',
+    '/yadavwebtools/contact/index.html': 'Contact',
+    '/yadavwebtools/privacy-policy/': 'Privacy Policy',
+    '/yadavwebtools/privacy-policy/index.html': 'Privacy Policy',
+    '/yadavwebtools/disclaimer/': 'Disclaimer',
+    '/yadavwebtools/disclaimer/index.html': 'Disclaimer',
+    '/yadavwebtools/terms/': 'Terms',
+    '/yadavwebtools/terms/index.html': 'Terms'
   };
 
   var expectedLabel = null;
@@ -547,6 +547,6 @@
   var link = document.createElement('link');
   link.rel = 'icon';
   link.type = 'image/svg+xml';
-  link.href = '/dav/favicon.svg';
+  link.href = '/yadavwebtools/favicon.svg';
   document.head.appendChild(link);
 })();
