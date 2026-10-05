@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Calculate GST inclusive or exclusive amounts with CGST, SGST, and IGST breakdown. Free, private, no signup." />
+  <title>GST Calculator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- GST Calculator local styles --- */
+
+    /* Mode segmented control */
+    .gst-mode {
+      display: inline-flex;
+      padding: 4px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+    .gst-mode-btn {
+      padding: 10px 22px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s var(--ease), color .2s var(--ease);
+      white-space: nowrap;
+    }
+    .gst-mode-btn:hover { color: var(--brand); }
+    .gst-mode-btn.active {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
+    }
+
+    /* Rate chips */
+    .gst-rates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .gst-rate-chip {
+      padding: 8px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-variant-numeric: tabular-nums;
+      min-width: 62px;
+      text-align: center;
+    }
+    .gst-rate-chip:hover {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .gst-rate-chip.active {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    /* Supply type */
+    .gst-supply {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .gst-supply-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .gst-supply-btn svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+    }
+    .gst-supply-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .gst-supply-btn.active {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    /* Split bar visual */
+    .gst-split-bar {
+      display: flex;
+      height: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--border);
+      margin: 4px 0 10px;
+    }
+    .gst-split-bar .split-base { background: var(--brand); transition: width .5s cubic-bezier(.22,.61,.36,1); }
+    .gst-split-bar .split-tax  { background: #52c98a; transition: width .5s cubic-bezier(.22,.61,.36,1); }
+    .gst-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      justify-content: center;
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .gst-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .gst-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .gst-legend .dot-base { background: var(--brand); }
+    .gst-legend .dot-tax  { background: #52c98a; }
+
+    /* Copy button on result */
+    .gst-copy-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 6px;
+    }
+    .gst-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .gst-copy-btn svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none; stroke-width: 2.2;
+    }
+    .gst-copy-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .gst-copy-btn.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    /* Quick reference table */
+    .gst-quickref {
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .gst-quickref-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+    }
+    .gst-quickref-header svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .gst-quickref-header[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .gst-quickref-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease-out);
+    }
+    .gst-quickref-body.open { max-height: 1200px; }
+    .gst-quickref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      min-width: 400px;
+    }
+    .gst-quickref-table thead th {
+      background: var(--bg-result);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: right;
+      padding: 10px 16px;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+    .gst-quickref-table thead th:first-child { text-align: left; }
+    .gst-quickref-table tbody td {
+      padding: 9px 16px;
+      text-align: right;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .gst-quickref-table tbody td:first-child {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .gst-quickref-table tbody tr:hover td { background: var(--brand-soft); }
+    .gst-quickref-wrap { overflow-x: auto; }
+
+    /* Breakdown card grid stays consistent with .gst-result in base CSS */
+
+    @media (max-width: 640px) {
+      .gst-mode { width: 100%; }
+      .gst-mode-btn { flex: 1; padding: 10px 12px; font-size: .82rem; }
+      .gst-rate-chip { padding: 7px 12px; font-size: .82rem; min-width: 52px; }
+      .gst-supply-btn { flex: 1; justify-content: center; padding: 9px 12px; font-size: .82rem; }
+      .gst-copy-row { justify-content: stretch; }
+      .gst-copy-btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="gst-heading">
+    <div class="section-title-bar">
+      <h2 id="gst-heading">GST Calculator</h2>
+      <p class="section-sub">Add or remove GST and see the CGST, SGST, and IGST split instantly.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter an amount, pick a GST slab, and choose the supply type. The calculator shows
+        the base amount, total tax, and the correct CGST / SGST or IGST breakdown — using
+        the current Indian GST rates.
+      </p>
+
+      <form class="gst-form" id="gstForm" novalidate onsubmit="return false;">
+
+        <!-- MODE -->
+        <div class="field-group" style="display:block;">
+          <div class="gst-mode" role="tablist" aria-label="Calculation mode">
+            <button type="button" class="gst-mode-btn active" data-mode="add" role="tab" aria-selected="true">
+              Add GST (exclusive)
+            </button>
+            <button type="button" class="gst-mode-btn" data-mode="remove" role="tab" aria-selected="false">
+              Remove GST (inclusive)
+            </button>
+          </div>
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="field-group">
+          <label for="gstAmount" id="gstAmountLabel">Base Amount (₹)</label>
+          <input type="number" id="gstAmount" min="0" step="any" value="1000" inputmode="decimal" aria-labelledby="gstAmountLabel" />
+        </div>
+
+        <!-- RATE -->
+        <div class="field-group" style="display:block;">
+          <label style="display:block;margin-bottom:10px;">GST Rate</label>
+          <div class="gst-rates" id="gstRates">
+            <button type="button" class="gst-rate-chip" data-rate="0">0%</button>
+            <button type="button" class="gst-rate-chip" data-rate="0.25">0.25%</button>
+            <button type="button" class="gst-rate-chip" data-rate="3">3%</button>
+            <button type="button" class="gst-rate-chip" data-rate="5">5%</button>
+            <button type="button" class="gst-rate-chip" data-rate="12">12%</button>
+            <button type="button" class="gst-rate-chip active" data-rate="18">18%</button>
+            <button type="button" class="gst-rate-chip" data-rate="28">28%</button>
+            <button type="button" class="gst-rate-chip" data-rate="custom">Custom</button>
+          </div>
+          <div class="field-group" id="gstCustomWrap" style="display:none;margin-top:10px;">
+            <label for="gstCustomRate">Custom Rate (%)</label>
+            <input type="number" id="gstCustomRate" min="0" max="100" step="0.01" value="18" />
+          </div>
+        </div>
+
+        <!-- SUPPLY TYPE -->
+        <div class="field-group" style="display:block;">
+          <label style="display:block;margin-bottom:10px;">Supply Type</label>
+          <div class="gst-supply" role="tablist" aria-label="Supply type">
+            <button type="button" class="gst-supply-btn active" data-supply="intra" role="tab" aria-selected="true">
+              <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 12h.01M9 15h.01M15 9h.01M15 12h.01M15 15h.01"/></svg>
+              Intra-state (CGST + SGST)
+            </button>
+            <button type="button" class="gst-supply-btn" data-supply="inter" role="tab" aria-selected="false">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Inter-state (IGST)
+            </button>
+          </div>
+        </div>
+
+        <div class="error-msg" id="gstError" role="alert"></div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn">Calculate</button>
+          <button type="button" class="btn btn-secondary" id="gstReset">Reset</button>
+        </div>
+      </form>
+
+      <!-- ===== RESULT ===== -->
+      <div class="gst-result" id="gstResult" hidden>
+
+        <div class="result-grid">
+          <div class="result-card">
+            <span class="result-label" id="gstBaseLabel">Base Amount</span>
+            <span class="result-value" id="gstBaseOut">₹0</span>
+          </div>
+          <div class="result-card highlight">
+            <span class="result-label" id="gstTotalLabel">Total (incl. GST)</span>
+            <span class="result-value" id="gstTotalOut">₹0</span>
+          </div>
+        </div>
+
+        <div class="gst-split-bar" aria-hidden="true">
+          <span class="split-base" id="gstSplitBase"></span>
+          <span class="split-tax"  id="gstSplitTax"></span>
+        </div>
+        <div class="gst-legend">
+          <span><span class="dot dot-base"></span> Base amount</span>
+          <span><span class="dot dot-tax"></span> GST</span>
+        </div>
+
+        <div class="result-breakdown">
+          <div class="breakdown-title" id="gstBreakdownTitle">Tax Breakdown</div>
+          <div class="breakdown-grid" id="gstBreakdownGrid">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div class="result-detail" id="gstDetail"></div>
+
+        <div class="gst-copy-row">
+          <button type="button" class="gst-copy-btn" id="gstCopyBtn">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy result
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ===== QUICK REFERENCE ===== -->
+      <div class="gst-quickref">
+        <div class="gst-quickref-header" id="gstRefHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="gstRefBody">
+          <span>GST rate reference — common goods and services</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="gst-quickref-body" id="gstRefBody">
+          <div class="gst-quickref-wrap">
+            <table class="gst-quickref-table">
+              <thead>
+                <tr>
+                  <th>Rate</th>
+                  <th>Typical items</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>0%</td><td>Fresh fruits, vegetables, unbranded flour, milk, salt, jaggery, judicial papers</td></tr>
+                <tr><td>0.25%</td><td>Rough diamonds, semi-precious stones</td></tr>
+                <tr><td>3%</td><td>Gold, silver, jewellery, coins</td></tr>
+                <tr><td>5%</td><td>Packaged food, tea, coffee, medicines, economy air travel, small restaurants</td></tr>
+                <tr><td>12%</td><td>Butter, cheese, ghee, mobile phones, business-class air travel, processed foods</td></tr>
+                <tr><td>18%</td><td>Soap, toothpaste, computers, printers, most services, restaurants in hotels</td></tr>
+                <tr><td>28%</td><td>Cars, motorcycles, tobacco, aerated drinks, luxury goods, casinos</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How GST is calculated</h3>
+        <p>
+          GST is a destination-based tax applied on the supply of goods and services. When
+          you have a base (pre-tax) amount and want to add GST, the tax is a simple
+          percentage of the base: GST = base × rate / 100, and total = base + GST.
+        </p>
+        <p>
+          When you have a total that already includes GST and want to extract the base, the
+          maths reverses: base = total / (1 + rate / 100), and GST = total − base. This is
+          the formula used by every GST invoice and return, and it avoids the common
+          mistake of subtracting the rate percentage from the inclusive amount.
+        </p>
+        <p>
+          For intra-state supplies (buyer and seller in the same state), the tax is split
+          equally between the Centre and the State as CGST and SGST. For inter-state
+          supplies (buyer and seller in different states), the whole amount is charged as
+          IGST. The tax total is always the same; only the split changes.
+        </p>
+        <p>
+          GST rates in India currently fall into the slabs shown above. Some goods attract
+          cess on top of the highest slab (for example, large cars and tobacco), which is
+          not included in this calculator. The figures shown are estimates for planning
+          purposes and do not replace a tax invoice or professional advice.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form           = document.getElementById('gstForm');
+  var amountInput    = document.getElementById('gstAmount');
+  var amountLabel    = document.getElementById('gstAmountLabel');
+  var customWrap     = document.getElementById('gstCustomWrap');
+  var customRate     = document.getElementById('gstCustomRate');
+  var errorBox       = document.getElementById('gstError');
+  var resultBox      = document.getElementById('gstResult');
+  var resetBtn       = document.getElementById('gstReset');
+
+  var modeBtns       = document.querySelectorAll('.gst-mode-btn');
+  var rateChips      = document.querySelectorAll('.gst-rate-chip');
+  var supplyBtns     = document.querySelectorAll('.gst-supply-btn');
+
+  var baseLabel      = document.getElementById('gstBaseLabel');
+  var baseOut        = document.getElementById('gstBaseOut');
+  var totalLabel     = document.getElementById('gstTotalLabel');
+  var totalOut       = document.getElementById('gstTotalOut');
+  var splitBase      = document.getElementById('gstSplitBase');
+  var splitTax       = document.getElementById('gstSplitTax');
+  var breakdownTitle = document.getElementById('gstBreakdownTitle');
+  var breakdownGrid  = document.getElementById('gstBreakdownGrid');
+  var detailOut      = document.getElementById('gstDetail');
+  var copyBtn        = document.getElementById('gstCopyBtn');
+
+  var refHeader      = document.getElementById('gstRefHeader');
+  var refBody        = document.getElementById('gstRefBody');
+
+  // ---------- STATE ----------
+  var state = {
+    mode: 'add',       // 'add' | 'remove'
+    rate: 18,          // number
+    supply: 'intra',   // 'intra' | 'inter'
+    lastResult: null
+  };
+
+  // ---------- HELPERS ----------
+  var inr = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  var inrShort = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  });
+
+  function formatINR(n) {
+    if (!isFinite(n)) return '₹0.00';
+    return inr.format(n);
+  }
+
+  function formatINRShort(n) {
+    if (!isFinite(n)) return '₹0';
+    return inrShort.format(n);
+  }
+
+  function round2(n) {
+    return Math.round(n * 100) / 100;
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ---------- CORE MATH ----------
+  // Add GST:  base = amount,          tax = base * r,       total = base + tax
+  // Remove:   total = amount,         base = amount / (1+r), tax = amount - base
+  function computeGST(amount, ratePercent, mode) {
+    var r = ratePercent / 100;
+    var base, tax, total;
+
+    if (mode === 'add') {
+      base  = amount;
+      tax   = base * r;
+      total = base + tax;
+    } else {
+      total = amount;
+      base  = total / (1 + r);
+      tax   = total - base;
+    }
+
+    return {
+      base:  round2(base),
+      tax:   round2(tax),
+      total: round2(total),
+      rate:  ratePercent
+    };
+  }
+
+  // ---------- RENDER ----------
+  function render() {
+    clearError();
+
+    var raw = amountInput.value;
+    if (raw === '' || raw === '-') {
+      showError('Please enter an amount.');
+      resultBox.hidden = true;
+      return;
+    }
+
+    var amount = parseFloat(raw);
+    if (!isFinite(amount) || amount < 0) {
+      showError('Please enter a valid non-negative amount.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (amount === 0) {
+      showError('Amount must be greater than zero.');
+      resultBox.hidden = true;
+      return;
+    }
+
+    var rate = state.rate;
+    if (!isFinite(rate) || rate < 0) {
+      showError('GST rate must be a non-negative number.');
+      resultBox.hidden = true;
+      return;
+    }
+
+    var res = computeGST(amount, rate, state.mode);
+
+    // Labels adapt to mode
+    if (state.mode === 'add') {
+      baseLabel.textContent  = 'Base Amount';
+      totalLabel.textContent = 'Total (incl. GST)';
+      amountLabel.textContent = 'Base Amount (₹)';
+    } else {
+      baseLabel.textContent  = 'Base Amount (extracted)';
+      totalLabel.textContent = 'Total (incl. GST)';
+      amountLabel.textContent = 'Total Amount (₹, incl. GST)';
+    }
+
+    baseOut.textContent  = formatINR(res.base);
+    totalOut.textContent = formatINR(res.total);
+
+    // Split bar
+    var safeTotal = res.total > 0 ? res.total : 1;
+    splitBase.style.width = ((res.base / safeTotal) * 100).toFixed(2) + '%';
+    splitTax.style.width  = ((res.tax  / safeTotal) * 100).toFixed(2) + '%';
+
+    // Breakdown grid
+    breakdownGrid.innerHTML = '';
+
+    var rateText = rate + '%';
+
+    if (state.supply === 'intra') {
+      var cgst = round2(res.tax / 2);
+      var sgst = round2(res.tax - cgst); // keeps sum exact
+
+      breakdownTitle.textContent = 'Tax Breakdown — Intra-state (CGST + SGST)';
+
+      breakdownGrid.appendChild(makeBreakdownItem('Taxable value', formatINR(res.base)));
+      breakdownGrid.appendChild(makeBreakdownItem('GST @ ' + rateText, formatINR(res.tax)));
+      breakdownGrid.appendChild(makeBreakdownItem('CGST @ ' + (rate / 2) + '%', formatINR(cgst)));
+      breakdownGrid.appendChild(makeBreakdownItem('SGST @ ' + (rate / 2) + '%', formatINR(sgst)));
+      breakdownGrid.appendChild(makeBreakdownItem('Total', formatINR(res.total)));
+    } else {
+      breakdownTitle.textContent = 'Tax Breakdown — Inter-state (IGST)';
+
+      breakdownGrid.appendChild(makeBreakdownItem('Taxable value', formatINR(res.base)));
+      breakdownGrid.appendChild(makeBreakdownItem('IGST @ ' + rateText, formatINR(res.tax)));
+      breakdownGrid.appendChild(makeBreakdownItem('Total', formatINR(res.total)));
+    }
+
+    // Detail line
+    var supplyText = state.supply === 'intra'
+      ? 'intra-state (split equally as CGST and SGST)'
+      : 'inter-state (charged as IGST)';
+
+    detailOut.textContent =
+      (state.mode === 'add' ? 'Adding ' : 'Removing ') + rateText + ' GST on ' +
+      formatINRShort(amount) + ' — ' + supplyText + '.';
+
+    // Stash for copy
+    state.lastResult = {
+      mode: state.mode,
+      rate: rate,
+      supply: state.supply,
+      base: res.base,
+      tax: res.tax,
+      total: res.total,
+      cgst: state.supply === 'intra' ? round2(res.tax / 2) : null,
+      sgst: state.supply === 'intra' ? round2(res.tax - round2(res.tax / 2)) : null,
+      igst: state.supply === 'inter' ? res.tax : null
+    };
+
+    resultBox.hidden = false;
+  }
+
+  function makeBreakdownItem(label, value) {
+    var div = document.createElement('div');
+    div.className = 'breakdown-item';
+    div.innerHTML =
+      '<span class="breakdown-label">' + escapeHtml(label) + '</span>' +
+      '<span class="breakdown-value">' + escapeHtml(value) + '</span>';
+    return div;
+  }
+
+  // ---------- INTERACTIONS ----------
+  modeBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      modeBtns.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      state.mode = btn.getAttribute('data-mode');
+      // Swap the meaning of the amount input if a result exists
+      if (!resultBox.hidden && state.lastResult) {
+        amountInput.value = state.mode === 'add'
+          ? state.lastResult.base
+          : state.lastResult.total;
+      }
+      render();
+    });
+  });
+
+  rateChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      rateChips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+
+      var r = chip.getAttribute('data-rate');
+      if (r === 'custom') {
+        customWrap.style.display = 'flex';
+        state.rate = parseFloat(customRate.value) || 0;
+        customRate.focus();
+      } else {
+        customWrap.style.display = 'none';
+        state.rate = parseFloat(r);
+      }
+      render();
+    });
+  });
+
+  customRate.addEventListener('input', function () {
+    state.rate = parseFloat(customRate.value) || 0;
+    render();
+  });
+
+  supplyBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      supplyBtns.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      state.supply = btn.getAttribute('data-supply');
+      render();
+    });
+  });
+
+  amountInput.addEventListener('input', render);
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    render();
+    if (!resultBox.hidden) {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      resultBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+    }
+  });
+
+  // ---------- RESET ----------
+  resetBtn.addEventListener('click', function () {
+    clearError();
+
+    state.mode = 'add';
+    state.rate = 18;
+    state.supply = 'intra';
+    state.lastResult = null;
+
+    modeBtns.forEach(function (b) {
+      var isActive = b.getAttribute('data-mode') === 'add';
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    rateChips.forEach(function (c) {
+      var isActive = c.getAttribute('data-rate') === '18';
+      c.classList.toggle('active', isActive);
+    });
+
+    supplyBtns.forEach(function (b) {
+      var isActive = b.getAttribute('data-supply') === 'intra';
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    customWrap.style.display = 'none';
+    customRate.value = '18';
+
+    amountInput.value = '1000';
+    amountLabel.textContent = 'Base Amount (₹)';
+
+    resultBox.hidden = true;
+    breakdownGrid.innerHTML = '';
+    splitBase.style.width = '0%';
+    splitTax.style.width = '0%';
+
+    amountInput.focus();
+  });
+
+  // ---------- QUICK REFERENCE TOGGLE ----------
+  refHeader.addEventListener('click', function () {
+    var open = refBody.classList.toggle('open');
+    refHeader.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  refHeader.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      refHeader.click();
+    }
+  });
+
+  // ---------- COPY RESULT ----------
+  copyBtn.addEventListener('click', function () {
+    if (!state.lastResult) return;
+
+    var r = state.lastResult;
+    var lines = [];
+
+    lines.push('GST Calculation');
+    lines.push('--------------------------------');
+    lines.push('Mode: ' + (r.mode === 'add' ? 'Add GST (exclusive)' : 'Remove GST (inclusive)'));
+    lines.push('Supply type: ' + (r.supply === 'intra' ? 'Intra-state (CGST + SGST)' : 'Inter-state (IGST)'));
+    lines.push('GST rate: ' + r.rate + '%');
+    lines.push('--------------------------------');
+    lines.push('Base amount: ' + formatINR(r.base));
+    lines.push('GST amount:  ' + formatINR(r.tax));
+
+    if (r.supply === 'intra') {
+      lines.push('CGST:        ' + formatINR(r.cgst));
+      lines.push('SGST:        ' + formatINR(r.sgst));
+    } else {
+      lines.push('IGST:        ' + formatINR(r.igst));
+    }
+
+    lines.push('--------------------------------');
+    lines.push('Total:       ' + formatINR(r.total));
+
+    var text = lines.join('\n');
+
+    var original = copyBtn.innerHTML;
+    var done = function () {
+      copyBtn.classList.add('copied');
+      copyBtn.innerHTML = 'Copied';
+      setTimeout(function () {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = original;
+      }, 1400);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- INIT ----------
+  // Set the default active rate chip (18%) to match state
+  rateChips.forEach(function (c) {
+    c.classList.toggle('active', c.getAttribute('data-rate') === '18');
+  });
+  render();
+
+})();
+</script>
+
+</body>
+</html>
