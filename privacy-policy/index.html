@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Privacy policy for Yadav Web Tools — what data we do and don't collect." />
+  <title>Privacy Policy — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+
+  <style>
+    .legal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      padding: 10px 14px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+    .legal-meta strong { color: var(--brand); font-weight: 600; }
+    .content-box h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--brand);
+      margin: 22px 0 8px;
+      letter-spacing: -.01em;
+    }
+    .content-box h3:first-of-type { margin-top: 0; }
+    .content-box ul {
+      list-style: disc;
+      padding-left: 22px;
+      margin: 0 0 1em;
+    }
+    .content-box ul li {
+      margin-bottom: 6px;
+      line-height: 1.7;
+      color: var(--text-2);
+      font-size: .95rem;
+    }
+    .content-box a {
+      color: var(--brand);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/yadavwebtools/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html" aria-current="page">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/hosting-checker/index.html">Hosting Checker</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<main id="main-content">
+  <section class="section" aria-labelledby="pp-heading">
+    <div class="section-title-bar">
+      <h2 id="pp-heading">Privacy Policy</h2>
+      <p class="section-sub">What data we collect, what we don't, and why.</p>
+    </div>
+
+    <div class="section-body">
+      <div class="legal-meta">
+        <span><strong>Last updated:</strong> 15 January 2026</span>
+        <span><strong>Effective:</strong> 15 January 2026</span>
+      </div>
+
+      <div class="content-box">
+        <p>
+          Yadav Web Tools is built around a simple principle: your data stays on your
+          device. This policy explains exactly what that means, what limited
+          information our hosting provider sees, and what third-party services are
+          involved when you use specific tools.
+        </p>
+
+        <h3>1. Data you enter into tools</h3>
+        <p>
+          Every tool on this site runs entirely in your browser. Text you type, files
+          you upload, images you resize, PDFs you merge, and JSON you edit are processed
+          locally using standard browser APIs. None of it is sent to us or to any
+          server we control. When you close the tab, that data is gone from our side
+          because it was never on our side to begin with.
+        </p>
+
+        <h3>2. What our hosting provider sees</h3>
+        <p>
+          This site is served by GitHub Pages. Like any web host, GitHub's
+          infrastructure logs standard request information — IP address, user agent,
+          requested URL, timestamp — to operate the service and protect against abuse.
+          This is outside our control and is covered by GitHub's own privacy policy.
+          We do not have access to these logs.
+        </p>
+
+        <h3>3. No analytics, no trackers, no ads</h3>
+        <p>
+          We do not run any analytics service, tracking pixel, session recorder, or
+          advertising network. There are no cookies set by this site. No fingerprinting
+          scripts are loaded. Nothing about your visit is profiled or sold.
+        </p>
+
+        <h3>4. Local storage</h3>
+        <p>
+          A small amount of data is stored in your browser's <code>localStorage</code>
+          so the site works smoothly between visits:
+        </p>
+        <ul>
+          <li><strong>Theme preference</strong> — whether you chose light or dark mode.</li>
+          <li><strong>Forex rate cache</strong> — a copy of the previous day's exchange rates, used only to show a percentage change on the forex dashboard.</li>
+        </ul>
+        <p>
+          This data stays on your device and can be cleared at any time from your
+          browser settings. It is not transmitted to us.
+        </p>
+
+        <h3>5. Third-party services</h3>
+        <p>
+          A few tools rely on external services for data you can't compute offline.
+          When you use those specific tools, your browser makes a direct request to
+          the service listed. Those services will see your IP address and the query
+          you sent, just as if you visited their site directly.
+        </p>
+        <ul>
+          <li><strong>Currency Converter</strong> — open.er-api.com for exchange rates, api.coingecko.com for crypto prices, api.frankfurter.app for historical charts.</li>
+          <li><strong>Forex Dashboard</strong> — TradingView for candlestick charts; open.er-api.com for the price cards.</li>
+          <li><strong>Hosting Checker</strong> — dns.google for DNS lookups; ipwho.is for IP geolocation.</li>
+          <li><strong>Fonts</strong> — Google Fonts serves the Inter typeface used across the site.</li>
+          <li><strong>Libraries</strong> — cdnjs.cloudflare.com and unpkg.com deliver PDF, ZIP, and QR libraries.</li>
+        </ul>
+        <p>
+          All other tools make no external requests at all.
+        </p>
+
+        <h3>6. Microphone and speech</h3>
+        <p>
+          The Accessibility Tool can transcribe speech using your browser's Web Speech
+          API. When you press the mic button, your browser may send audio to Google's
+          speech recognition service (in Chrome) or process it locally (in some other
+          browsers). This behaviour is controlled by your browser and operating system,
+          not by us. We never receive, store, or transmit the audio.
+        </p>
+
+        <h3>7. Children's privacy</h3>
+        <p>
+          This site is not directed at children under 13 and we do not knowingly
+          collect personal information from anyone. Since no personal information is
+          collected from any user, there is nothing to delete on request.
+        </p>
+
+        <h3>8. Your rights</h3>
+        <p>
+          Because we do not collect personal data, there is nothing for us to export,
+          correct, or delete. You retain full control of anything stored locally by
+          clearing your browser's site data at any time.
+        </p>
+
+        <h3>9. Security</h3>
+        <p>
+          The site is served over HTTPS. Client-side tools use standard browser APIs
+          that do not introduce additional attack surface. We do not accept uploads
+          or store files, so there is no server-side database to breach.
+        </p>
+
+        <h3>10. Changes to this policy</h3>
+        <p>
+          If this policy changes in a material way, the "last updated" date at the
+          top will change and the new version will be posted here. Continued use of
+          the site after a change constitutes acceptance of the revised policy.
+        </p>
+
+        <h3>11. Contact</h3>
+        <p>
+          Questions about this policy can be sent to
+          <a href="mailto:hello@yadavwebtools.com">hello@yadavwebtools.com</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../script.js"></script>
+
+</body>
+</html>
