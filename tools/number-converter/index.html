@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Convert numbers between binary, octal, decimal, and hexadecimal instantly. Supports custom bases from 2 to 36. Free and private." />
+  <title>Number Converter — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Number Converter local styles --- */
+
+    /* Base selector pills */
+    .nc-bases {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .nc-base-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .nc-base-chip .nc-base-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--bg-result);
+      color: var(--brand);
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .nc-base-chip:hover {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .nc-base-chip.active {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+    .nc-base-chip.active .nc-base-num {
+      background: rgba(255,255,255,.22);
+      color: #fff;
+    }
+
+    /* Input row */
+    .nc-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .nc-input {
+      flex: 1 1 260px;
+      min-width: 200px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+    }
+    .nc-input:focus {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26, 92, 58, .12);
+    }
+    .nc-input.nc-invalid {
+      border-color: #e74c3c;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, .12);
+    }
+    .nc-input-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .nc-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .nc-icon-btn svg {
+      width: 18px; height: 18px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .nc-icon-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .nc-icon-btn.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    /* Custom base row */
+    .nc-custom-row {
+      display: none;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .nc-custom-row.show { display: flex; }
+    .nc-custom-row label {
+      font-weight: 500;
+      font-size: .9rem;
+      min-width: 100px;
+    }
+    .nc-custom-row input[type="number"] {
+      width: 100px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .95rem;
+    }
+    .nc-custom-row input[type="number"]:focus {
+      outline: 0;
+      border-color: var(--brand);
+    }
+
+    /* Results grid */
+    .nc-results {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .nc-result-row {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color .2s var(--ease), background .2s var(--ease);
+    }
+    .nc-result-row:hover {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .nc-result-row.primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+    .nc-result-row.primary .nc-result-label { color: rgba(255,255,255,.85); }
+    .nc-result-row.primary .nc-result-value { color: #fff; }
+    .nc-result-row.primary .nc-icon-btn {
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.28);
+      color: #fff;
+    }
+    .nc-result-row.primary .nc-icon-btn:hover {
+      background: rgba(255,255,255,.24);
+      color: #fff;
+    }
+    .nc-result-label {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+    }
+    .nc-result-value {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: .5px;
+      word-break: break-all;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+    .nc-result-row .nc-icon-btn {
+      width: 38px;
+      height: 38px;
+    }
+    .nc-result-row .nc-icon-btn svg {
+      width: 15px; height: 15px;
+    }
+
+    /* Info bar */
+    .nc-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      padding: 12px 16px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+    }
+    .nc-info strong { color: var(--brand); font-weight: 600; }
+    .nc-info-item { display: inline-flex; align-items: center; gap: 5px; }
+
+    /* Bit view */
+    .nc-bits-wrap {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .nc-bits-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nc-bits-header svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .nc-bits-header[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .nc-bits-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease-out);
+    }
+    .nc-bits-body.open { max-height: 400px; }
+    .nc-bits-inner {
+      padding: 12px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: .9rem;
+      letter-spacing: 2px;
+      color: var(--text);
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      line-height: 1.8;
+      font-variant-numeric: tabular-nums;
+    }
+    .nc-bit-group {
+      display: inline-block;
+      margin-right: 6px;
+      color: var(--text-muted);
+    }
+    .nc-bit-group.on { color: var(--brand); font-weight: 700; }
+
+    /* Base info line */
+    .nc-base-help {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      padding-left: 2px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .nc-base-chip { padding: 8px 12px; font-size: .82rem; }
+      .nc-result-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 10px 12px;
+      }
+      .nc-result-row .nc-icon-btn {
+        justify-self: end;
+      }
+      .nc-result-value { font-size: .9rem; }
+      .nc-input { font-size: 1rem; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="nc-heading">
+    <div class="section-title-bar">
+      <h2 id="nc-heading">Number Converter</h2>
+      <p class="section-sub">Convert between binary, octal, decimal, and hexadecimal — or any base from 2 to 36.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter a number, pick its source base, and see the equivalent in every common
+        base at once. Useful for programmers, students, and anyone working with
+        hexadecimal, binary, or non-decimal arithmetic.
+      </p>
+
+      <form class="number-form" id="ncForm" novalidate onsubmit="return false;">
+
+        <!-- SOURCE BASE -->
+        <div class="field-group" style="display:block;">
+          <label style="display:block;margin-bottom:10px;">Source Base</label>
+          <div class="nc-bases" id="ncBases">
+            <button type="button" class="nc-base-chip" data-base="2">
+              <span class="nc-base-num">2</span>
+              Binary
+            </button>
+            <button type="button" class="nc-base-chip" data-base="8">
+              <span class="nc-base-num">8</span>
+              Octal
+            </button>
+            <button type="button" class="nc-base-chip active" data-base="10">
+              <span class="nc-base-num">10</span>
+              Decimal
+            </button>
+            <button type="button" class="nc-base-chip" data-base="16">
+              <span class="nc-base-num">16</span>
+              Hexadecimal
+            </button>
+            <button type="button" class="nc-base-chip" data-base="custom">
+              <span class="nc-base-num">n</span>
+              Custom
+            </button>
+          </div>
+
+          <div class="nc-custom-row" id="ncCustomRow">
+            <label for="ncCustomBase">Custom Base</label>
+            <input type="number" id="ncCustomBase" min="2" max="36" step="1" value="36" />
+            <span class="helper-text">Between 2 and 36</span>
+          </div>
+
+          <div class="nc-base-help" id="ncBaseHelp">Digits 0–9 are allowed.</div>
+        </div>
+
+        <!-- INPUT -->
+        <div class="field-group" style="display:block;">
+          <label for="ncInput" style="display:block;margin-bottom:6px;">Value</label>
+          <div class="nc-input-row">
+            <input type="text" id="ncInput" class="nc-input" value="255" autocomplete="off" spellcheck="false" aria-label="Number to convert" />
+            <div class="nc-input-actions">
+              <button type="button" class="nc-icon-btn" id="ncPaste" aria-label="Paste from clipboard" title="Paste">
+                <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+              </button>
+              <button type="button" class="nc-icon-btn" id="ncClear" aria-label="Clear input" title="Clear">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <span class="helper-text" id="ncValidHelp"></span>
+        </div>
+
+        <div class="error-msg" id="ncError" role="alert"></div>
+
+        <!-- INFO -->
+        <div class="nc-info" id="ncInfo" hidden>
+          <span class="nc-info-item">Decimal value: <strong id="ncDecimalOut">0</strong></span>
+          <span class="nc-info-item">Digits: <strong id="ncDigitsOut">0</strong></span>
+          <span class="nc-info-item">Bit length: <strong id="ncBitsOut">0</strong></span>
+          <span class="nc-info-item">Byte size: <strong id="ncBytesOut">0</strong></span>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="nc-results" id="ncResults" hidden>
+          <div class="nc-result-row" data-result="binary">
+            <span class="nc-result-label">Binary (2)</span>
+            <span class="nc-result-value" id="ncBinary">—</span>
+            <button type="button" class="nc-icon-btn nc-copy" data-copy-target="ncBinary" aria-label="Copy binary">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+
+          <div class="nc-result-row" data-result="octal">
+            <span class="nc-result-label">Octal (8)</span>
+            <span class="nc-result-value" id="ncOctal">—</span>
+            <button type="button" class="nc-icon-btn nc-copy" data-copy-target="ncOctal" aria-label="Copy octal">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+
+          <div class="nc-result-row primary" data-result="decimal">
+            <span class="nc-result-label">Decimal (10)</span>
+            <span class="nc-result-value" id="ncDecimal">—</span>
+            <button type="button" class="nc-icon-btn nc-copy" data-copy-target="ncDecimal" aria-label="Copy decimal">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+
+          <div class="nc-result-row" data-result="hex">
+            <span class="nc-result-label">Hexadecimal (16)</span>
+            <span class="nc-result-value" id="ncHex">—</span>
+            <button type="button" class="nc-icon-btn nc-copy" data-copy-target="ncHex" aria-label="Copy hexadecimal">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+
+          <div class="nc-result-row" data-result="baseCustom" id="ncCustomResultRow" hidden>
+            <span class="nc-result-label" id="ncCustomResultLabel">Base n</span>
+            <span class="nc-result-value" id="ncCustomResult">—</span>
+            <button type="button" class="nc-icon-btn nc-copy" data-copy-target="ncCustomResult" aria-label="Copy custom base result">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- BITS -->
+        <div class="nc-bits-wrap" id="ncBitsWrap" hidden>
+          <div class="nc-bits-header" id="ncBitsHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="ncBitsBody">
+            <span>Binary view (grouped by 4)</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="nc-bits-body" id="ncBitsBody">
+            <div class="nc-bits-inner" id="ncBitsInner">—</div>
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="btn-group" style="margin-top:18px;">
+          <button type="button" class="btn" id="ncCopyAll">Copy all</button>
+          <button type="button" class="btn btn-secondary" id="ncReset">Reset</button>
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How number bases work</h3>
+        <p>
+          Every number system uses a base (also called radix) to represent values. In
+          base 10, we use digits 0–9, where each position is worth ten times the one on
+          its right. In base 2, only 0 and 1 are used, and each position doubles. In
+          base 16, digits 0–9 plus A–F represent values 0 through 15.
+        </p>
+        <p>
+          Converting from any base to decimal is a sum of each digit multiplied by the
+          base raised to its position. Converting from decimal to another base repeatedly
+          divides by the base and collects remainders, reading them from last to first.
+          This tool performs both operations and shows the result in every common base
+          at once.
+        </p>
+        <p>
+          Binary is grouped in nibbles (4 bits) and bytes (8 bits) so the structure is
+          easy to read. A single hexadecimal digit represents exactly 4 bits, which is
+          why hex is the preferred shorthand for binary data in programming and debugging.
+        </p>
+        <p>
+          Very large numbers are supported through JavaScript's BigInt type, so you can
+          convert values beyond the usual 2<sup>53</sup> safe-integer limit. Negative
+          values and fractions are not supported — use a dedicated fixed-point or
+          floating-point converter for those.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form         = document.getElementById('ncForm');
+  var inputEl      = document.getElementById('ncInput');
+  var errorBox     = document.getElementById('ncError');
+  var validHelp    = document.getElementById('ncValidHelp');
+  var baseHelp     = document.getElementById('ncBaseHelp');
+  var basesWrap    = document.getElementById('ncBases');
+  var baseChips    = document.querySelectorAll('.nc-base-chip');
+  var customRow    = document.getElementById('ncCustomRow');
+  var customBaseIn = document.getElementById('ncCustomBase');
+
+  var pasteBtn     = document.getElementById('ncPaste');
+  var clearBtn     = document.getElementById('ncClear');
+  var copyAllBtn   = document.getElementById('ncCopyAll');
+  var resetBtn     = document.getElementById('ncReset');
+
+  var infoBar      = document.getElementById('ncInfo');
+  var decimalOut   = document.getElementById('ncDecimalOut');
+  var digitsOut    = document.getElementById('ncDigitsOut');
+  var bitsOut      = document.getElementById('ncBitsOut');
+  var bytesOut     = document.getElementById('ncBytesOut');
+
+  var results      = document.getElementById('ncResults');
+  var binaryOut    = document.getElementById('ncBinary');
+  var octalOut     = document.getElementById('ncOctal');
+  var decimalOutV  = document.getElementById('ncDecimal');
+  var hexOut       = document.getElementById('ncHex');
+
+  var customResRow = document.getElementById('ncCustomResultRow');
+  var customResLbl = document.getElementById('ncCustomResultLabel');
+  var customResOut = document.getElementById('ncCustomResult');
+
+  var bitsWrap     = document.getElementById('ncBitsWrap');
+  var bitsHeader   = document.getElementById('ncBitsHeader');
+  var bitsBody     = document.getElementById('ncBitsBody');
+  var bitsInner    = document.getElementById('ncBitsInner');
+
+  // ---------- STATE ----------
+  var state = {
+    base: 10,
+    customBase: 36,
+    decimalValue: null,
+    lastValidInput: '255'
+  };
+
+  // ---------- HELPERS ----------
+  var DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  function isDigitValid(ch, base) {
+    var idx = DIGITS.indexOf(ch.toUpperCase());
+    return idx >= 0 && idx < base;
+  }
+
+  function sanitizeInput(raw) {
+    // Strip spaces, underscores, and common separators
+    return String(raw || '').replace(/[\s_,]/g, '');
+  }
+
+  function validateInput(raw, base) {
+    var s = sanitizeInput(raw);
+    if (!s) return { ok: false, reason: 'empty' };
+    if (s.length > 512) return { ok: false, reason: 'too-long' };
+
+    for (var i = 0; i < s.length; i++) {
+      if (!isDigitValid(s[i], base)) {
+        return { ok: false, reason: 'bad-digit', badChar: s[i], position: i };
+      }
+    }
+    return { ok: true, value: s };
+  }
+
+  function digitsForBase(base) {
+    if (base <= 10) return 'Digits 0–' + (base - 1) + ' are allowed.';
+    return 'Digits 0–9 and A–' + DIGITS[base - 1] + ' are allowed (letters are case-insensitive).';
+  }
+
+  function parseToBigInt(str, base) {
+    var result = BigInt(0);
+    var b = BigInt(base);
+    var s = str.toUpperCase();
+    for (var i = 0; i < s.length; i++) {
+      var d = DIGITS.indexOf(s[i]);
+      result = result * b + BigInt(d);
+    }
+    return result;
+  }
+
+  function bigIntToBase(num, base) {
+    if (num === BigInt(0)) return '0';
+    var b = BigInt(base);
+    var out = '';
+    var n = num;
+    while (n > 0) {
+      var d = Number(n % b);
+      out = DIGITS[d] + out;
+      n = n / b;
+    }
+    return out;
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function setInputInvalid(invalid) {
+    inputEl.classList.toggle('nc-invalid', !!invalid);
+  }
+
+  function updateBaseHelp() {
+    baseHelp.textContent = digitsForBase(state.base);
+    validHelp.textContent = 'Enter a value in base ' + state.base + '.';
+  }
+
+  // ---------- RENDER ----------
+  function render() {
+    clearError();
+
+    var v = validateInput(inputEl.value, state.base);
+
+    if (!v.ok) {
+      setInputInvalid(true);
+      results.hidden = true;
+      infoBar.hidden = true;
+      bitsWrap.hidden = true;
+      customResRow.hidden = true;
+
+      if (v.reason === 'empty') {
+        clearError();
+      } else if (v.reason === 'too-long') {
+        showError('Input is too long. Please use 512 characters or fewer.');
+      } else if (v.reason === 'bad-digit') {
+        showError('"' + v.badChar + '" is not a valid digit in base ' + state.base + '.');
+      }
+      return;
+    }
+
+    setInputInvalid(false);
+
+    var decimal;
+    try {
+      decimal = parseToBigInt(v.value, state.base);
+    } catch (e) {
+      showError('Could not parse the number. Please check your input.');
+      return;
+    }
+
+    state.decimalValue = decimal;
+    state.lastValidInput = v.value;
+
+    var binStr  = bigIntToBase(decimal, 2);
+    var octStr  = bigIntToBase(decimal, 8);
+    var decStr  = decimal.toString(10);
+    var hexStr  = bigIntToBase(decimal, 16);
+
+    // Group binary for readability (4-bit groups)
+    binaryOut.textContent = groupBinary(binStr);
+    octalOut.textContent  = octStr;
+    decimalOutV.textContent = groupDecimal(decStr);
+    hexOut.textContent    = groupHex(hexStr);
+
+    // Custom base
+    if (state.base === state.customBase) {
+      customResRow.hidden = true;
+    } else {
+      customResRow.hidden = false;
+      customResLbl.textContent = 'Base ' + state.customBase;
+      customResOut.textContent = bigIntToBase(decimal, state.customBase);
+    }
+
+    // Info bar
+    infoBar.hidden = false;
+    decimalOut.textContent = decStr.length > 24
+      ? decStr.slice(0, 21) + '…'
+      : decStr;
+    digitsOut.textContent = v.value.length;
+
+    var bitLen = binStr.length;
+    bitsOut.textContent = bitLen;
+
+    var byteLen = Math.ceil(bitLen / 8);
+    bytesOut.textContent = byteLen + (byteLen === 1 ? ' byte' : ' bytes');
+
+    // Bits view
+    bitsWrap.hidden = false;
+    renderBits(binStr);
+
+    results.hidden = false;
+  }
+
+  function groupBinary(bin) {
+    // Group from the right in 4s
+    var groups = [];
+    var s = bin;
+    while (s.length > 4) {
+      groups.unshift(s.slice(-4));
+      s = s.slice(0, -4);
+    }
+    if (s.length) groups.unshift(s);
+    return groups.join(' ');
+  }
+
+  function groupHex(hex) {
+    // Group from the right in 4s
+    var groups = [];
+    var s = hex;
+    while (s.length > 4) {
+      groups.unshift(s.slice(-4));
+      s = s.slice(0, -4);
+    }
+    if (s.length) groups.unshift(s);
+    return groups.join(' ');
+  }
+
+  function groupDecimal(dec) {
+    // Indian-style grouping
+    if (dec.length <= 3) return dec;
+    var last3 = dec.slice(-3);
+    var rest = dec.slice(0, -3);
+    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return rest + ',' + last3;
+  }
+
+  function renderBits(binStr) {
+    // Render each 4-bit group as a colored span
+    var padded = binStr;
+    var rem = padded.length % 4;
+    if (rem !== 0) {
+      padded = '0'.repeat(4 - rem) + padded;
+    }
+    var html = '';
+    for (var i = 0; i < padded.length; i += 4) {
+      var group = padded.slice(i, i + 4);
+      var hasOnes = group.indexOf('1') !== -1;
+      html += '<span class="nc-bit-group' + (hasOnes ? ' on' : '') + '">' + group + '</span>';
+    }
+    bitsInner.innerHTML = html;
+  }
+
+  // ---------- CLIPBOARD ----------
+  function copyText(text, btn, doneText) {
+    var orig = btn.innerHTML;
+    var done = function () {
+      btn.classList.add('copied');
+      if (doneText) btn.textContent = doneText;
+      setTimeout(function () {
+        btn.classList.remove('copied');
+        btn.innerHTML = orig;
+      }, 1200);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- BASE SELECTION ----------
+  baseChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      baseChips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+
+      var b = chip.getAttribute('data-base');
+      if (b === 'custom') {
+        customRow.classList.add('show');
+        state.base = parseInt(customBaseIn.value, 10) || 36;
+        customBaseIn.focus();
+      } else {
+        customRow.classList.remove('show');
+        state.base = parseInt(b, 10);
+      }
+
+      updateBaseHelp();
+      render();
+    });
+  });
+
+  customBaseIn.addEventListener('input', function () {
+    var b = parseInt(customBaseIn.value, 10);
+    if (!isFinite(b) || b < 2 || b > 36) {
+      showError('Custom base must be between 2 and 36.');
+      return;
+    }
+    clearError();
+    state.customBase = b;
+    state.base = b;
+    updateBaseHelp();
+    render();
+  });
+
+  // ---------- INPUT EVENTS ----------
+  inputEl.addEventListener('input', function () {
+    render();
+  });
+
+  inputEl.addEventListener('paste', function () {
+    // Let the browser insert, then re-render on next tick
+    setTimeout(render, 0);
+  });
+
+  pasteBtn.addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (text) {
+        inputEl.value = sanitizeInput(text);
+        render();
+      }).catch(function () {
+        inputEl.focus();
+      });
+    } else {
+      inputEl.focus();
+    }
+  });
+
+  clearBtn.addEventListener('click', function () {
+    inputEl.value = '';
+    clearError();
+    render();
+    inputEl.focus();
+  });
+
+  // ---------- COPY ALL ----------
+  copyAllBtn.addEventListener('click', function () {
+    if (state.decimalValue === null) return;
+
+    var d = state.decimalValue;
+    var lines = [];
+    lines.push('Binary:      ' + bigIntToBase(d, 2));
+    lines.push('Octal:       ' + bigIntToBase(d, 8));
+    lines.push('Decimal:     ' + d.toString(10));
+    lines.push('Hexadecimal: ' + bigIntToBase(d, 16).toUpperCase());
+    if (state.base !== state.customBase) {
+      lines.push('Base ' + state.customBase + ':    ' + bigIntToBase(d, state.customBase).toUpperCase());
+    }
+
+    copyText(lines.join('\n'), copyAllBtn, 'Copied');
+  });
+
+  // ---------- COPY PER ROW ----------
+  document.querySelectorAll('.nc-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var targetId = btn.getAttribute('data-copy-target');
+      var target = document.getElementById(targetId);
+      if (!target) return;
+      // Copy without grouping spaces
+      var raw = target.textContent.replace(/\s/g, '');
+      copyText(raw, btn, null);
+    });
+  });
+
+  // ---------- BITS TOGGLE ----------
+  bitsHeader.addEventListener('click', function () {
+    var open = bitsBody.classList.toggle('open');
+    bitsHeader.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  bitsHeader.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      bitsHeader.click();
+    }
+  });
+
+  // ---------- RESET ----------
+  resetBtn.addEventListener('click', function () {
+    clearError();
+    state.base = 10;
+    state.customBase = 36;
+    state.decimalValue = null;
+    state.lastValidInput = '255';
+
+    baseChips.forEach(function (c) {
+      c.classList.toggle('active', c.getAttribute('data-base') === '10');
+    });
+    customRow.classList.remove('show');
+    customBaseIn.value = '36';
+
+    inputEl.value = '255';
+    setInputInvalid(false);
+
+    results.hidden = true;
+    infoBar.hidden = true;
+    bitsWrap.hidden = true;
+    bitsBody.classList.remove('open');
+    bitsHeader.setAttribute('aria-expanded', 'false');
+    customResRow.hidden = true;
+
+    updateBaseHelp();
+    render();
+    inputEl.focus();
+  });
+
+  // ---------- INIT ----------
+  updateBaseHelp();
+  render();
+
+})();
+</script>
+
+</body>
+</html>
