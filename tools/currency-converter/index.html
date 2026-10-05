@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Convert 150+ currencies and top cryptocurrencies with live exchange rates. Includes a historical chart. Free and private." />
+  <title>Currency Converter — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Currency Converter local styles --- */
+
+    /* Status / rate stamp */
+    .cc-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 14px;
+      padding: 10px 14px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .cc-status .cc-status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #95a5a6;
+      flex-shrink: 0;
+    }
+    .cc-status.ok .cc-status-dot { background: #27ae60; }
+    .cc-status.error .cc-status-dot { background: #e74c3c; }
+    .cc-status.loading .cc-status-dot { background: #f39c12; animation: ccBlink 1s infinite; }
+    @keyframes ccBlink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    .cc-status strong { color: var(--brand); font-weight: 600; }
+    .cc-refresh {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cc-refresh svg {
+      width: 12px; height: 12px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .cc-refresh:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .cc-refresh.spinning svg { animation: ccSpin .8s linear infinite; }
+    @keyframes ccSpin { to { transform: rotate(360deg); } }
+
+    /* Popular pairs quick chips */
+    .cc-quick-pairs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cc-chip {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-variant-numeric: tabular-nums;
+    }
+    .cc-chip:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    /* Result display reuses base .result-display styling but with tweaks */
+    .result-display .result-value { font-variant-numeric: tabular-nums; }
+    .result-display .result-rate {
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      width: 100%;
+    }
+    .result-display .result-rate strong { color: var(--brand); font-weight: 600; }
+
+    /* Swap column vertical alignment on desktop */
+    .swap-column {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Advanced row */
+    .advanced-grid .access-select,
+    .advanced-grid select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .92rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .advanced-grid label {
+      font-weight: 500;
+      font-size: .9rem;
+      color: var(--text-2);
+    }
+
+    /* History chart panel */
+    .cc-chart-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .cc-chart-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .cc-chart-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: .82rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .cc-chart-stats strong { color: var(--brand); font-weight: 600; }
+    .cc-chart-stats .cc-up { color: #27ae60; font-weight: 700; }
+    .cc-chart-stats .cc-down { color: #e74c3c; font-weight: 700; }
+    .cc-chart-canvas {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+
+    /* Disclaimer reuses base .disclaimer-box */
+
+    @media (max-width: 768px) {
+      .swap-column { padding: 0 0 6px; }
+      .swap-btn { transform: rotate(90deg); }
+      .swap-btn:hover { transform: rotate(90deg) scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="cc-heading">
+    <div class="section-title-bar">
+      <h2 id="cc-heading">Currency Converter</h2>
+      <p class="section-sub">Live exchange rates for 150+ currencies and top cryptocurrencies.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Convert between world currencies using live mid-market rates. Rates refresh on
+        page load and whenever you tap refresh. Historical charts pull from the European
+        Central Bank's reference dataset. All calculations run in your browser.
+      </p>
+
+      <!-- ===== STATUS ===== -->
+      <div class="cc-status loading" id="ccStatus">
+        <span class="cc-status-dot"></span>
+        <span id="ccStatusText">Loading live exchange rates…</span>
+        <button type="button" class="cc-refresh" id="ccRefresh" aria-label="Refresh rates">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- ===== QUICK PAIRS ===== -->
+      <div class="cc-quick-pairs" id="ccQuickPairs">
+        <button type="button" class="cc-chip" data-from="USD" data-to="INR">USD → INR</button>
+        <button type="button" class="cc-chip" data-from="USD" data-to="EUR">USD → EUR</button>
+        <button type="button" class="cc-chip" data-from="EUR" data-to="INR">EUR → INR</button>
+        <button type="button" class="cc-chip" data-from="GBP" data-to="INR">GBP → INR</button>
+        <button type="button" class="cc-chip" data-from="USD" data-to="JPY">USD → JPY</button>
+        <button type="button" class="cc-chip" data-from="AED" data-to="INR">AED → INR</button>
+      </div>
+
+      <form class="currency-form" id="ccForm" novalidate onsubmit="return false;">
+
+        <!-- Asset type toggle -->
+        <div class="field-group" style="display:block;">
+          <label style="display:block;margin-bottom:10px;">Asset type</label>
+          <div class="asset-toggle" role="tablist" aria-label="Asset type">
+            <button type="button" class="toggle-btn active" data-asset="fiat" role="tab" aria-selected="true">Currencies</button>
+            <button type="button" class="toggle-btn" data-asset="crypto" role="tab" aria-selected="false">Crypto</button>
+          </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="field-group">
+          <label for="ccAmount">Amount</label>
+          <input type="number" id="ccAmount" min="0" step="any" value="100" inputmode="decimal" aria-label="Amount to convert" />
+        </div>
+
+        <!-- Converter grid -->
+        <div class="converter-grid">
+
+          <div class="converter-column">
+            <div class="currency-select-wrapper">
+              <input type="text" class="currency-search" id="ccFromSearch" placeholder="Search currency…" autocomplete="off" aria-label="Search from currency" />
+              <select class="currency-select" id="ccFrom" size="1" aria-label="From currency"></select>
+            </div>
+          </div>
+
+          <div class="swap-column">
+            <button type="button" class="swap-btn" id="ccSwap" aria-label="Swap currencies">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="converter-column">
+            <div class="currency-select-wrapper">
+              <input type="text" class="currency-search" id="ccToSearch" placeholder="Search currency…" autocomplete="off" aria-label="Search to currency" />
+              <select class="currency-select" id="ccTo" size="1" aria-label="To currency"></select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Result -->
+        <div class="result-display" id="ccResultDisplay" style="margin-top:16px;">
+          <div style="flex:1;min-width:0;">
+            <span class="result-value" id="ccResult">—</span>
+            <span class="result-currency" id="ccResultCurrency"></span>
+            <div class="result-rate" id="ccResultRate"></div>
+          </div>
+        </div>
+
+        <!-- Advanced -->
+        <div class="advanced-grid" style="margin-top:18px;">
+          <label for="ccPrecision">Decimal places</label>
+          <select id="ccPrecision" class="cc-adv-select">
+            <option value="2" selected>2 (standard)</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8">8 (crypto-friendly)</option>
+          </select>
+        </div>
+
+        <div class="error-msg" id="ccError" role="alert"></div>
+
+        <!-- Chart -->
+        <div class="chart-container" id="ccChartContainer" style="display:none;">
+          <div class="cc-chart-header">
+            <div class="cc-chart-title" id="ccChartTitle">Historical rate</div>
+            <div class="timeframe-toggle" id="ccTimeframe" role="tablist" aria-label="Chart timeframe">
+              <button type="button" class="timeframe-btn" data-days="7" role="tab">7D</button>
+              <button type="button" class="timeframe-btn active" data-days="30" role="tab" aria-selected="true">30D</button>
+              <button type="button" class="timeframe-btn" data-days="90" role="tab">90D</button>
+              <button type="button" class="timeframe-btn" data-days="365" role="tab">1Y</button>
+            </div>
+          </div>
+          <div class="cc-chart-stats" id="ccChartStats" style="display:none;"></div>
+          <div id="ccChartBody">
+            <div class="chart-loading" id="ccChartLoading" style="display:none;">
+              <div>Loading historical rates…</div>
+            </div>
+            <canvas class="cc-chart-canvas" id="ccChartCanvas" width="800" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="btn-group" style="margin-top:18px;">
+          <button type="button" class="btn btn-secondary" id="ccReset">Reset</button>
+        </div>
+
+      </form>
+
+      <div class="disclaimer-box">
+        <strong>Note on rates.</strong> The numbers on this page are indicative mid-market
+        rates, not the rates your bank or card issuer will apply. Banks typically add a
+        margin of 1–3% and may charge a flat fee, so the amount you actually receive may
+        differ. Crypto prices come from CoinGecko and are aggregated across major
+        exchanges. Never rely on this tool for settlement or tax filing — always verify
+        against your provider's published rate before transacting.
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How currency conversion works</h3>
+        <p>
+          A currency exchange rate expresses how much of one currency is worth one unit
+          of another. If the USD to INR rate is 83.50, then 1 US dollar buys 83.50
+          Indian rupees. To convert an amount, multiply by the rate. To convert back,
+          divide by the rate — or equivalently, multiply by the inverse pair's rate.
+        </p>
+        <p>
+          Rates move constantly during trading hours because banks and brokers are
+          continuously matching buy and sell orders. The mid-market rate is the midpoint
+          between the buy price (bid) and the sell price (ask). It is the fairest
+          baseline you can compare against, but it is almost never the rate you get as
+          a retail customer.
+        </p>
+        <p>
+          The historical chart pulls daily reference rates published by the European
+          Central Bank, which update once per working day. This dataset covers around 30
+          major currencies. When you select a pair outside that set, the chart falls back
+          gracefully and only the live conversion is shown.
+        </p>
+        <p>
+          Cryptocurrency prices are quoted in USD by aggregators such as CoinGecko and are
+          far more volatile than fiat rates. A price that looks accurate at 10:00 may be
+          off by several percent at 10:01. Use crypto figures with extra caution.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form        = document.getElementById('ccForm');
+  var statusBox   = document.getElementById('ccStatus');
+  var statusText  = document.getElementById('ccStatusText');
+  var refreshBtn  = document.getElementById('ccRefresh');
+
+  var assetBtns   = document.querySelectorAll('.asset-toggle .toggle-btn');
+  var amountIn    = document.getElementById('ccAmount');
+  var fromSel     = document.getElementById('ccFrom');
+  var toSel       = document.getElementById('ccTo');
+  var fromSearch  = document.getElementById('ccFromSearch');
+  var toSearch    = document.getElementById('ccToSearch');
+  var swapBtn     = document.getElementById('ccSwap');
+
+  var resultVal   = document.getElementById('ccResult');
+  var resultCur   = document.getElementById('ccResultCurrency');
+  var resultRate  = document.getElementById('ccResultRate');
+  var errorBox    = document.getElementById('ccError');
+
+  var precisionSel = document.getElementById('ccPrecision');
+  var resetBtn     = document.getElementById('ccReset');
+
+  var chartContainer = document.getElementById('ccChartContainer');
+  var chartTitle     = document.getElementById('ccChartTitle');
+  var chartStats     = document.getElementById('ccChartStats');
+  var chartBody      = document.getElementById('ccChartBody');
+  var chartLoading   = document.getElementById('ccChartLoading');
+  var chartCanvas    = document.getElementById('ccChartCanvas');
+  var timeframeBtns  = document.querySelectorAll('.timeframe-btn');
+  var quickChips     = document.querySelectorAll('.cc-chip');
+
+  // ---------- STATE ----------
+  var state = {
+    asset: 'fiat',            // 'fiat' | 'crypto'
+    ratesFiat: null,          // { USD: 1, INR: 83.5, ... }  base = USD
+    ratesBase: 'USD',
+    ratesUpdated: null,
+    crypto: {},               // { bitcoin: { usd: 65000 }, ... }
+    from: 'USD',
+    to: 'INR',
+    chartDays: 30,
+    chartCache: {}
+  };
+
+  // ---------- CURRENCY META ----------
+  var CURRENCY_NAMES = {
+    USD: 'US Dollar', INR: 'Indian Rupee', EUR: 'Euro', GBP: 'British Pound',
+    JPY: 'Japanese Yen', CNY: 'Chinese Yuan', AUD: 'Australian Dollar',
+    CAD: 'Canadian Dollar', CHF: 'Swiss Franc', HKD: 'Hong Kong Dollar',
+    SGD: 'Singapore Dollar', NZD: 'New Zealand Dollar', KRW: 'South Korean Won',
+    SEK: 'Swedish Krona', NOK: 'Norwegian Krone', DKK: 'Danish Krone',
+    PLN: 'Polish Zloty', CZK: 'Czech Koruna', HUF: 'Hungarian Forint',
+    RUB: 'Russian Ruble', TRY: 'Turkish Lira', ZAR: 'South African Rand',
+    BRL: 'Brazilian Real', MXN: 'Mexican Peso', ARS: 'Argentine Peso',
+    CLP: 'Chilean Peso', COP: 'Colombian Peso', PEN: 'Peruvian Sol',
+    AED: 'UAE Dirham', SAR: 'Saudi Riyal', QAR: 'Qatari Riyal',
+    KWD: 'Kuwaiti Dinar', BHD: 'Bahraini Dinar', OMR: 'Omani Rial',
+    JOD: 'Jordanian Dinar', ILS: 'Israeli Shekel', EGP: 'Egyptian Pound',
+    THB: 'Thai Baht', MYR: 'Malaysian Ringgit', IDR: 'Indonesian Rupiah',
+    PHP: 'Philippine Peso', VND: 'Vietnamese Dong', PKR: 'Pakistani Rupee',
+    BDT: 'Bangladeshi Taka', LKR: 'Sri Lankan Rupee', NPR: 'Nepalese Rupee',
+    MMK: 'Myanmar Kyat', KHR: 'Cambodian Riel', LAK: 'Lao Kip',
+    NGN: 'Nigerian Naira', KES: 'Kenyan Shilling', GHS: 'Ghanaian Cedi',
+    TZS: 'Tanzanian Shilling', UGX: 'Ugandan Shilling', MAD: 'Moroccan Dirham',
+    TND: 'Tunisian Dinar', DZD: 'Algerian Dinar', XOF: 'West African CFA Franc',
+    XAF: 'Central African CFA Franc', MUR: 'Mauritian Rupee', SCR: 'Seychellois Rupee',
+    ISK: 'Icelandic Krona', HRK: 'Croatian Kuna', RON: 'Romanian Leu',
+    BGN: 'Bulgarian Lev', RSD: 'Serbian Dinar', UAH: 'Ukrainian Hryvnia',
+    GEL: 'Georgian Lari', AMD: 'Armenian Dram', AZN: 'Azerbaijani Manat',
+    KZT: 'Kazakhstani Tenge', UZS: 'Uzbekistani Som', MNT: 'Mongolian Tugrik',
+    TWD: 'New Taiwan Dollar', MOP: 'Macanese Pataca', BND: 'Brunei Dollar',
+    FJD: 'Fijian Dollar', PGK: 'Papua New Guinean Kina', WST: 'Samoan Tala',
+    TOP: 'Tongan Paʻanga', VUV: 'Vanuatu Vatu', SBD: 'Solomon Islands Dollar',
+    JMD: 'Jamaican Dollar', TTD: 'Trinidad and Tobago Dollar', BBD: 'Barbadian Dollar',
+    BSD: 'Bahamian Dollar', BZD: 'Belize Dollar', GTQ: 'Guatemalan Quetzal',
+    HNL: 'Honduran Lempira', NIO: 'Nicaraguan Cordoba', CRC: 'Costa Rican Colon',
+    PAB: 'Panamanian Balboa', DOP: 'Dominican Peso', HTG: 'Haitian Gourde',
+    CUP: 'Cuban Peso', UYU: 'Uruguayan Peso', PYG: 'Paraguayan Guarani',
+    BOB: 'Bolivian Boliviano', VES: 'Venezuelan Bolivar', GYD: 'Guyanese Dollar',
+    SRD: 'Surinamese Dollar'
+  };
+
+  var CRYPTO_META = [
+    { id: 'bitcoin',     symbol: 'BTC', name: 'Bitcoin' },
+    { id: 'ethereum',    symbol: 'ETH', name: 'Ethereum' },
+    { id: 'tether',      symbol: 'USDT', name: 'Tether' },
+    { id: 'binancecoin', symbol: 'BNB', name: 'BNB' },
+    { id: 'solana',      symbol: 'SOL', name: 'Solana' },
+    { id: 'ripple',      symbol: 'XRP', name: 'XRP' },
+    { id: 'cardano',     symbol: 'ADA', name: 'Cardano' },
+    { id: 'dogecoin',    symbol: 'DOGE', name: 'Dogecoin' },
+    { id: 'polkadot',    symbol: 'DOT', name: 'Polkadot' },
+    { id: 'matic-network', symbol: 'MATIC', name: 'Polygon' },
+    { id: 'litecoin',    symbol: 'LTC', name: 'Litecoin' },
+    { id: 'tron',        symbol: 'TRX', name: 'TRON' },
+    { id: 'chainlink',   symbol: 'LINK', name: 'Chainlink' },
+    { id: 'avalanche-2', symbol: 'AVAX', name: 'Avalanche' }
+  ];
+
+  // ECB-supported fiat currencies for the historical chart
+  var ECB_SUPPORTED = ['USD','EUR','GBP','JPY','CHF','AUD','CAD','SEK','NOK','DKK','PLN','CZK','HUF','RON','BGN','HRK','ISK','TRY','ZAR','BRL','INR','IDR','ILS','KRW','MXN','MYR','NZD','PHP','SGD','THB','CNY','HKD'];
+
+  // ---------- HELPERS ----------
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function setStatus(msg, mode) {
+    statusText.textContent = msg;
+    statusBox.classList.remove('ok', 'error', 'loading');
+    if (mode) statusBox.classList.add(mode);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function formatNumber(n, decimals) {
+    if (!isFinite(n)) return '—';
+    return n.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  // ---------- LOAD FIAT RATES ----------
+  function loadFiatRates() {
+    setStatus('Loading live exchange rates…', 'loading');
+    refreshBtn.classList.add('spinning');
+
+    var url = 'https://open.er-api.com/v6/latest/USD';
+
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.rates) throw new Error('Bad response');
+
+        state.ratesFiat = data.rates;
+        state.ratesBase = data.base_code || 'USD';
+        state.ratesUpdated = data.time_last_update_utc || new Date().toUTCString();
+
+        var count = Object.keys(data.rates).length;
+        setStatus('Live rates loaded · ' + count + ' currencies · updated ' + formatTimestamp(state.ratesUpdated), 'ok');
+        refreshBtn.classList.remove('spinning');
+        populateSelects();
+        runConversion();
+        scheduleChartLoad();
+      })
+      .catch(function () {
+        setStatus('Could not load rates. Check your connection and press Refresh.', 'error');
+        refreshBtn.classList.remove('spinning');
+      });
+  }
+
+  function formatTimestamp(ts) {
+    try {
+      var d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      var diff = Math.round((Date.now() - d.getTime()) / 60000);
+      if (diff < 1) return 'just now';
+      if (diff < 60) return diff + ' min ago';
+      if (diff < 1440) return Math.round(diff / 60) + ' hr ago';
+      return d.toLocaleDateString();
+    } catch (e) { return ts; }
+  }
+
+  // ---------- LOAD CRYPTO PRICES ----------
+  function loadCryptoPrices() {
+    setStatus('Loading crypto prices…', 'loading');
+    refreshBtn.classList.add('spinning');
+
+    var ids = CRYPTO_META.map(function (c) { return c.id; }).join(',');
+    var url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + ids + '&vs_currencies=usd';
+
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        state.crypto = data || {};
+        setStatus('Crypto prices loaded · ' + Object.keys(state.crypto).length + ' assets', 'ok');
+        refreshBtn.classList.remove('spinning');
+        runConversion();
+      })
+      .catch(function () {
+        setStatus('Could not load crypto prices. Press Refresh to try again.', 'error');
+        refreshBtn.classList.remove('spinning');
+      });
+  }
+
+  // ---------- POPULATE SELECTS ----------
+  function populateSelects() {
+    if (state.asset === 'fiat') {
+      if (!state.ratesFiat) return;
+      var codes = Object.keys(state.ratesFiat).sort();
+
+      // From
+      var prevFrom = state.from;
+      fromSel.innerHTML = '';
+      codes.forEach(function (code) {
+        var opt = document.createElement('option');
+        opt.value = code;
+        var name = CURRENCY_NAMES[code] || code;
+        opt.textContent = code + ' — ' + name;
+        if (code === prevFrom) opt.selected = true;
+        fromSel.appendChild(opt);
+      });
+
+      // To
+      var prevTo = state.to;
+      toSel.innerHTML = '';
+      codes.forEach(function (code) {
+        var opt = document.createElement('option');
+        opt.value = code;
+        var name = CURRENCY_NAMES[code] || code;
+        opt.textContent = code + ' — ' + name;
+        if (code === prevTo) opt.selected = true;
+        toSel.appendChild(opt);
+      });
+
+      // Ensure both exist
+      if (!state.ratesFiat[state.from]) state.from = 'USD';
+      if (!state.ratesFiat[state.to]) state.to = 'INR';
+      fromSel.value = state.from;
+      toSel.value = state.to;
+    } else {
+      // Crypto From = crypto assets + USD fiat
+      var cryptoFromOptions = CRYPTO_META.map(function (c) {
+        return { value: c.symbol, label: c.symbol + ' — ' + c.name };
+      });
+      cryptoFromOptions.push({ value: 'USD', label: 'USD — US Dollar' });
+
+      fromSel.innerHTML = '';
+      cryptoFromOptions.forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        fromSel.appendChild(opt);
+      });
+
+      // To = fiat currencies
+      var cryptoToOptions = [];
+      if (state.ratesFiat) {
+        Object.keys(state.ratesFiat).sort().forEach(function (code) {
+          cryptoToOptions.push({ value: code, label: code + ' — ' + (CURRENCY_NAMES[code] || code) });
+        });
+      } else {
+        cryptoToOptions.push({ value: 'USD', label: 'USD — US Dollar' });
+      }
+
+      toSel.innerHTML = '';
+      cryptoToOptions.forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        toSel.appendChild(opt);
+      });
+
+      // Defaults for crypto mode
+      if (!CRYPTO_META.some(function (c) { return c.symbol === state.from; }) && state.from !== 'USD') {
+        state.from = 'BTC';
+      }
+      if (!cryptoToOptions.some(function (o) { return o.value === state.to; })) {
+        state.to = 'USD';
+      }
+      fromSel.value = state.from;
+      toSel.value = state.to;
+    }
+  }
+
+  // ---------- CONVERT ----------
+  function getRate(from, to) {
+    if (from === to) return 1;
+
+    if (state.asset === 'fiat') {
+      if (!state.ratesFiat) return NaN;
+      var base = state.ratesBase; // normally USD
+      var rFrom = state.ratesFiat[from];
+      var rTo   = state.ratesFiat[to];
+      if (!rFrom || !rTo) return NaN;
+      // rate[code] = units of code per 1 base
+      // amount in base = amount(from) / rFrom
+      // amount in to   = amount(base) * rTo
+      return rTo / rFrom;
+    }
+
+    // Crypto mode
+    // from = crypto symbol OR 'USD' ; to = fiat code
+    var fromUsdValue;
+    if (from === 'USD') {
+      fromUsdValue = 1;
+    } else {
+      var meta = CRYPTO_META.filter(function (c) { return c.symbol === from; })[0];
+      if (!meta || !state.crypto[meta.id]) return NaN;
+      fromUsdValue = state.crypto[meta.id].usd;
+    }
+
+    // to is a fiat code
+    if (to === 'USD') return fromUsdValue;
+    if (!state.ratesFiat) return NaN;
+    var usdToTarget = state.ratesFiat[to]; // units of `to` per 1 USD
+    if (!usdToTarget) return NaN;
+    return fromUsdValue * usdToTarget;
+  }
+
+  function runConversion() {
+    clearError();
+
+    var amount = parseFloat(amountIn.value);
+    if (!isFinite(amount) || amount < 0) {
+      resultVal.textContent = '—';
+      resultCur.textContent = '';
+      resultRate.textContent = '';
+      return;
+    }
+
+    var from = fromSel.value;
+    var to = toSel.value;
+
+    var rate = getRate(from, to);
+    if (!isFinite(rate)) {
+      resultVal.textContent = '—';
+      resultCur.textContent = '';
+      resultRate.textContent = state.asset === 'crypto'
+        ? 'Pick a cryptocurrency and a fiat currency to convert.'
+        : 'Rates for this pair are unavailable.';
+      return;
+    }
+
+    var converted = amount * rate;
+    var decimals = parseInt(precisionSel.value, 10) || 2;
+
+    resultVal.textContent = formatNumber(converted, decimals);
+    resultCur.textContent = ' ' + to;
+    resultRate.innerHTML =
+      '1 ' + escapeHtml(from) + ' = <strong>' + formatNumber(rate, Math.max(decimals, 4)) + ' ' + escapeHtml(to) + '</strong>' +
+      ' · 1 ' + escapeHtml(to) + ' = ' + formatNumber(1 / rate, Math.max(decimals, 4)) + ' ' + escapeHtml(from);
+  }
+
+  // ---------- CHART ----------
+  function scheduleChartLoad() {
+    // Only show the chart when both currencies are supported by ECB
+    if (state.asset !== 'fiat') {
+      chartContainer.style.display = 'none';
+      return;
+    }
+    var from = state.from;
+    var to = state.to;
+    if (ECB_SUPPORTED.indexOf(from) === -1 || ECB_SUPPORTED.indexOf(to) === -1) {
+      chartContainer.style.display = 'none';
+      return;
+    }
+    chartContainer.style.display = 'block';
+    loadHistorical(from, to, state.chartDays);
+  }
+
+  function loadHistorical(from, to, days) {
+    if (!window.fetch) return;
+    if (from === to) {
+      chartContainer.style.display = 'none';
+      return;
+    }
+
+    var cacheKey = from + '_' + to + '_' + days;
+    if (state.chartCache[cacheKey]) {
+      drawChart(state.chartCache[cacheKey]);
+      return;
+    }
+
+    chartLoading.style.display = 'flex';
+    chartCanvas.style.display = 'none';
+    chartStats.style.display = 'none';
+
+    var end = new Date();
+    var start = new Date(end.getTime() - days * 86400000);
+    var fmt = function (d) { return d.toISOString().slice(0, 10); };
+
+    // frankfurter.app expects from/to in the URL
+    var url = 'https://api.frankfurter.app/' + fmt(start) + '..' + fmt(end) + '?from=' + from + '&to=' + to;
+
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.rates) throw new Error('No data');
+        var points = [];
+        Object.keys(data.rates).sort().forEach(function (date) {
+          var v = data.rates[date][to];
+          if (isFinite(v)) points.push({ date: date, value: v });
+        });
+        if (!points.length) throw new Error('Empty dataset');
+        state.chartCache[cacheKey] = { points: points, from: from, to: to };
+        chartLoading.style.display = 'none';
+        chartCanvas.style.display = 'block';
+        drawChart(state.chartCache[cacheKey]);
+      })
+      .catch(function () {
+        chartLoading.innerHTML = '<div>Historical data unavailable for this pair.</div>';
+      });
+  }
+
+  function drawChart(payload) {
+    var points = payload.points;
+    var from = payload.from;
+    var to = payload.to;
+
+    if (!points || points.length < 2) return;
+
+    var canvas = chartCanvas;
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || 800;
+    var cssH = 220;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.height = cssH + 'px';
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    var values = points.map(function (p) { return p.value; });
+    var min = Math.min.apply(null, values);
+    var max = Math.max.apply(null, values);
+    if (min === max) { min -= 1; max += 1; }
+
+    var pad = { top: 16, right: 12, bottom: 26, left: 46 };
+    var plotW = cssW - pad.left - pad.right;
+    var plotH = cssH - pad.top - pad.bottom;
+
+    var xStep = points.length > 1 ? plotW / (points.length - 1) : plotW;
+
+    var styles = getComputedStyle(document.documentElement);
+    var brand = styles.getPropertyValue('--brand').trim() || '#1a5c3a';
+    var accent = '#52c98a';
+    var border = styles.getPropertyValue('--border').trim() || '#e6e6e6';
+    var textMuted = styles.getPropertyValue('--text-muted').trim() || '#7b8a83';
+
+    // Grid lines
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= 4; i++) {
+      var y = pad.top + (plotH * i / 4);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + plotW, y);
+      ctx.stroke();
+
+      var labelVal = max - ((max - min) * i / 4);
+      ctx.fillStyle = textMuted;
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(labelVal.toFixed(4), pad.left - 6, y);
+    }
+
+    // Area fill
+    var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+    grad.addColorStop(0, hexToRgba(brand, .22));
+    grad.addColorStop(1, hexToRgba(brand, 0));
+
+    ctx.beginPath();
+    points.forEach(function (p, i) {
+      var x = pad.left + i * xStep;
+      var y = pad.top + plotH - ((p.value - min) / (max - min)) * plotH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(pad.left + plotW, pad.top + plotH);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    points.forEach(function (p, i) {
+      var x = pad.left + i * xStep;
+      var y = pad.top + plotH - ((p.value - min) / (max - min)) * plotH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = brand;
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // End dot
+    var last = points[points.length - 1];
+    var lastX = pad.left + (points.length - 1) * xStep;
+    var lastY = pad.top + plotH - ((last.value - min) / (max - min)) * plotH;
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = brand;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // X labels
+    var labelIdx = [0, Math.floor(points.length / 2), points.length - 1];
+    ctx.fillStyle = textMuted;
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    labelIdx.forEach(function (i) {
+      var p = points[i];
+      var x = pad.left + i * xStep;
+      ctx.fillText(p.date.slice(5), x, pad.top + plotH + 6);
+    });
+
+    // Stats
+    var first = values[0];
+    var lastVal = values[values.length - 1];
+    var change = lastVal - first;
+    var changePct = (change / first) * 100;
+    var sign = change > 0 ? '+' : '';
+    var cls = change > 0 ? 'cc-up' : (change < 0 ? 'cc-down' : '');
+    chartStats.innerHTML =
+      '<span>Open <strong>' + first.toFixed(4) + '</strong></span>' +
+      '<span>Close <strong>' + lastVal.toFixed(4) + '</strong></span>' +
+      '<span>High <strong>' + max.toFixed(4) + '</strong></span>' +
+      '<span>Low <strong>' + min.toFixed(4) + '</strong></span>' +
+      '<span class="' + cls + '">' + sign + changePct.toFixed(2) + '%</span>' +
+      '<span>' + points.length + ' days</span>';
+    chartStats.style.display = 'flex';
+    chartTitle.textContent = from + ' / ' + to + ' · last ' + state.chartDays + ' days';
+  }
+
+  function hexToRgba(hex, alpha) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.slice(2, 4), 16);
+    var b = parseInt(hex.slice(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
+  // ---------- EVENTS ----------
+  amountIn.addEventListener('input', runConversion);
+
+  fromSel.addEventListener('change', function () {
+    state.from = fromSel.value;
+    fromSearch.value = '';
+    filterSelect(fromSel, '');
+    runConversion();
+    scheduleChartLoad();
+  });
+
+  toSel.addEventListener('change', function () {
+    state.to = toSel.value;
+    toSearch.value = '';
+    filterSelect(toSel, '');
+    runConversion();
+    scheduleChartLoad();
+  });
+
+  fromSearch.addEventListener('input', function () {
+    filterSelect(fromSel, this.value);
+  });
+  toSearch.addEventListener('input', function () {
+    filterSelect(toSel, this.value);
+  });
+
+  function filterSelect(selectEl, query) {
+    var q = (query || '').toLowerCase().trim();
+    Array.prototype.forEach.call(selectEl.options, function (opt) {
+      var text = opt.textContent.toLowerCase();
+      opt.hidden = q && text.indexOf(q) === -1;
+    });
+    if (q) {
+      // Auto-select first visible option
+      for (var i = 0; i < selectEl.options.length; i++) {
+        if (!selectEl.options[i].hidden) {
+          selectEl.value = selectEl.options[i].value;
+          break;
+        }
+      }
+    }
+  }
+
+  swapBtn.addEventListener('click', function () {
+    var f = fromSel.value;
+    var t = toSel.value;
+    fromSel.value = t;
+    toSel.value = f;
+    state.from = t;
+    state.to = f;
+    runConversion();
+    scheduleChartLoad();
+  });
+
+  assetBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      assetBtns.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+
+      state.asset = btn.getAttribute('data-asset');
+      state.from = state.asset === 'crypto' ? 'BTC' : 'USD';
+      state.to = state.asset === 'crypto' ? 'USD' : 'INR';
+
+      if (state.asset === 'crypto' && !Object.keys(state.crypto).length) {
+        loadCryptoPrices();
+      }
+      populateSelects();
+      runConversion();
+      scheduleChartLoad();
+    });
+  });
+
+  precisionSel.addEventListener('change', runConversion);
+
+  refreshBtn.addEventListener('click', function () {
+    if (state.asset === 'crypto') loadCryptoPrices();
+    else loadFiatRates();
+  });
+
+  timeframeBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      timeframeBtns.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      state.chartDays = parseInt(btn.getAttribute('data-days'), 10) || 30;
+      scheduleChartLoad();
+    });
+  });
+
+  quickChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var from = chip.getAttribute('data-from');
+      var to = chip.getAttribute('data-to');
+      // Ensure we're in fiat mode
+      if (state.asset !== 'fiat') {
+        assetBtns.forEach(function (b) {
+          var isFiat = b.getAttribute('data-asset') === 'fiat';
+          b.classList.toggle('active', isFiat);
+          b.setAttribute('aria-selected', isFiat ? 'true' : 'false');
+        });
+        state.asset = 'fiat';
+        populateSelects();
+      }
+      fromSel.value = from;
+      toSel.value = to;
+      state.from = from;
+      state.to = to;
+      runConversion();
+      scheduleChartLoad();
+    });
+  });
+
+  resetBtn.addEventListener('click', function () {
+    clearError();
+    state.asset = 'fiat';
+    state.from = 'USD';
+    state.to = 'INR';
+    state.chartDays = 30;
+
+    assetBtns.forEach(function (b) {
+      var isFiat = b.getAttribute('data-asset') === 'fiat';
+      b.classList.toggle('active', isFiat);
+      b.setAttribute('aria-selected', isFiat ? 'true' : 'false');
+    });
+    timeframeBtns.forEach(function (b) {
+      var isActive = b.getAttribute('data-days') === '30';
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    amountIn.value = '100';
+    precisionSel.value = '2';
+    fromSearch.value = '';
+    toSearch.value = '';
+
+    populateSelects();
+    fromSel.value = 'USD';
+    toSel.value = 'INR';
+    runConversion();
+    scheduleChartLoad();
+  });
+
+  // Redraw chart on theme change
+  var observer = new MutationObserver(function () {
+    var keys = Object.keys(state.chartCache);
+    if (keys.length) {
+      var last = state.chartCache[keys[keys.length - 1]];
+      if (chartCanvas.style.display !== 'none') drawChart(last);
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+  window.addEventListener('resize', function () {
+    var keys = Object.keys(state.chartCache);
+    if (keys.length) {
+      var last = state.chartCache[keys[keys.length - 1]];
+      if (chartCanvas.style.display !== 'none') drawChart(last);
+    }
+  });
+
+  // ---------- INIT ----------
+  loadFiatRates();
+
+})();
+</script>
+
+</body>
+</html>
