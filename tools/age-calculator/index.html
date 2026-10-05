@@ -317,23 +317,28 @@
     return n.toLocaleString('en-US');
   }
 
-  function computeAge(dob, asOf) {
+function computeAge(dob, asOf) {
     var years  = asOf.getFullYear() - dob.getFullYear();
     var months = asOf.getMonth()    - dob.getMonth();
     var days   = asOf.getDate()     - dob.getDate();
 
     if (days < 0) {
       months -= 1;
-      // days in the month prior to asOf
       var prevMonth = new Date(asOf.getFullYear(), asOf.getMonth(), 0);
       days += prevMonth.getDate();
+
+      if (days < 0) {
+        months -= 1;
+        var monthBefore = new Date(asOf.getFullYear(), asOf.getMonth() - 1, 0);
+        days += monthBefore.getDate();
+      }
     }
     if (months < 0) {
       years -= 1;
       months += 12;
     }
     return { years: years, months: months, days: days };
-  }
+}
 
   function nextBirthdayInfo(dob, asOf) {
     // Clone asOf at midnight
