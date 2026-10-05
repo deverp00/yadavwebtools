@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Solve every common percentage problem — X% of Y, X is what % of Y, percent change, increase, decrease, and reverse percentage. Free and private." />
+  <title>Percentage Calculator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Percentage Calculator local styles --- */
+
+    /* Mode tabs (segmented control) */
+    .pc-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 6px;
+      background: var(--bg-result);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 22px;
+    }
+    .pc-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex: 1 1 auto;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s var(--ease), color .2s var(--ease);
+      white-space: nowrap;
+      text-align: center;
+    }
+    .pc-tab svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+      flex-shrink: 0;
+    }
+    .pc-tab:hover { color: var(--brand); }
+    .pc-tab.active {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
+    }
+
+    /* Panels */
+    .pc-panel { display: none; }
+    .pc-panel.active { display: block; animation: pcFade .28s var(--ease-out); }
+    @keyframes pcFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Inline formula row: [input] label [input] */
+    .pc-inline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 12px;
+      padding: 18px 20px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .pc-inline .pc-num {
+      width: 130px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+    }
+    .pc-inline .pc-num:focus {
+      outline: 0;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26, 92, 58, .12);
+    }
+    .pc-inline .pc-num.nc-invalid {
+      border-color: #e74c3c;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, .12);
+    }
+    .pc-inline .pc-word {
+      color: var(--text-2);
+      font-weight: 500;
+    }
+    .pc-inline .pc-result-inline {
+      color: var(--brand);
+      font-weight: 700;
+      font-size: 1.15rem;
+      font-variant-numeric: tabular-nums;
+      min-width: 90px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 2px solid var(--brand);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      display: inline-block;
+    }
+    .pc-inline .pc-result-inline.is-empty {
+      color: var(--text-muted);
+      border-color: var(--border);
+      border-style: dashed;
+      font-weight: 500;
+    }
+
+    /* Result panel below each mode */
+    .pc-result {
+      margin-top: 14px;
+      padding: 20px 22px;
+      background: var(--bg-result);
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius);
+      display: none;
+    }
+    .pc-result.show {
+      display: block;
+      animation: pcFade .3s var(--ease-out);
+    }
+    .pc-result-line {
+      font-size: 1rem;
+      color: var(--text-2);
+      margin-bottom: 12px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .pc-result-line strong { color: var(--text); font-weight: 600; }
+    .pc-result-value {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      color: var(--brand);
+      text-align: center;
+      line-height: 1.15;
+      word-break: break-all;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 6px;
+    }
+    .pc-result-detail {
+      font-size: .85rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--brand-line);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    .pc-result-detail strong { color: var(--brand); font-weight: 600; }
+
+    .pc-result-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .pc-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .pc-copy-btn svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .pc-copy-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .pc-copy-btn.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    /* Delta indicator (increase/decrease) */
+    .pc-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .pc-delta.up   { background: rgba(46, 204, 113, .14); color: #1a7a44; }
+    .pc-delta.down { background: rgba(231, 76, 60, .14);  color: #b33a2c; }
+    .pc-delta.flat { background: var(--brand-soft); color: var(--text-muted); }
+    .dark-mode .pc-delta.up   { color: #52c98a; }
+    .dark-mode .pc-delta.down { color: #ff8979; }
+
+    /* Common percentages quick chips */
+    .pc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+    .pc-chip {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      font-variant-numeric: tabular-nums;
+    }
+    .pc-chip:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    /* Small link-style button */
+    .pc-link-btn {
+      background: transparent;
+      border: 0;
+      color: var(--brand);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background .2s var(--ease);
+    }
+    .pc-link-btn:hover { background: var(--brand-soft); }
+
+    /* Result toggle row */
+    .pc-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .pc-tab {
+        padding: 9px 8px;
+        font-size: .76rem;
+      }
+      .pc-tab span.pc-tab-label { display: none; }
+      .pc-tab svg { width: 18px; height: 18px; }
+      .pc-tab.active span.pc-tab-label { display: inline; }
+      .pc-inline {
+        padding: 14px 14px;
+        gap: 8px 10px;
+        font-size: .92rem;
+      }
+      .pc-inline .pc-num {
+        width: 100px;
+        padding: 8px 10px;
+        font-size: .92rem;
+      }
+      .pc-inline .pc-result-inline {
+        min-width: 70px;
+        font-size: 1rem;
+        padding: 7px 10px;
+      }
+      .pc-result-actions { justify-content: stretch; }
+      .pc-copy-btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="pc-heading">
+    <div class="section-title-bar">
+      <h2 id="pc-heading">Percentage Calculator</h2>
+      <p class="section-sub">Solve every common percentage problem in one place.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Choose a calculation type, fill in the values, and see the answer instantly as you
+        type. Every result also shows the formula and the exact working so you can verify
+        the number yourself.
+      </p>
+
+      <!-- ===== MODE TABS ===== -->
+      <div class="pc-tabs" role="tablist" aria-label="Calculation type">
+        <button type="button" class="pc-tab active" data-mode="of" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          <span class="pc-tab-label">X% of Y</span>
+        </button>
+        <button type="button" class="pc-tab" data-mode="is" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span class="pc-tab-label">X is what % of Y</span>
+        </button>
+        <button type="button" class="pc-tab" data-mode="change" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span class="pc-tab-label">% Change</span>
+        </button>
+        <button type="button" class="pc-tab" data-mode="increase" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <span class="pc-tab-label">Increase / Decrease</span>
+        </button>
+        <button type="button" class="pc-tab" data-mode="reverse" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span class="pc-tab-label">Reverse %</span>
+        </button>
+      </div>
+
+      <form class="perc-form" id="pcForm" novalidate onsubmit="return false;">
+
+        <!-- ===== PANEL 1: X% of Y ===== -->
+        <div class="pc-panel active" data-panel="of">
+          <div class="pc-inline">
+            <span class="pc-word">What is</span>
+            <input type="number" class="pc-num" id="ofX" value="15" step="any" inputmode="decimal" aria-label="Percentage" />
+            <span class="pc-word">% of</span>
+            <input type="number" class="pc-num" id="ofY" value="200" step="any" inputmode="decimal" aria-label="Value" />
+            <span class="pc-word">?</span>
+            <span class="pc-result-inline" id="ofResult">—</span>
+          </div>
+          <div class="error-msg" id="ofError" role="alert"></div>
+          <div class="pc-chips">
+            <button type="button" class="pc-chip" data-quick="5">5%</button>
+            <button type="button" class="pc-chip" data-quick="10">10%</button>
+            <button type="button" class="pc-chip" data-quick="15">15%</button>
+            <button type="button" class="pc-chip" data-quick="20">20%</button>
+            <button type="button" class="pc-chip" data-quick="25">25%</button>
+            <button type="button" class="pc-chip" data-quick="50">50%</button>
+          </div>
+        </div>
+
+        <!-- ===== PANEL 2: X is what % of Y ===== -->
+        <div class="pc-panel" data-panel="is">
+          <div class="pc-inline">
+            <input type="number" class="pc-num" id="isX" value="30" step="any" inputmode="decimal" aria-label="Value" />
+            <span class="pc-word">is what % of</span>
+            <input type="number" class="pc-num" id="isY" value="150" step="any" inputmode="decimal" aria-label="Total" />
+            <span class="pc-word">?</span>
+            <span class="pc-result-inline" id="isResult">—</span>
+          </div>
+          <div class="error-msg" id="isError" role="alert"></div>
+        </div>
+
+        <!-- ===== PANEL 3: % Change ===== -->
+        <div class="pc-panel" data-panel="change">
+          <div class="pc-inline">
+            <span class="pc-word">From</span>
+            <input type="number" class="pc-num" id="chFrom" value="80" step="any" inputmode="decimal" aria-label="Original value" />
+            <span class="pc-word">to</span>
+            <input type="number" class="pc-num" id="chTo" value="100" step="any" inputmode="decimal" aria-label="New value" />
+            <span class="pc-word">→</span>
+            <span class="pc-result-inline" id="chResult">—</span>
+          </div>
+          <div class="error-msg" id="chError" role="alert"></div>
+        </div>
+
+        <!-- ===== PANEL 4: Increase / Decrease ===== -->
+        <div class="pc-panel" data-panel="increase">
+          <div class="pc-inline">
+            <span class="pc-word">Increase</span>
+            <input type="number" class="pc-num" id="incValue" value="500" step="any" inputmode="decimal" aria-label="Value" />
+            <span class="pc-word">by</span>
+            <input type="number" class="pc-num" id="incPercent" value="20" step="any" inputmode="decimal" aria-label="Percentage" />
+            <span class="pc-word">%</span>
+            <span class="pc-result-inline" id="incResult">—</span>
+          </div>
+          <div class="pc-actions-row">
+            <button type="button" class="pc-link-btn" id="incDirBtn" data-dir="up">Switch to decrease</button>
+          </div>
+          <div class="error-msg" id="incError" role="alert"></div>
+        </div>
+
+        <!-- ===== PANEL 5: Reverse % ===== -->
+        <div class="pc-panel" data-panel="reverse">
+          <div class="pc-inline">
+            <input type="number" class="pc-num" id="revValue" value="120" step="any" inputmode="decimal" aria-label="Final value" />
+            <span class="pc-word">is the result after a</span>
+            <input type="number" class="pc-num" id="revPercent" value="20" step="any" inputmode="decimal" aria-label="Percentage" />
+            <span class="pc-word">% increase — original?</span>
+            <span class="pc-result-inline" id="revResult">—</span>
+          </div>
+          <div class="pc-actions-row">
+            <button type="button" class="pc-link-btn" id="revDirBtn" data-dir="up">Switch to decrease</button>
+          </div>
+          <div class="error-msg" id="revError" role="alert"></div>
+        </div>
+
+        <!-- ===== RESULT DETAIL (shared) ===== -->
+        <div class="pc-result" id="pcResult">
+          <div class="pc-result-line" id="pcResultLine"></div>
+          <div class="pc-result-value" id="pcResultValue">—</div>
+          <div class="pc-result-detail" id="pcResultDetail"></div>
+          <div class="pc-result-actions">
+            <button type="button" class="pc-copy-btn" id="pcCopyBtn">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy result
+            </button>
+          </div>
+        </div>
+
+        <!-- ===== GLOBAL ACTIONS ===== -->
+        <div class="btn-group" style="margin-top:18px;">
+          <button type="button" class="btn btn-secondary" id="pcReset">Reset</button>
+        </div>
+
+      </form>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">The five percentage problems, explained</h3>
+        <p>
+          <strong>1. X% of Y</strong> — the most common ask. Multiply Y by X and divide by
+          100. Example: 15% of 200 = (15 × 200) / 100 = 30. Useful for tips, discounts,
+          tax, interest, and margins.
+        </p>
+        <p>
+          <strong>2. X is what % of Y</strong> — flip the question. Divide X by Y and
+          multiply by 100. Example: 30 is 20% of 150 because (30 / 150) × 100 = 20.
+          Useful for score percentages, contribution ratios, and coverage metrics.
+        </p>
+        <p>
+          <strong>3. % change from A to B</strong> — measures how much something grew or
+          shrank. Take the difference, divide by the original value, then multiply by 100.
+          Example: from 80 to 100 is a 25% increase because ((100 − 80) / 80) × 100 = 25.
+          Going from 100 to 80 is a 20% decrease, not a 25% one — the denominator changes.
+        </p>
+        <p>
+          <strong>4. Increase or decrease by X%</strong> — apply a percentage change to a
+          starting value. Increase: value × (1 + X/100). Decrease: value × (1 − X/100).
+          Example: 500 increased by 20% = 500 × 1.20 = 600.
+        </p>
+        <p>
+          <strong>5. Reverse percentage</strong> — you know the final value and the
+          percentage that was applied, and want to find the original. For an increase,
+          original = final / (1 + X/100). For a decrease, original = final / (1 − X/100).
+          Example: a 20% increase that ended at 120 means the original was 120 / 1.20 = 100.
+        </p>
+        <p>
+          All five modes are computed locally in your browser with full floating-point
+          precision. Results are shown with up to ten significant digits and always include
+          the exact formula used, so you can verify each answer by hand.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form         = document.getElementById('pcForm');
+  var tabs         = document.querySelectorAll('.pc-tab');
+  var panels       = document.querySelectorAll('.pc-panel');
+
+  // Panel 1: X% of Y
+  var ofX          = document.getElementById('ofX');
+  var ofY          = document.getElementById('ofY');
+  var ofResult     = document.getElementById('ofResult');
+  var ofError      = document.getElementById('ofError');
+
+  // Panel 2: X is what % of Y
+  var isX          = document.getElementById('isX');
+  var isY          = document.getElementById('isY');
+  var isResult     = document.getElementById('isResult');
+  var isError      = document.getElementById('isError');
+
+  // Panel 3: % Change
+  var chFrom       = document.getElementById('chFrom');
+  var chTo         = document.getElementById('chTo');
+  var chResult     = document.getElementById('chResult');
+  var chError      = document.getElementById('chError');
+
+  // Panel 4: Increase / Decrease
+  var incValue     = document.getElementById('incValue');
+  var incPercent   = document.getElementById('incPercent');
+  var incResult    = document.getElementById('incResult');
+  var incError     = document.getElementById('incError');
+  var incDirBtn    = document.getElementById('incDirBtn');
+
+  // Panel 5: Reverse
+  var revValue     = document.getElementById('revValue');
+  var revPercent   = document.getElementById('revPercent');
+  var revResult    = document.getElementById('revResult');
+  var revError     = document.getElementById('revError');
+  var revDirBtn    = document.getElementById('revDirBtn');
+
+  // Shared result
+  var pcResult       = document.getElementById('pcResult');
+  var pcResultLine   = document.getElementById('pcResultLine');
+  var pcResultValue  = document.getElementById('pcResultValue');
+  var pcResultDetail = document.getElementById('pcResultDetail');
+  var pcCopyBtn      = document.getElementById('pcCopyBtn');
+  var resetBtn       = document.getElementById('pcReset');
+
+  // Quick chips
+  var chips = document.querySelectorAll('.pc-chip');
+
+  // ---------- STATE ----------
+  var state = {
+    mode: 'of',
+    incDir: 'up',   // 'up' | 'down'
+    revDir: 'up',   // 'up' | 'down'
+    lastResult: null
+  };
+
+  // ---------- HELPERS ----------
+  var numFmt = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 10
+  });
+
+  function fmt(n) {
+    if (!isFinite(n)) return '—';
+    var abs = Math.abs(n);
+    if (abs !== 0 && (abs >= 1e12 || abs < 1e-6)) {
+      return n.toExponential(6).replace(/\.?0+e/, 'e');
+    }
+    return numFmt.format(n);
+  }
+
+  function fmtPercent(n) {
+    if (!isFinite(n)) return '—';
+    // Round display to 4 decimals but keep up to 10 significant in the value
+    var rounded = Math.round(n * 10000) / 10000;
+    return numFmt.format(rounded) + '%';
+  }
+
+  function parseNum(el) {
+    var raw = (el.value || '').trim();
+    if (raw === '' || raw === '-') return NaN;
+    var n = parseFloat(raw);
+    return isFinite(n) ? n : NaN;
+  }
+
+  function showError(box, msg) {
+    box.textContent = msg;
+    box.classList.add('show');
+  }
+  function clearError(box) {
+    box.textContent = '';
+    box.classList.remove('show');
+  }
+
+  function setInlineResult(el, value) {
+    if (value === null || value === undefined || !isFinite(value)) {
+      el.textContent = '—';
+      el.classList.add('is-empty');
+    } else {
+      el.textContent = value;
+      el.classList.remove('is-empty');
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ---------- HIDE ALL RESULTS ----------
+  function hideResult() {
+    pcResult.classList.remove('show');
+    state.lastResult = null;
+  }
+
+  // ---------- PANEL 1: X% of Y ----------
+  function calcOf() {
+    clearError(ofError);
+
+    var x = parseNum(ofX);
+    var y = parseNum(ofY);
+
+    if (isNaN(x) || isNaN(y)) {
+      setInlineResult(ofResult, null);
+      hideResult();
+      return;
+    }
+
+    var result = (x * y) / 100;
+
+    setInlineResult(ofResult, fmt(result));
+
+    state.lastResult = {
+      mode: 'of',
+      headline: fmt(x) + '% of ' + fmt(y) + ' = ' + fmt(result),
+      value: fmt(result),
+      detail: 'Formula: (' + fmt(x) + ' × ' + fmt(y) + ') / 100 = ' + fmt(result),
+      copyText:
+        fmt(x) + '% of ' + fmt(y) + ' = ' + fmt(result) + '\n' +
+        'Formula: (' + fmt(x) + ' × ' + fmt(y) + ') / 100'
+    };
+  }
+
+  // ---------- PANEL 2: X is what % of Y ----------
+  function calcIs() {
+    clearError(isError);
+
+    var x = parseNum(isX);
+    var y = parseNum(isY);
+
+    if (isNaN(x) || isNaN(y)) {
+      setInlineResult(isResult, null);
+      hideResult();
+      return;
+    }
+    if (y === 0) {
+      setInlineResult(isResult, null);
+      showError(isError, 'The total value cannot be zero.');
+      hideResult();
+      return;
+    }
+
+    var result = (x / y) * 100;
+
+    setInlineResult(isResult, fmtPercent(result));
+
+    state.lastResult = {
+      mode: 'is',
+      headline: fmt(x) + ' is ' + fmtPercent(result) + ' of ' + fmt(y),
+      value: fmtPercent(result),
+      detail: 'Formula: (' + fmt(x) + ' / ' + fmt(y) + ') × 100 = ' + fmtPercent(result),
+      copyText:
+        fmt(x) + ' is ' + fmtPercent(result) + ' of ' + fmt(y) + '\n' +
+        'Formula: (' + fmt(x) + ' / ' + fmt(y) + ') × 100'
+    };
+  }
+
+  // ---------- PANEL 3: % Change ----------
+  function calcChange() {
+    clearError(chError);
+
+    var a = parseNum(chFrom);
+    var b = parseNum(chTo);
+
+    if (isNaN(a) || isNaN(b)) {
+      setInlineResult(chResult, null);
+      hideResult();
+      return;
+    }
+    if (a === 0) {
+      setInlineResult(chResult, null);
+      showError(chError, 'The starting value cannot be zero.');
+      hideResult();
+      return;
+    }
+
+    var change = ((b - a) / Math.abs(a)) * 100;
+    var dir = change > 0 ? 'up' : (change < 0 ? 'down' : 'flat');
+    var dirLabel = dir === 'up' ? 'increase' : (dir === 'down' ? 'decrease' : 'no change');
+
+    var display = (change > 0 ? '+' : '') + fmt(change) + '%';
+    setInlineResult(chResult, display);
+
+    var diff = b - a;
+
+    state.lastResult = {
+      mode: 'change',
+      headline: 'From ' + fmt(a) + ' to ' + fmt(b) + ' is a ' + fmt(Math.abs(change)) + '% ' + dirLabel,
+      value: display,
+      detail:
+        'Difference: ' + fmt(diff) + ' · ' +
+        'Formula: ((' + fmt(b) + ' − ' + fmt(a) + ') / ' + fmt(Math.abs(a)) + ') × 100 = ' + fmt(change) + '%',
+      copyText:
+        'From ' + fmt(a) + ' to ' + fmt(b) + '\n' +
+        'Change: ' + display + ' (' + dirLabel + ')\n' +
+        'Difference: ' + fmt(diff) + '\n' +
+        'Formula: ((' + fmt(b) + ' − ' + fmt(a) + ') / ' + fmt(Math.abs(a)) + ') × 100'
+    };
+  }
+
+  // ---------- PANEL 4: Increase / Decrease ----------
+  function calcInc() {
+    clearError(incError);
+
+    var v = parseNum(incValue);
+    var p = parseNum(incPercent);
+
+    if (isNaN(v) || isNaN(p)) {
+      setInlineResult(incResult, null);
+      hideResult();
+      return;
+    }
+
+    var up = state.incDir === 'up';
+    var result = up ? v * (1 + p / 100) : v * (1 - p / 100);
+    var dirWord = up ? 'increase' : 'decrease';
+    var operator = up ? '+' : '−';
+
+    setInlineResult(incResult, fmt(result));
+
+    state.lastResult = {
+      mode: 'increase',
+      headline: fmt(v) + ' after a ' + fmt(p) + '% ' + dirWord + ' = ' + fmt(result),
+      value: fmt(result),
+      detail: 'Formula: ' + fmt(v) + ' × (1 ' + operator + ' ' + fmt(p) + '/100) = ' + fmt(result),
+      copyText:
+        fmt(v) + ' ' + dirWord + 'd by ' + fmt(p) + '% = ' + fmt(result) + '\n' +
+        'Formula: ' + fmt(v) + ' × (1 ' + operator + ' ' + fmt(p) + '/100)'
+    };
+  }
+
+  // ---------- PANEL 5: Reverse % ----------
+  function calcReverse() {
+    clearError(revError);
+
+    var finalVal = parseNum(revValue);
+    var p = parseNum(revPercent);
+
+    if (isNaN(finalVal) || isNaN(p)) {
+      setInlineResult(revResult, null);
+      hideResult();
+      return;
+    }
+
+    var up = state.revDir === 'up';
+    var factor = up ? (1 + p / 100) : (1 - p / 100);
+
+    if (factor === 0) {
+      setInlineResult(revResult, null);
+      showError(revError, 'A 100% decrease has no finite original value.');
+      hideResult();
+      return;
+    }
+
+    var original = finalVal / factor;
+    var dirWord = up ? 'increase' : 'decrease';
+    var operator = up ? '+' : '−';
+
+    setInlineResult(revResult, fmt(original));
+
+    state.lastResult = {
+      mode: 'reverse',
+      headline: 'Original value before a ' + fmt(p) + '% ' + dirWord + ' to ' + fmt(finalVal) + ' = ' + fmt(original),
+      value: fmt(original),
+      detail: 'Formula: ' + fmt(finalVal) + ' / (1 ' + operator + ' ' + fmt(p) + '/100) = ' + fmt(original),
+      copyText:
+        'Final: ' + fmt(finalVal) + ' · ' + dirWord + ': ' + fmt(p) + '%\n' +
+        'Original value: ' + fmt(original) + '\n' +
+        'Formula: ' + fmt(finalVal) + ' / (1 ' + operator + ' ' + fmt(p) + '/100)'
+    };
+  }
+
+  // ---------- DISPATCH ----------
+  function run() {
+    if (state.mode === 'of')       calcOf();
+    else if (state.mode === 'is')  calcIs();
+    else if (state.mode === 'change') calcChange();
+    else if (state.mode === 'increase') calcInc();
+    else if (state.mode === 'reverse') calcReverse();
+
+    renderSharedResult();
+  }
+
+  function renderSharedResult() {
+    if (!state.lastResult) {
+      pcResult.classList.remove('show');
+      return;
+    }
+    pcResultLine.innerHTML  = escapeHtml(state.lastResult.headline);
+    pcResultValue.textContent = state.lastResult.value;
+    pcResultDetail.innerHTML = escapeHtml(state.lastResult.detail);
+    pcResult.classList.add('show');
+  }
+
+  // ---------- TABS ----------
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+
+      state.mode = tab.getAttribute('data-mode');
+
+      panels.forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-panel') === state.mode);
+      });
+
+      run();
+    });
+  });
+
+  // ---------- INPUT EVENTS ----------
+  [ofX, ofY, isX, isY, chFrom, chTo, incValue, incPercent, revValue, revPercent].forEach(function (el) {
+    el.addEventListener('input', run);
+  });
+
+  // Quick chips fill ofX
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      ofX.value = chip.getAttribute('data-quick');
+      // Switch to "X% of Y" tab if not active
+      if (state.mode !== 'of') {
+        tabs.forEach(function (t) {
+          var isActive = t.getAttribute('data-mode') === 'of';
+          t.classList.toggle('active', isActive);
+          t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        panels.forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-panel') === 'of');
+        });
+        state.mode = 'of';
+      }
+      run();
+    });
+  });
+
+  // Direction toggles
+  incDirBtn.addEventListener('click', function () {
+    state.incDir = state.incDir === 'up' ? 'down' : 'up';
+    incDirBtn.textContent = state.incDir === 'up' ? 'Switch to decrease' : 'Switch to increase';
+    run();
+  });
+
+  revDirBtn.addEventListener('click', function () {
+    state.revDir = state.revDir === 'up' ? 'down' : 'up';
+    revDirBtn.textContent = state.revDir === 'up' ? 'Switch to decrease' : 'Switch to increase';
+    run();
+  });
+
+  // ---------- COPY ----------
+  pcCopyBtn.addEventListener('click', function () {
+    if (!state.lastResult) return;
+
+    var text = state.lastResult.copyText;
+    var original = pcCopyBtn.innerHTML;
+
+    var done = function () {
+      pcCopyBtn.classList.add('copied');
+      pcCopyBtn.innerHTML = 'Copied';
+      setTimeout(function () {
+        pcCopyBtn.classList.remove('copied');
+        pcCopyBtn.innerHTML = original;
+      }, 1400);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- RESET ----------
+  resetBtn.addEventListener('click', function () {
+    // Clear every error box
+    [ofError, isError, chError, incError, revError].forEach(clearError);
+
+    // Defaults
+    ofX.value = '15'; ofY.value = '200';
+    isX.value = '30'; isY.value = '150';
+    chFrom.value = '80'; chTo.value = '100';
+    incValue.value = '500'; incPercent.value = '20';
+    revValue.value = '120'; revPercent.value = '20';
+
+    state.incDir = 'up';
+    state.revDir = 'up';
+    incDirBtn.textContent = 'Switch to decrease';
+    revDirBtn.textContent = 'Switch to decrease';
+
+    // Switch to first tab
+    state.mode = 'of';
+    tabs.forEach(function (t) {
+      var isActive = t.getAttribute('data-mode') === 'of';
+      t.classList.toggle('active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    panels.forEach(function (p) {
+      p.classList.toggle('active', p.getAttribute('data-panel') === 'of');
+    });
+
+    run();
+    ofX.focus();
+  });
+
+  // ---------- INIT ----------
+  run();
+
+})();
+</script>
+
+</body>
+</html>
