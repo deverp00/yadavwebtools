@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Calculate monthly EMI, total interest, and full amortization schedule for any loan. Includes an interactive donut chart. Free and private." />
+  <title>Loan Calculator — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    /* --- Loan Calculator local styles --- */
+
+    /* Result grid tweak: keep 4-up on desktop, 2-up on tablet, 1-up on phone */
+    .loan-result .result-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Chart block */
+    .loan-chart-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 16px 0 6px;
+      padding: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .loan-chart-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .loan-donut {
+      width: 220px;
+      height: 220px;
+      position: relative;
+    }
+    .loan-donut canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .loan-donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+    .loan-donut-center .loan-donut-label {
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .loan-donut-center .loan-donut-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+    .loan-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      justify-content: center;
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+    .loan-chart-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .loan-chart-legend .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .loan-dot-principal { background: var(--brand); }
+    .loan-dot-interest  { background: #52c98a; }
+
+    /* Amortization table */
+    .loan-schedule {
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .loan-schedule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--brand-soft);
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+      user-select: none;
+    }
+    .loan-schedule-header svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none; stroke-width: 2.4;
+      transition: transform .3s var(--ease);
+    }
+    .loan-schedule-header[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .loan-schedule-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease-out);
+    }
+    .loan-schedule-body.open { max-height: 4000px; }
+    .loan-schedule-scroll { overflow-x: auto; }
+    .loan-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      min-width: 560px;
+    }
+    .loan-table thead th {
+      background: var(--brand);
+      color: #fff;
+      font-weight: 600;
+      text-align: right;
+      padding: 10px 14px;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+    .loan-table thead th:first-child { text-align: left; }
+    .loan-table tbody td {
+      padding: 9px 14px;
+      text-align: right;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .loan-table tbody td:first-child {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .loan-table tbody tr:hover td { background: var(--brand-soft); }
+    .loan-table tbody tr.total-row td {
+      font-weight: 700;
+      color: var(--brand);
+      border-top: 2px solid var(--brand-line);
+    }
+
+    /* Copy button row */
+    .loan-copy-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .loan-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s var(--ease);
+    }
+    .loan-copy-btn svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .loan-copy-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .loan-copy-btn.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    @media (max-width: 900px) {
+      .loan-result .result-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .loan-result .result-grid { grid-template-columns: 1fr; }
+      .loan-donut { width: 180px; height: 180px; }
+      .loan-chart-wrap { padding: 14px; }
+      .loan-copy-row { justify-content: stretch; }
+      .loan-copy-btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/dav/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/dav/index.html">Home</a></li>
+        <li><a href="/dav/about/index.html">About</a></li>
+        <li><a href="/dav/contact/index.html">Contact</a></li>
+        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/dav/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+
+  <section class="section" aria-labelledby="loan-heading">
+    <div class="section-title-bar">
+      <h2 id="loan-heading">Loan Calculator</h2>
+      <p class="section-sub">Calculate monthly EMI, total interest, and the full amortization schedule.</p>
+    </div>
+
+    <div class="section-body">
+
+      <p class="tool-intro">
+        Enter the loan amount, annual interest rate, and tenure to see your Equated
+        Monthly Instalment (EMI), the total interest you will pay, and how every rupee
+        of every payment splits between principal and interest over the life of the loan.
+      </p>
+
+      <form class="loan-form" id="loanForm" novalidate onsubmit="return false;">
+
+        <!-- Loan amount -->
+        <div class="field-group">
+          <label for="loanAmount">Loan Amount</label>
+          <input type="number" id="loanAmount" min="1000" max="1000000000" step="1000" value="500000" inputmode="numeric" />
+          <input type="range" class="loan-range" id="loanAmountRange" min="10000" max="10000000" step="10000" value="500000" aria-label="Loan amount slider" />
+          <span class="range-value" id="loanAmountVal">₹5,00,000</span>
+        </div>
+
+        <!-- Interest rate -->
+        <div class="field-group">
+          <label for="loanRate">Interest Rate (p.a.)</label>
+          <input type="number" id="loanRate" min="0.1" max="40" step="0.05" value="8.5" inputmode="decimal" />
+          <input type="range" class="loan-range" id="loanRateRange" min="0.5" max="24" step="0.05" value="8.5" aria-label="Interest rate slider" />
+          <span class="range-value" id="loanRateVal">8.5%</span>
+        </div>
+
+        <!-- Tenure -->
+        <div class="field-group tenure-group">
+          <label for="loanTenure">Loan Tenure</label>
+          <div class="tenure-control">
+            <input type="number" id="loanTenure" min="1" max="600" step="1" value="20" inputmode="numeric" />
+            <button type="button" class="tenure-toggle" id="loanTenureToggle" data-unit="years">years</button>
+          </div>
+          <input type="range" class="loan-range" id="loanTenureRange" min="1" max="40" step="1" value="20" aria-label="Loan tenure slider" />
+          <span class="range-value" id="loanTenureVal">20 years</span>
+        </div>
+
+        <div class="error-msg" id="loanError" role="alert"></div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn">Calculate EMI</button>
+          <button type="button" class="btn btn-secondary" id="loanReset">Reset</button>
+        </div>
+      </form>
+
+      <!-- ===== RESULT ===== -->
+      <div class="loan-result" id="loanResult" hidden>
+
+        <div class="result-grid">
+          <div class="result-card highlight">
+            <span class="result-label">Monthly EMI</span>
+            <span class="result-value" id="loanEmi">₹0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Principal</span>
+            <span class="result-value" id="loanPrincipal">₹0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Total Interest</span>
+            <span class="result-value" id="loanInterest">₹0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">Total Payment</span>
+            <span class="result-value" id="loanTotal">₹0</span>
+          </div>
+        </div>
+
+        <!-- Donut chart -->
+        <div class="loan-chart-wrap">
+          <div class="loan-chart-title">Principal vs Interest</div>
+          <div class="loan-donut">
+            <canvas id="loanDonut" width="440" height="440" aria-label="Principal versus interest breakdown"></canvas>
+            <div class="loan-donut-center">
+              <div class="loan-donut-label">Interest share</div>
+              <div class="loan-donut-value" id="loanInterestPct">0%</div>
+            </div>
+          </div>
+          <div class="loan-chart-legend">
+            <span><span class="dot loan-dot-principal"></span> Principal</span>
+            <span><span class="dot loan-dot-interest"></span> Interest</span>
+          </div>
+        </div>
+
+        <!-- Amortization schedule -->
+        <div class="loan-schedule">
+          <div class="loan-schedule-header" id="loanScheduleHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="loanScheduleBody">
+            <span>Year-by-year amortization schedule</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="loan-schedule-body" id="loanScheduleBody">
+            <div class="loan-schedule-scroll">
+              <table class="loan-table">
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Principal Paid</th>
+                    <th>Interest Paid</th>
+                    <th>Total Paid</th>
+                    <th>Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="loanScheduleBodyRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-detail" id="loanDetail"></div>
+
+        <div class="loan-copy-row">
+          <button type="button" class="loan-copy-btn" id="loanCopyBtn">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy result
+          </button>
+        </div>
+
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">How EMI is calculated</h3>
+        <p>
+          EMI stands for Equated Monthly Instalment — the fixed amount you pay every
+          month for the life of the loan. Each instalment is split between interest on
+          the outstanding balance and repayment of the principal. Early instalments are
+          mostly interest; later ones are mostly principal.
+        </p>
+        <p>
+          The formula is <strong>EMI = P × r × (1 + r)<sup>n</sup> / ((1 + r)<sup>n</sup> − 1)</strong>,
+          where P is the loan amount, r is the monthly interest rate (annual rate ÷ 12 ÷ 100),
+          and n is the total number of monthly payments (years × 12). The tool uses
+          double-precision arithmetic and rounds only the final EMI to the nearest rupee,
+          so the schedule matches what banks publish within a few rupees.
+        </p>
+        <p>
+          The amortization table shows, for each completed year, how much of your
+          payments went toward interest, how much reduced the principal, and what balance
+          remained at year-end. The final row shows totals. You will notice that in the
+          first few years the interest portion is far larger than the principal portion —
+          this is normal and is the reason prepaying early saves so much interest.
+        </p>
+        <p>
+          The donut chart visualises the split between principal and interest across the
+          whole loan. A small shift in the interest rate or tenure dramatically changes
+          that split — try moving the sliders to see how sensitive the total cost is to
+          each input. All figures are estimates for planning; actual EMI depends on
+          lender-specific fees, insurance, and processing charges.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/dav/about/index.html">About</a>
+      <a href="/dav/contact/index.html">Contact</a>
+      <a href="/dav/privacy-policy/index.html">Privacy</a>
+      <a href="/dav/disclaimer/index.html">Disclaimer</a>
+      <a href="/dav/terms/index.html">Terms</a>
+    </nav>
+
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../../script.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- ELEMENTS ----------
+  var form            = document.getElementById('loanForm');
+
+  var amountInput     = document.getElementById('loanAmount');
+  var amountRange     = document.getElementById('loanAmountRange');
+  var amountVal       = document.getElementById('loanAmountVal');
+
+  var rateInput       = document.getElementById('loanRate');
+  var rateRange       = document.getElementById('loanRateRange');
+  var rateVal         = document.getElementById('loanRateVal');
+
+  var tenureInput     = document.getElementById('loanTenure');
+  var tenureRange     = document.getElementById('loanTenureRange');
+  var tenureVal       = document.getElementById('loanTenureVal');
+  var tenureToggle    = document.getElementById('loanTenureToggle');
+
+  var errorBox        = document.getElementById('loanError');
+  var resultBox       = document.getElementById('loanResult');
+  var resetBtn        = document.getElementById('loanReset');
+
+  var emiOut          = document.getElementById('loanEmi');
+  var principalOut    = document.getElementById('loanPrincipal');
+  var interestOut     = document.getElementById('loanInterest');
+  var totalOut        = document.getElementById('loanTotal');
+  var interestPctOut  = document.getElementById('loanInterestPct');
+  var detailOut       = document.getElementById('loanDetail');
+
+  var donutCanvas     = document.getElementById('loanDonut');
+
+  var schedHeader     = document.getElementById('loanScheduleHeader');
+  var schedBody       = document.getElementById('loanScheduleBody');
+  var schedRows       = document.getElementById('loanScheduleBodyRows');
+
+  var copyBtn         = document.getElementById('loanCopyBtn');
+
+  // ---------- STATE ----------
+  var state = {
+    tenureUnit: 'years',   // 'years' | 'months'
+    lastResult: null
+  };
+
+  // ---------- FORMATTERS ----------
+  var inr = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  });
+
+  var inr2 = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  function formatINR(n) {
+    if (!isFinite(n)) return '₹0';
+    return inr.format(Math.round(n));
+  }
+
+  function formatINR2(n) {
+    if (!isFinite(n)) return '₹0.00';
+    return inr2.format(n);
+  }
+
+  function formatINRShort(n) {
+    n = Math.round(n);
+    if (Math.abs(n) >= 10000000) return '₹' + (n / 10000000).toFixed(2) + ' Cr';
+    if (Math.abs(n) >= 100000)   return '₹' + (n / 100000).toFixed(2) + ' L';
+    return '₹' + n.toLocaleString('en-IN');
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+  }
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  // ---------- SLIDER <-> INPUT SYNC ----------
+  function bindPair(inputEl, rangeEl, onChange) {
+    inputEl.addEventListener('input', function () {
+      var v = parseFloat(inputEl.value);
+      if (isFinite(v)) {
+        rangeEl.value = clamp(v, parseFloat(rangeEl.min), parseFloat(rangeEl.max));
+      }
+      if (onChange) onChange();
+    });
+    rangeEl.addEventListener('input', function () {
+      inputEl.value = rangeEl.value;
+      if (onChange) onChange();
+    });
+  }
+
+  bindPair(amountInput, amountRange, function () {
+    var v = parseFloat(amountInput.value) || 0;
+    amountVal.textContent = formatINR(v);
+  });
+
+  bindPair(rateInput, rateRange, function () {
+    var v = parseFloat(rateInput.value) || 0;
+    rateVal.textContent = v + '%';
+  });
+
+  bindPair(tenureInput, tenureRange, function () {
+    var v = parseInt(tenureInput.value, 10) || 0;
+    tenureVal.textContent = v + ' ' + (state.tenureUnit === 'years' ? (v === 1 ? 'year' : 'years') : (v === 1 ? 'month' : 'months'));
+  });
+
+  // ---------- TENURE TOGGLE ----------
+  tenureToggle.addEventListener('click', function () {
+    var currentVal = parseInt(tenureInput.value, 10) || 0;
+    var currentMin = parseInt(tenureInput.min, 10);
+    var currentMax = parseInt(tenureInput.max, 10);
+
+    if (state.tenureUnit === 'years') {
+      // switch to months
+      state.tenureUnit = 'months';
+      tenureToggle.textContent = 'months';
+      tenureToggle.setAttribute('data-unit', 'months');
+      var months = currentVal * 12;
+      tenureInput.min = 1;
+      tenureInput.max = 600;
+      tenureRange.min = 1;
+      tenureRange.max = 360;
+      tenureRange.step = 1;
+      tenureInput.value = months;
+      tenureRange.value = Math.min(months, 360);
+    } else {
+      // switch to years
+      state.tenureUnit = 'years';
+      tenureToggle.textContent = 'years';
+      tenureToggle.setAttribute('data-unit', 'years');
+      var years = Math.max(1, Math.round(currentVal / 12));
+      tenureInput.min = 1;
+      tenureInput.max = 50;
+      tenureRange.min = 1;
+      tenureRange.max = 40;
+      tenureRange.step = 1;
+      tenureInput.value = years;
+      tenureRange.value = Math.min(years, 40);
+    }
+
+    var v = parseInt(tenureInput.value, 10) || 0;
+    tenureVal.textContent = v + ' ' + (state.tenureUnit === 'years' ? (v === 1 ? 'year' : 'years') : (v === 1 ? 'month' : 'months'));
+    runCalc();
+  });
+
+  // ---------- CORE MATH ----------
+  // EMI = P * r * (1+r)^n / ((1+r)^n - 1)
+  // r = annual / 12 / 100
+  // n = months
+  function computeEMI(P, annualRate, months) {
+    var r = annualRate / 12 / 100;
+    if (r === 0) {
+      return {
+        emi: P / months,
+        totalPayment: P,
+        totalInterest: 0
+      };
+    }
+    var pow = Math.pow(1 + r, months);
+    var emi = (P * r * pow) / (pow - 1);
+    var totalPayment = emi * months;
+    var totalInterest = totalPayment - P;
+    return { emi: emi, totalPayment: totalPayment, totalInterest: totalInterest };
+  }
+
+  // Year-by-year amortization
+  function buildSchedule(P, annualRate, months) {
+    var r = annualRate / 12 / 100;
+    var res = computeEMI(P, annualRate, months);
+    var emi = res.emi;
+
+    var balance = P;
+    var rows = [];
+    var totalPrincipal = 0;
+    var totalInterest = 0;
+
+    var yearPrincipal = 0;
+    var yearInterest = 0;
+    var yearCount = 0;
+
+    for (var m = 1; m <= months; m++) {
+      var interestThisMonth = balance * r;
+      var principalThisMonth = emi - interestThisMonth;
+      if (principalThisMonth < 0) principalThisMonth = 0; // safety
+
+      // Last month adjust for rounding
+      if (m === months) {
+        principalThisMonth = balance;
+      }
+
+      balance -= principalThisMonth;
+      if (balance < 0.01) balance = 0;
+
+      yearPrincipal += principalThisMonth;
+      yearInterest += interestThisMonth;
+      yearCount++;
+
+      totalPrincipal += principalThisMonth;
+      totalInterest += interestThisMonth;
+
+      if (m % 12 === 0 || m === months) {
+        rows.push({
+          year: Math.ceil(m / 12),
+          principalPaid: yearPrincipal,
+          interestPaid: yearInterest,
+          totalPaid: yearPrincipal + yearInterest,
+          balance: balance
+        });
+        yearPrincipal = 0;
+        yearInterest = 0;
+        yearCount = 0;
+      }
+    }
+
+    return {
+      rows: rows,
+      emi: emi,
+      totalPrincipal: totalPrincipal,
+      totalInterest: totalInterest,
+      totalPayment: totalPrincipal + totalInterest
+    };
+  }
+
+  // ---------- RENDER ----------
+  function renderSchedule(rows) {
+    schedRows.innerHTML = '';
+    var lastIndex = rows.length - 1;
+
+    rows.forEach(function (row, idx) {
+      var tr = document.createElement('tr');
+      if (idx === lastIndex) tr.className = 'total-row';
+      tr.innerHTML =
+        '<td>Year ' + row.year + (idx === lastIndex ? ' (total)' : '') + '</td>' +
+        '<td>' + formatINR(row.principalPaid) + '</td>' +
+        '<td>' + formatINR(row.interestPaid) + '</td>' +
+        '<td>' + formatINR(row.totalPaid) + '</td>' +
+        '<td>' + formatINR(row.balance) + '</td>';
+      schedRows.appendChild(tr);
+    });
+  }
+
+  // ---------- DONUT CHART ----------
+  function drawDonut(principal, interest) {
+    var canvas = donutCanvas;
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var total = principal + interest;
+    if (!isFinite(total) || total <= 0) return;
+
+    var cx = W / 2;
+    var cy = H / 2;
+    var outer = Math.min(W, H) / 2 - 6;
+    var inner = outer * 0.62;
+
+    // Read colors from CSS variables so dark mode stays consistent
+    var styles = getComputedStyle(document.documentElement);
+    var brand = styles.getPropertyValue('--brand').trim() || '#1a5c3a';
+    var accent = '#52c98a';
+    var trackColor = styles.getPropertyValue('--border').trim() || '#e6e6e6';
+
+    var startAngle = -Math.PI / 2;
+    var principalAngle = (principal / total) * Math.PI * 2;
+
+    // Principal arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, startAngle, startAngle + principalAngle);
+    ctx.arc(cx, cy, inner, startAngle + principalAngle, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = brand;
+    ctx.fill();
+
+    // Interest arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, startAngle + principalAngle, startAngle + Math.PI * 2);
+    ctx.arc(cx, cy, inner, startAngle + Math.PI * 2, startAngle + principalAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = accent;
+    ctx.fill();
+
+    // Thin separator rings for crispness
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+    ctx.arc(cx, cy, inner, 0, Math.PI * 2, true);
+    ctx.strokeStyle = trackColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // ---------- MAIN ----------
+  function runCalc() {
+    clearError();
+
+    var P = parseFloat(amountInput.value);
+    var annualRate = parseFloat(rateInput.value);
+    var tenureValRaw = parseInt(tenureInput.value, 10);
+
+    var months;
+    if (state.tenureUnit === 'years') {
+      months = tenureValRaw * 12;
+    } else {
+      months = tenureValRaw;
+    }
+
+    if (!isFinite(P) || P < 1000) {
+      showError('Loan amount must be at least ₹1,000.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (P > 1000000000) {
+      showError('Loan amount is unrealistically large.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (!isFinite(annualRate) || annualRate <= 0) {
+      showError('Interest rate must be greater than 0%.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (annualRate > 40) {
+      showError('Interest rate above 40% p.a. is not supported.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (!isFinite(months) || months < 1) {
+      showError('Loan tenure must be at least 1 month.');
+      resultBox.hidden = true;
+      return;
+    }
+    if (months > 600) {
+      showError('Loan tenure above 50 years is not supported.');
+      resultBox.hidden = true;
+      return;
+    }
+
+    var sched = buildSchedule(P, annualRate, months);
+
+    // Main cards
+    emiOut.textContent       = formatINR(sched.emi);
+    principalOut.textContent = formatINR(P);
+    interestOut.textContent  = formatINR(sched.totalInterest);
+    totalOut.textContent     = formatINR(sched.totalPayment);
+
+    // Interest percentage for donut center
+    var interestPct = sched.totalPayment > 0 ? (sched.totalInterest / sched.totalPayment) * 100 : 0;
+    interestPctOut.textContent = interestPct.toFixed(1) + '%';
+
+    // Detail line
+    var years = months / 12;
+    var yearsText = years % 1 === 0
+      ? years + ' year' + (years === 1 ? '' : 's')
+      : years.toFixed(1) + ' years';
+
+    detailOut.textContent =
+      'A loan of ' + formatINRShort(P) + ' at ' + annualRate + '% p.a. for ' + yearsText +
+      ' results in ' + months + ' monthly payments of ' + formatINR(sched.emi) +
+      ' each. Total interest paid will be ' + formatINRShort(sched.totalInterest) +
+      ' — about ' + (sched.totalInterest / P * 100).toFixed(1) + '% of the principal.';
+
+    // Schedule
+    renderSchedule(sched.rows);
+
+    // Donut
+    requestAnimationFrame(function () {
+      drawDonut(P, sched.totalInterest);
+    });
+
+    // Stash result for copy
+    state.lastResult = {
+      principal: P,
+      annualRate: annualRate,
+      months: months,
+      emi: sched.emi,
+      totalInterest: sched.totalInterest,
+      totalPayment: sched.totalPayment,
+      schedule: sched.rows
+    };
+
+    resultBox.hidden = false;
+  }
+
+  // ---------- SUBMIT ----------
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    runCalc();
+    if (!resultBox.hidden) {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      resultBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+    }
+  });
+
+  // ---------- SCHEDULE TOGGLE ----------
+  schedHeader.addEventListener('click', function () {
+    var open = schedBody.classList.toggle('open');
+    schedHeader.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  schedHeader.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      schedHeader.click();
+    }
+  });
+
+  // ---------- COPY ----------
+  copyBtn.addEventListener('click', function () {
+    if (!state.lastResult) return;
+
+    var r = state.lastResult;
+    var years = r.months / 12;
+    var yearsText = years % 1 === 0 ? years + ' years' : years.toFixed(1) + ' years';
+
+    var lines = [];
+    lines.push('Loan Calculation');
+    lines.push('--------------------------------');
+    lines.push('Principal:       ' + formatINR2(r.principal));
+    lines.push('Interest rate:   ' + r.annualRate + '% p.a.');
+    lines.push('Tenure:          ' + r.months + ' months (' + yearsText + ')');
+    lines.push('--------------------------------');
+    lines.push('Monthly EMI:     ' + formatINR2(r.emi));
+    lines.push('Total interest:  ' + formatINR2(r.totalInterest));
+    lines.push('Total payment:   ' + formatINR2(r.totalPayment));
+    lines.push('--------------------------------');
+    lines.push('Year-by-year breakdown:');
+    r.schedule.forEach(function (row) {
+      lines.push(
+        'Year ' + row.year + ': ' +
+        'principal ' + formatINR2(row.principalPaid) + ' · ' +
+        'interest ' + formatINR2(row.interestPaid) + ' · ' +
+        'balance ' + formatINR2(row.balance)
+      );
+    });
+
+    var text = lines.join('\n');
+    var original = copyBtn.innerHTML;
+
+    var done = function () {
+      copyBtn.classList.add('copied');
+      copyBtn.innerHTML = 'Copied';
+      setTimeout(function () {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = original;
+      }, 1400);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        fallbackCopy(text, done);
+      });
+    } else {
+      fallbackCopy(text, done);
+    }
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- RESET ----------
+  resetBtn.addEventListener('click', function () {
+    clearError();
+
+    state.tenureUnit = 'years';
+    tenureToggle.textContent = 'years';
+    tenureToggle.setAttribute('data-unit', 'years');
+
+    amountInput.value = '500000'; amountRange.value = '500000';
+    amountVal.textContent = formatINR(500000);
+
+    rateInput.value = '8.5'; rateRange.value = '8.5';
+    rateVal.textContent = '8.5%';
+
+    tenureInput.min = 1;
+    tenureInput.max = 50;
+    tenureInput.value = '20';
+    tenureRange.min = 1;
+    tenureRange.max = 40;
+    tenureRange.value = '20';
+    tenureVal.textContent = '20 years';
+
+    resultBox.hidden = true;
+    schedBody.classList.remove('open');
+    schedHeader.setAttribute('aria-expanded', 'false');
+    schedRows.innerHTML = '';
+
+    // Clear donut
+    var ctx = donutCanvas.getContext('2d');
+    ctx.clearRect(0, 0, donutCanvas.width, donutCanvas.height);
+
+    state.lastResult = null;
+
+    amountInput.focus();
+  });
+
+  // Redraw donut on theme change (colour variables change)
+  var observer = new MutationObserver(function () {
+    if (state.lastResult) {
+      drawDonut(state.lastResult.principal, state.lastResult.totalInterest);
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+  // ---------- INIT ----------
+  amountVal.textContent = formatINR(500000);
+  rateVal.textContent   = '8.5%';
+  tenureVal.textContent = '20 years';
+
+})();
+</script>
+
+</body>
+</html>
