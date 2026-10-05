@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a5c3a" />
+  <meta name="description" content="Get in touch with Yadav Web Tools — feedback, bug reports, and new tool requests." />
+  <title>Contact — Yadav Web Tools</title>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ywt-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css" />
+
+  <style>
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    @media (max-width: 700px) { .contact-grid { grid-template-columns: 1fr; } }
+
+    .contact-card {
+      padding: 22px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease);
+    }
+    .contact-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.06);
+    }
+    .contact-card-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-line);
+      color: var(--brand);
+      margin-bottom: 14px;
+    }
+    .contact-card-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .contact-card-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 6px;
+      letter-spacing: -.01em;
+    }
+    .contact-card p {
+      font-size: .92rem;
+      color: var(--text-2);
+      line-height: 1.65;
+      margin: 0 0 14px;
+    }
+    .contact-card a {
+      color: var(--brand);
+      font-weight: 600;
+      word-break: break-all;
+    }
+    .contact-card a:hover { text-decoration: underline; }
+
+    .contact-faq {
+      margin-top: 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .contact-faq details {
+      border-top: 1px solid var(--border);
+    }
+    .contact-faq details:first-child { border-top: 0; }
+    .contact-faq summary {
+      padding: 14px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .92rem;
+      color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background .2s var(--ease);
+    }
+    .contact-faq summary::-webkit-details-marker { display: none; }
+    .contact-faq summary:hover { background: var(--brand-soft); }
+    .contact-faq summary::after {
+      content: "";
+      width: 10px; height: 10px;
+      border-right: 2px solid var(--brand);
+      border-bottom: 2px solid var(--brand);
+      transform: rotate(45deg);
+      transition: transform .25s var(--ease);
+      flex-shrink: 0;
+      margin-right: 4px;
+    }
+    .contact-faq details[open] summary::after { transform: rotate(-135deg); }
+    .contact-faq .contact-faq-body {
+      padding: 0 18px 16px;
+      font-size: .9rem;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader" role="banner">
+  <div class="header-inner">
+    <a href="/yadavwebtools/index.html" class="site-title">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </a>
+
+    <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
+      <ul class="nav-list">
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html" aria-current="page">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="search-container" id="searchContainer">
+        <div class="search-box">
+          <button class="search-toggle" id="searchToggle" aria-label="Search tools" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+        </div>
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="dropdown-section">
+            <span class="dropdown-label">Quick Tools</span>
+            <ul class="dropdown-list" id="quickToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+            </ul>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-section">
+            <span class="dropdown-label">All Tools</span>
+            <ul class="dropdown-list" id="allToolsList">
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/hosting-checker/index.html">Hosting Checker</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/>
+          <line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/>
+          <line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/>
+          <line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>
+        </svg>
+      </button>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="nav-scrim" id="navScrim" hidden></div>
+
+<main id="main-content">
+  <section class="section" aria-labelledby="contact-heading">
+    <div class="section-title-bar">
+      <h2 id="contact-heading">Contact</h2>
+      <p class="section-sub">Feedback, bug reports, and requests for new tools.</p>
+    </div>
+
+    <div class="section-body">
+      <div class="content-box" style="margin-bottom:22px;">
+        <p>
+          Have a suggestion, found a bug, or want a tool we don't have yet? Send a
+          message — every one is read. Requests that get asked for repeatedly are
+          the ones we build next.
+        </p>
+      </div>
+
+      <div class="contact-grid">
+
+        <div class="contact-card">
+          <div class="contact-card-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+          </div>
+          <h3 class="contact-card-title">Email</h3>
+          <p>
+            The most reliable way to reach us. Include the tool name and a short
+            description of your issue or idea.
+          </p>
+          <a href="mailto:hello@yadavwebtools.com">hello@yadavwebtools.com</a>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          </div>
+          <h3 class="contact-card-title">Bug reports</h3>
+          <p>
+            If a tool gives a wrong result or behaves unexpectedly, tell us what you
+            entered and what you expected. Screenshots help.
+          </p>
+          <a href="mailto:bugs@yadavwebtools.com">bugs@yadavwebtools.com</a>
+        </div>
+
+      </div>
+
+      <div class="contact-faq">
+        <details open>
+          <summary>How long until I hear back?</summary>
+          <div class="contact-faq-body">
+            Replies typically go out within a few days. If you're reporting a broken
+            tool, we try to acknowledge within 24 hours.
+          </div>
+        </details>
+        <details>
+          <summary>Can I request a new tool?</summary>
+          <div class="contact-faq-body">
+            Absolutely. Describe what you want it to do, and if possible give an example
+            of a task you'd use it for. The most requested additions get built next.
+          </div>
+        </details>
+        <details>
+          <summary>Do you accept contributions?</summary>
+          <div class="contact-faq-body">
+            The site is currently maintained by a single author, but thoughtful fixes and
+            suggestions are welcome by email. If you spot a security issue, please mark
+            the subject line as "security" so it's prioritised.
+          </div>
+        </details>
+        <details>
+          <summary>Is my data safe if I email you?</summary>
+          <div class="contact-faq-body">
+            Yes. Messages go to a private inbox and are used only to reply. We don't add
+            addresses to any list, and we never share or sell them. See the privacy
+            policy for details.
+          </div>
+        </details>
+        <details>
+          <summary>Something else?</summary>
+          <div class="contact-faq-body">
+            Send a general message to <a href="mailto:hello@yadavwebtools.com">hello@yadavwebtools.com</a>
+            and it'll land with the right person.
+          </div>
+        </details>
+      </div>
+
+      <div class="content-box" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--brand);margin:0 0 10px;">Before you write</h3>
+        <p>
+          If a tool isn't working, first try a hard refresh (Ctrl + Shift + R on
+          Windows, Cmd + Shift + R on Mac) to clear any cached version. If a
+          browser extension is blocking scripts, the tool may not run until you
+          disable it for this site. And if a specific file type isn't supported, it's
+          usually because the browser itself can't decode it — let us know the type
+          and we'll see what's possible.
+        </p>
+        <p>
+          For privacy or data questions, the short answer is: nothing leaves your
+          device when you use the tools. The long answer lives in the
+          <a href="/yadavwebtools/privacy-policy/index.html">privacy policy</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      Yadav Web Tools
+    </div>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<script src="../script.js"></script>
+
+</body>
+</html>
