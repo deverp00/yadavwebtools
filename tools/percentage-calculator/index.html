@@ -26,7 +26,6 @@
   <style>
     /* --- Percentage Calculator local styles --- */
 
-    /* Mode tabs (segmented control) */
     .pc-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -54,6 +53,7 @@
       transition: background .2s var(--ease), color .2s var(--ease);
       white-space: nowrap;
       text-align: center;
+      font-family: inherit;
     }
     .pc-tab svg {
       width: 15px; height: 15px;
@@ -67,7 +67,6 @@
       box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
     }
 
-    /* Panels */
     .pc-panel { display: none; }
     .pc-panel.active { display: block; animation: pcFade .28s var(--ease-out); }
     @keyframes pcFade {
@@ -75,7 +74,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Inline formula row: [input] label [input] */
     .pc-inline {
       display: flex;
       flex-wrap: wrap;
@@ -101,6 +99,7 @@
       font-variant-numeric: tabular-nums;
       text-align: center;
       transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+      font-family: inherit;
     }
     .pc-inline .pc-num:focus {
       outline: 0;
@@ -135,7 +134,6 @@
       font-weight: 500;
     }
 
-    /* Result panel below each mode */
     .pc-result {
       margin-top: 14px;
       padding: 20px 22px;
@@ -195,6 +193,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .pc-copy-btn svg {
       width: 14px; height: 14px;
@@ -212,24 +211,6 @@
       border-color: #27ae60;
     }
 
-    /* Delta indicator (increase/decrease) */
-    .pc-delta {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: .82rem;
-      font-weight: 700;
-      letter-spacing: .3px;
-    }
-    .pc-delta.up   { background: rgba(46, 204, 113, .14); color: #1a7a44; }
-    .pc-delta.down { background: rgba(231, 76, 60, .14);  color: #b33a2c; }
-    .pc-delta.flat { background: var(--brand-soft); color: var(--text-muted); }
-    .dark-mode .pc-delta.up   { color: #52c98a; }
-    .dark-mode .pc-delta.down { color: #ff8979; }
-
-    /* Common percentages quick chips */
     .pc-chips {
       display: flex;
       flex-wrap: wrap;
@@ -248,6 +229,7 @@
       cursor: pointer;
       transition: all .2s var(--ease);
       font-variant-numeric: tabular-nums;
+      font-family: inherit;
     }
     .pc-chip:hover {
       border-color: var(--brand);
@@ -255,7 +237,6 @@
       background: var(--brand-soft);
     }
 
-    /* Small link-style button */
     .pc-link-btn {
       background: transparent;
       border: 0;
@@ -266,10 +247,10 @@
       padding: 4px 8px;
       border-radius: 6px;
       transition: background .2s var(--ease);
+      font-family: inherit;
     }
     .pc-link-btn:hover { background: var(--brand-soft); }
 
-    /* Result toggle row */
     .pc-actions-row {
       display: flex;
       flex-wrap: wrap;
@@ -310,7 +291,7 @@
 <!-- ===== HEADER ===== -->
 <header class="site-header" id="siteHeader" role="banner">
   <div class="header-inner">
-    <a href="/dav/index.html" class="site-title">
+    <a href="/yadavwebtools/index.html" class="site-title">
       <span class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
@@ -321,12 +302,12 @@
 
     <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
       <ul class="nav-list">
-        <li><a href="/dav/index.html">Home</a></li>
-        <li><a href="/dav/about/index.html">About</a></li>
-        <li><a href="/dav/contact/index.html">Contact</a></li>
-        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
-        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
-        <li><a href="/dav/terms/index.html">Terms</a></li>
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
       </ul>
     </nav>
 
@@ -339,36 +320,42 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
           <div class="dropdown-section">
             <span class="dropdown-label">Quick Tools</span>
             <ul class="dropdown-list" id="quickToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
             </ul>
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-section">
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
-              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
-              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
-              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
-              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
-              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
-              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
-              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
-              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -519,7 +506,7 @@
           <div class="error-msg" id="revError" role="alert"></div>
         </div>
 
-        <!-- ===== RESULT DETAIL (shared) ===== -->
+        <!-- ===== SHARED RESULT ===== -->
         <div class="pc-result" id="pcResult">
           <div class="pc-result-line" id="pcResultLine"></div>
           <div class="pc-result-value" id="pcResultValue">—</div>
@@ -532,7 +519,6 @@
           </div>
         </div>
 
-        <!-- ===== GLOBAL ACTIONS ===== -->
         <div class="btn-group" style="margin-top:18px;">
           <button type="button" class="btn btn-secondary" id="pcReset">Reset</button>
         </div>
@@ -593,11 +579,11 @@
     </div>
 
     <nav class="footer-links" aria-label="Footer navigation">
-      <a href="/dav/about/index.html">About</a>
-      <a href="/dav/contact/index.html">Contact</a>
-      <a href="/dav/privacy-policy/index.html">Privacy</a>
-      <a href="/dav/disclaimer/index.html">Disclaimer</a>
-      <a href="/dav/terms/index.html">Terms</a>
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
     </nav>
 
     <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
@@ -622,39 +608,33 @@
   var tabs         = document.querySelectorAll('.pc-tab');
   var panels       = document.querySelectorAll('.pc-panel');
 
-  // Panel 1: X% of Y
   var ofX          = document.getElementById('ofX');
   var ofY          = document.getElementById('ofY');
   var ofResult     = document.getElementById('ofResult');
   var ofError      = document.getElementById('ofError');
 
-  // Panel 2: X is what % of Y
   var isX          = document.getElementById('isX');
   var isY          = document.getElementById('isY');
   var isResult     = document.getElementById('isResult');
   var isError      = document.getElementById('isError');
 
-  // Panel 3: % Change
   var chFrom       = document.getElementById('chFrom');
   var chTo         = document.getElementById('chTo');
   var chResult     = document.getElementById('chResult');
   var chError      = document.getElementById('chError');
 
-  // Panel 4: Increase / Decrease
   var incValue     = document.getElementById('incValue');
   var incPercent   = document.getElementById('incPercent');
   var incResult    = document.getElementById('incResult');
   var incError     = document.getElementById('incError');
   var incDirBtn    = document.getElementById('incDirBtn');
 
-  // Panel 5: Reverse
   var revValue     = document.getElementById('revValue');
   var revPercent   = document.getElementById('revPercent');
   var revResult    = document.getElementById('revResult');
   var revError     = document.getElementById('revError');
   var revDirBtn    = document.getElementById('revDirBtn');
 
-  // Shared result
   var pcResult       = document.getElementById('pcResult');
   var pcResultLine   = document.getElementById('pcResultLine');
   var pcResultValue  = document.getElementById('pcResultValue');
@@ -662,14 +642,13 @@
   var pcCopyBtn      = document.getElementById('pcCopyBtn');
   var resetBtn       = document.getElementById('pcReset');
 
-  // Quick chips
   var chips = document.querySelectorAll('.pc-chip');
 
   // ---------- STATE ----------
   var state = {
     mode: 'of',
-    incDir: 'up',   // 'up' | 'down'
-    revDir: 'up',   // 'up' | 'down'
+    incDir: 'up',
+    revDir: 'up',
     lastResult: null
   };
 
@@ -689,7 +668,6 @@
 
   function fmtPercent(n) {
     if (!isFinite(n)) return '—';
-    // Round display to 4 decimals but keep up to 10 significant in the value
     var rounded = Math.round(n * 10000) / 10000;
     return numFmt.format(rounded) + '%';
   }
@@ -729,7 +707,6 @@
       .replace(/'/g, '&#39;');
   }
 
-  // ---------- HIDE ALL RESULTS ----------
   function hideResult() {
     pcResult.classList.remove('show');
     state.lastResult = null;
@@ -959,11 +936,9 @@
     el.addEventListener('input', run);
   });
 
-  // Quick chips fill ofX
   chips.forEach(function (chip) {
     chip.addEventListener('click', function () {
       ofX.value = chip.getAttribute('data-quick');
-      // Switch to "X% of Y" tab if not active
       if (state.mode !== 'of') {
         tabs.forEach(function (t) {
           var isActive = t.getAttribute('data-mode') === 'of';
@@ -979,7 +954,6 @@
     });
   });
 
-  // Direction toggles
   incDirBtn.addEventListener('click', function () {
     state.incDir = state.incDir === 'up' ? 'down' : 'up';
     incDirBtn.textContent = state.incDir === 'up' ? 'Switch to decrease' : 'Switch to increase';
@@ -1031,10 +1005,8 @@
 
   // ---------- RESET ----------
   resetBtn.addEventListener('click', function () {
-    // Clear every error box
     [ofError, isError, chError, incError, revError].forEach(clearError);
 
-    // Defaults
     ofX.value = '15'; ofY.value = '200';
     isX.value = '30'; isY.value = '150';
     chFrom.value = '80'; chTo.value = '100';
@@ -1046,7 +1018,6 @@
     incDirBtn.textContent = 'Switch to decrease';
     revDirBtn.textContent = 'Switch to decrease';
 
-    // Switch to first tab
     state.mode = 'of';
     tabs.forEach(function (t) {
       var isActive = t.getAttribute('data-mode') === 'of';
