@@ -46,6 +46,7 @@
       cursor: pointer;
       transition: background .2s var(--ease), color .2s var(--ease);
       white-space: nowrap;
+      font-family: inherit;
     }
     .gst-mode-btn:hover { color: var(--brand); }
     .gst-mode-btn.active {
@@ -73,6 +74,7 @@
       font-variant-numeric: tabular-nums;
       min-width: 62px;
       text-align: center;
+      font-family: inherit;
     }
     .gst-rate-chip:hover {
       border-color: var(--brand);
@@ -103,6 +105,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .gst-supply-btn svg {
       width: 16px; height: 16px;
@@ -159,6 +162,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .gst-copy-btn svg {
       width: 14px; height: 14px;
@@ -242,8 +246,6 @@
     .gst-quickref-table tbody tr:hover td { background: var(--brand-soft); }
     .gst-quickref-wrap { overflow-x: auto; }
 
-    /* Breakdown card grid stays consistent with .gst-result in base CSS */
-
     @media (max-width: 640px) {
       .gst-mode { width: 100%; }
       .gst-mode-btn { flex: 1; padding: 10px 12px; font-size: .82rem; }
@@ -288,7 +290,7 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
@@ -305,19 +307,25 @@
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
               <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
               <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
               <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
               <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
               <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
               <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
               <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
               <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
               <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
               <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -452,9 +460,7 @@
 
         <div class="result-breakdown">
           <div class="breakdown-title" id="gstBreakdownTitle">Tax Breakdown</div>
-          <div class="breakdown-grid" id="gstBreakdownGrid">
-            <!-- filled by JS -->
-          </div>
+          <div class="breakdown-grid" id="gstBreakdownGrid"></div>
         </div>
 
         <div class="result-detail" id="gstDetail"></div>
@@ -596,9 +602,9 @@
 
   // ---------- STATE ----------
   var state = {
-    mode: 'add',       // 'add' | 'remove'
-    rate: 18,          // number
-    supply: 'intra',   // 'intra' | 'inter'
+    mode: 'add',
+    rate: 18,
+    supply: 'intra',
     lastResult: null
   };
 
@@ -649,8 +655,6 @@
   }
 
   // ---------- CORE MATH ----------
-  // Add GST:  base = amount,          tax = base * r,       total = base + tax
-  // Remove:   total = amount,         base = amount / (1+r), tax = amount - base
   function computeGST(amount, ratePercent, mode) {
     var r = ratePercent / 100;
     var base, tax, total;
@@ -705,7 +709,6 @@
 
     var res = computeGST(amount, rate, state.mode);
 
-    // Labels adapt to mode
     if (state.mode === 'add') {
       baseLabel.textContent  = 'Base Amount';
       totalLabel.textContent = 'Total (incl. GST)';
@@ -719,19 +722,17 @@
     baseOut.textContent  = formatINR(res.base);
     totalOut.textContent = formatINR(res.total);
 
-    // Split bar
     var safeTotal = res.total > 0 ? res.total : 1;
     splitBase.style.width = ((res.base / safeTotal) * 100).toFixed(2) + '%';
     splitTax.style.width  = ((res.tax  / safeTotal) * 100).toFixed(2) + '%';
 
-    // Breakdown grid
     breakdownGrid.innerHTML = '';
 
     var rateText = rate + '%';
 
     if (state.supply === 'intra') {
       var cgst = round2(res.tax / 2);
-      var sgst = round2(res.tax - cgst); // keeps sum exact
+      var sgst = round2(res.tax - cgst);
 
       breakdownTitle.textContent = 'Tax Breakdown — Intra-state (CGST + SGST)';
 
@@ -748,7 +749,6 @@
       breakdownGrid.appendChild(makeBreakdownItem('Total', formatINR(res.total)));
     }
 
-    // Detail line
     var supplyText = state.supply === 'intra'
       ? 'intra-state (split equally as CGST and SGST)'
       : 'inter-state (charged as IGST)';
@@ -757,7 +757,6 @@
       (state.mode === 'add' ? 'Adding ' : 'Removing ') + rateText + ' GST on ' +
       formatINRShort(amount) + ' — ' + supplyText + '.';
 
-    // Stash for copy
     state.lastResult = {
       mode: state.mode,
       rate: rate,
@@ -792,7 +791,6 @@
       btn.classList.add('active');
       btn.setAttribute('aria-selected', 'true');
       state.mode = btn.getAttribute('data-mode');
-      // Swap the meaning of the amount input if a result exists
       if (!resultBox.hidden && state.lastResult) {
         amountInput.value = state.mode === 'add'
           ? state.lastResult.base
@@ -961,7 +959,6 @@
   }
 
   // ---------- INIT ----------
-  // Set the default active rate chip (18%) to match state
   rateChips.forEach(function (c) {
     c.classList.toggle('active', c.getAttribute('data-rate') === '18');
   });
