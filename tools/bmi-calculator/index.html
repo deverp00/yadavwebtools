@@ -26,7 +26,6 @@
   <style>
     /* --- BMI Calculator local styles --- */
 
-    /* Unit system toggle */
     .bmi-units {
       display: inline-flex;
       padding: 4px;
@@ -46,6 +45,7 @@
       cursor: pointer;
       transition: background .2s var(--ease), color .2s var(--ease);
       white-space: nowrap;
+      font-family: inherit;
     }
     .bmi-unit-btn:hover { color: var(--brand); }
     .bmi-unit-btn.active {
@@ -54,7 +54,6 @@
       box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
     }
 
-    /* Height / weight panels (metric vs imperial) */
     .bmi-panel { display: none; }
     .bmi-panel.active { display: block; animation: bmiFade .28s var(--ease-out); }
     @keyframes bmiFade {
@@ -62,7 +61,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Result hero */
     .bmi-hero {
       display: grid;
       grid-template-columns: auto 1fr;
@@ -130,13 +128,11 @@
     }
     .bmi-hero-detail strong { color: var(--text); font-weight: 600; }
 
-    /* Category colors */
     .bmi-cat-under { color: #3b82f6; }
     .bmi-cat-normal { color: #16a34a; }
     .bmi-cat-over { color: #f59e0b; }
     .bmi-cat-obese { color: #dc2626; }
 
-    /* BMI scale bar */
     .bmi-scale-wrap {
       margin-top: 22px;
       padding: 18px 20px;
@@ -158,10 +154,10 @@
       border-radius: 8px;
       overflow: hidden;
       background: linear-gradient(to right,
-        #3b82f6 0%, #3b82f6 18.5%,
-        #16a34a 18.5%, #16a34a 43%,
-        #f59e0b 43%, #f59e0b 53%,
-        #dc2626 53%, #dc2626 100%);
+        #3b82f6 0%, #3b82f6 28%,
+        #16a34a 28%, #16a34a 50%,
+        #f59e0b 50%, #f59e0b 67%,
+        #dc2626 67%, #dc2626 100%);
       margin-bottom: 8px;
     }
     .bmi-scale-marker {
@@ -223,7 +219,6 @@
     .bmi-dot-over   { background: #f59e0b; }
     .bmi-dot-obese  { background: #dc2626; }
 
-    /* Healthy weight range card */
     .bmi-healthy {
       margin-top: 14px;
       padding: 16px 20px;
@@ -243,7 +238,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Categories reference table */
     .bmi-cats {
       margin-top: 18px;
       border: 1px solid var(--border);
@@ -297,7 +291,6 @@
       background: var(--brand-soft);
     }
 
-    /* Copy row */
     .bmi-copy-row {
       display: flex;
       justify-content: center;
@@ -316,6 +309,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .bmi-copy-btn svg {
       width: 14px; height: 14px;
@@ -387,7 +381,7 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
@@ -404,19 +398,25 @@
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
               <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
               <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
               <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
               <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
               <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
               <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
               <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
               <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
               <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
               <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -538,7 +538,7 @@
           </div>
           <div class="bmi-hero-info">
             <span class="bmi-category" id="bmiCategory">—</span>
-            <p class="bmi-hero-detail" id="bmiHeroDetail">Enter your height and weight to calculate.</p>
+            <p class="bmi-hero-detail" id="bmiHeroDetail"></p>
           </div>
         </div>
 
@@ -762,7 +762,7 @@
   }
 
   // ---------- MARKER POSITION ----------
-  // Maps BMI 10..40 across 0..100% of the bar (with 18.5 → ~28%, 25 → 50%, 30 → 67%)
+  // Maps BMI 10..40 across 0..100% of the bar
   function markerPercent(bmi) {
     var min = 10, max = 40;
     var pct = ((bmi - min) / (max - min)) * 100;
@@ -781,10 +781,6 @@
     if (isNaN(h) || h <= 0) {
       resultWrap.hidden = true;
       state.lastResult = null;
-      if (state.units === 'metric' && heightCm.value !== '') {
-        // Only surface error when user has entered something
-        // no-op — keep the UI quiet while typing
-      }
       return;
     }
     if (isNaN(w) || w <= 0) {
@@ -793,7 +789,6 @@
       return;
     }
 
-    // Sanity range
     if (h < 0.3 || h > 3) {
       showError('Height is out of a valid range (30 cm – 300 cm / 1 ft – 9 ft).');
       resultWrap.hidden = true;
@@ -810,14 +805,11 @@
 
     var cat = categorize(bmi);
 
-    // Hero value
     bmiValueEl.textContent = fmt(bmi, 1);
 
-    // Category
     bmiCategoryEl.textContent = cat.label;
     bmiCategoryEl.className = 'bmi-category ' + cat.cls;
 
-    // Hero detail
     var heightStr, weightStr;
     if (state.units === 'metric') {
       heightStr = fmt(h * 100, 1) + ' cm';
@@ -833,17 +825,17 @@
     var distanceText = '';
     if (cat.key === 'under') {
       var targetMinUnder = 18.5 * h * h;
-      distanceText = 'You are ' + fmt(targetMinUnder - w, 1) + ' ' +
-        (state.units === 'metric' ? 'kg' : 'lb') +
-        ' below the normal range.';
-      if (state.units === 'imperial') {
+      if (state.units === 'metric') {
+        distanceText = 'You are ' + fmt(targetMinUnder - w, 1) + ' kg below the normal range.';
+      } else {
         distanceText = 'You are ' + fmt((targetMinUnder - w) / 0.45359237, 1) + ' lb below the normal range.';
       }
     } else if (cat.key === 'over' || cat.key === 'obese') {
       var targetMax = 24.9 * h * h;
       var kgOver = w - targetMax;
-      distanceText = 'You are ' + fmt(kgOver, 1) + ' kg above the normal range.';
-      if (state.units === 'imperial') {
+      if (state.units === 'metric') {
+        distanceText = 'You are ' + fmt(kgOver, 1) + ' kg above the normal range.';
+      } else {
         distanceText = 'You are ' + fmt(kgOver / 0.45359237, 1) + ' lb above the normal range.';
       }
     } else {
@@ -854,11 +846,9 @@
       'Height <strong>' + heightStr + '</strong> · Weight <strong>' + weightStr + '</strong>. ' +
       distanceText;
 
-    // Marker
     var pct = markerPercent(bmiRounded);
     bmiMarker.style.left = pct + '%';
 
-    // Healthy weight range
     var lowKg  = 18.5 * h * h;
     var highKg = 24.9 * h * h;
     var rangeText;
@@ -869,12 +859,10 @@
     }
     bmiHealthyRange.textContent = rangeText;
 
-    // Highlight active category row
     bmiCatsRows.forEach(function (row) {
       row.classList.toggle('active', row.getAttribute('data-cat') === cat.key);
     });
 
-    // Stash for copy
     state.lastResult = {
       bmi: bmiRounded,
       category: cat.label,
@@ -900,7 +888,6 @@
       var next = btn.getAttribute('data-units');
       if (next === state.units) return;
 
-      // Convert current values so the change is seamless
       if (next === 'imperial' && state.units === 'metric') {
         var cm = parseNum(heightCm);
         if (!isNaN(cm) && cm > 0) {
