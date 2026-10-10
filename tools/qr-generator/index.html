@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#1a5c3a" />
-  <meta name="description" content="Generate high-resolution QR codes for URLs, text, email, phone, SMS, WiFi, and vCard. Download as lossless PNG up to 8000px or vector SVG. Free and private." />
+  <meta name="description" content="Generate high-resolution QR codes for URLs, text, email, phone, SMS, WiFi, and vCard. Download as lossless PNG up to 8000px with margin and rounded corners, or as vector SVG." />
   <title>QR Generator — Yadav Web Tools</title>
 
   <script>
@@ -29,7 +29,6 @@
   <style>
     /* --- QR Generator local styles --- */
 
-    /* Data type tabs */
     .qr-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -56,27 +55,15 @@
       cursor: pointer;
       transition: background .2s var(--ease), color .2s var(--ease);
       white-space: nowrap;
+      font-family: inherit;
     }
-    .qr-tab svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-      flex-shrink: 0;
-    }
+    .qr-tab svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0; }
     .qr-tab:hover { color: var(--brand); }
-    .qr-tab.active {
-      background: var(--brand);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(26, 92, 58, .22);
-    }
+    .qr-tab.active { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(26, 92, 58, .22); }
 
-    /* Dynamic field panels */
     .qr-panel { display: none; }
     .qr-panel.active { display: block; }
 
-    /* Layout: form + preview side by side on desktop */
     .qr-layout {
       display: grid;
       grid-template-columns: 1.15fr 1fr;
@@ -107,18 +94,45 @@
       border-radius: var(--radius);
       min-height: 340px;
     }
-    .qr-preview-panel #qrPreview canvas,
-    .qr-preview-panel #qrPreview svg {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      display: block;
+
+    /* Preview wrapper that mimics the downloaded output: padding + rounded corners */
+    .qr-preview-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 300px;
+      height: 300px;
+      box-sizing: border-box;
+      overflow: hidden;
+      background: #ffffff;
+      transition: padding .25s var(--ease), border-radius .25s var(--ease), background .25s var(--ease);
+      box-shadow: 0 6px 22px rgba(0,0,0,.08);
     }
-    .qr-preview-note {
-      font-size: .8rem;
-      color: var(--text-muted);
-      text-align: center;
+    .qr-preview-stage.transparent {
+      background:
+        linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+        linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+        linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-color: #f7f7f7;
     }
+    .dark-mode .qr-preview-stage.transparent {
+      background:
+        linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+        linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+        linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-color: #1a1a1a;
+    }
+    .qr-preview-stage > div { display: block; }
+    .qr-preview-stage canvas,
+    .qr-preview-stage svg { display: block; max-width: 100%; height: auto; }
+
+    .qr-preview-note { font-size: .8rem; color: var(--text-muted); text-align: center; }
     .qr-preview-badge {
       display: inline-flex;
       align-items: center;
@@ -133,10 +147,7 @@
       letter-spacing: .3px;
       text-transform: uppercase;
     }
-    .qr-preview-badge svg {
-      width: 12px; height: 12px;
-      stroke: currentColor; fill: none; stroke-width: 2.4;
-    }
+    .qr-preview-badge svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.4; }
 
     /* Color rows */
     .qr-color-row {
@@ -190,20 +201,12 @@
       transition: transform .3s var(--ease);
     }
     .qr-advanced-header[aria-expanded="true"] svg { transform: rotate(180deg); }
-    .qr-advanced-body {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height .5s var(--ease-out);
-    }
-    .qr-advanced-body.open { max-height: 900px; }
+    .qr-advanced-body { max-height: 0; overflow: hidden; transition: max-height .5s var(--ease-out); }
+    .qr-advanced-body.open { max-height: 1400px; }
     .qr-advanced-inner { padding: 16px; }
 
-    /* Download size chips */
-    .qr-size-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    /* Size chips */
+    .qr-size-chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .qr-size-chip {
       padding: 8px 16px;
       border: 1px solid var(--border);
@@ -215,13 +218,10 @@
       cursor: pointer;
       transition: all .2s var(--ease);
       font-variant-numeric: tabular-nums;
+      font-family: inherit;
     }
     .qr-size-chip:hover { border-color: var(--brand); color: var(--brand); }
-    .qr-size-chip.active {
-      background: var(--brand);
-      color: #fff;
-      border-color: var(--brand);
-    }
+    .qr-size-chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
 
     /* Download panel */
     .qr-download-panel {
@@ -259,9 +259,7 @@
     }
     .qr-logo-drop:hover { border-color: var(--brand); background: var(--brand-soft); }
     .qr-logo-drop svg { width: 18px; height: 18px; stroke: var(--brand); fill: none; stroke-width: 2; flex-shrink: 0; }
-    .qr-logo-drop input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-    }
+    .qr-logo-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .qr-logo-preview {
       display: flex;
       align-items: center;
@@ -274,27 +272,10 @@
       font-size: .82rem;
       color: var(--text-2);
     }
-    .qr-logo-preview img {
-      width: 32px; height: 32px;
-      object-fit: contain;
-      border-radius: 4px;
-      background: #fff;
-      padding: 2px;
-      border: 1px solid var(--border);
-    }
-    .qr-logo-remove {
-      margin-left: auto;
-      background: transparent;
-      border: 0;
-      color: #e74c3c;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 0 4px;
-      line-height: 1;
-    }
+    .qr-logo-preview img { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background: #fff; padding: 2px; border: 1px solid var(--border); }
+    .qr-logo-remove { margin-left: auto; background: transparent; border: 0; color: #e74c3c; font-weight: 700; cursor: pointer; font-size: 1rem; padding: 0 4px; line-height: 1; }
 
-    /* Warning about 8K */
+    /* Warn */
     .qr-warn {
       display: flex;
       align-items: flex-start;
@@ -311,11 +292,10 @@
     .dark-mode .qr-warn { background: rgba(243, 156, 18, .12); color: #f0b90b; border-color: rgba(243, 156, 18, .4); }
     .qr-warn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; flex-shrink: 0; margin-top: 2px; }
 
-    /* Loading spinner in download button */
+    /* Loading spinner */
     .btn .btn-spinner {
       display: none;
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,.4);
       border-top-color: #fff;
       border-radius: 50%;
@@ -325,7 +305,39 @@
     .btn.loading .btn-label { opacity: .75; }
     @keyframes qrSpin { to { transform: rotate(360deg); } }
 
-    /* Mobile tweaks */
+    /* Output style inputs */
+    .qr-output-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .qr-output-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .qr-output-field label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .qr-output-field input[type="number"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: .9rem;
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+    .qr-output-field input[type="number"]:focus {
+      outline: 0;
+      border-color: var(--brand);
+    }
+
     @media (max-width: 640px) {
       .qr-tab { font-size: .78rem; padding: 9px 8px; }
       .qr-tab span.tab-label { display: none; }
@@ -333,6 +345,8 @@
       .qr-tab.active span.tab-label { display: inline; }
       .qr-preview-wrap { position: static; }
       .qr-color-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .qr-output-grid { grid-template-columns: 1fr; }
+      .qr-preview-stage { width: 260px; height: 260px; }
     }
   </style>
 </head>
@@ -341,7 +355,7 @@
 <!-- ===== HEADER ===== -->
 <header class="site-header" id="siteHeader" role="banner">
   <div class="header-inner">
-    <a href="/dav/index.html" class="site-title">
+    <a href="/yadavwebtools/index.html" class="site-title">
       <span class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
@@ -352,12 +366,12 @@
 
     <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
       <ul class="nav-list">
-        <li><a href="/dav/index.html">Home</a></li>
-        <li><a href="/dav/about/index.html">About</a></li>
-        <li><a href="/dav/contact/index.html">Contact</a></li>
-        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
-        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
-        <li><a href="/dav/terms/index.html">Terms</a></li>
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
       </ul>
     </nav>
 
@@ -370,36 +384,42 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
           <div class="dropdown-section">
             <span class="dropdown-label">Quick Tools</span>
             <ul class="dropdown-list" id="quickToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
             </ul>
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-section">
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
-              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
-              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
-              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
-              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
-              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
-              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
-              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
-              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -436,16 +456,15 @@
   <section class="section" aria-labelledby="qr-heading">
     <div class="section-title-bar">
       <h2 id="qr-heading">QR Generator</h2>
-      <p class="section-sub">Create QR codes for URLs, text, email, phone, SMS, WiFi, and vCard — download as lossless PNG up to 8000px or vector SVG.</p>
+      <p class="section-sub">Create QR codes for URLs, text, email, phone, SMS, WiFi, and vCard — download as lossless PNG up to 8000px with margin and rounded corners, or as vector SVG.</p>
     </div>
 
     <div class="section-body">
 
       <p class="tool-intro">
         Powered by the open-source <code>qr-code-styling</code> library. Every code is
-        generated locally in your browser with proper Reed-Solomon error correction and
-        can be exported as a full-resolution lossless PNG or a resolution-independent
-        SVG. No data is uploaded.
+        generated locally in your browser with proper Reed-Solomon error correction.
+        Downloads include an outer margin and rounded corners. No data is uploaded.
       </p>
 
       <form class="qr-form" id="qrForm" novalidate onsubmit="return false;">
@@ -483,61 +502,56 @@
           <!-- ===== LEFT: FORM ===== -->
           <div class="qr-form-column">
 
-            <!-- Text / URL -->
             <div class="qr-panel active" data-panel="text">
               <div class="field-group" style="display:block;">
                 <label for="qrText">Text or URL</label>
-                <textarea id="qrText" class="qr-textarea" placeholder="https://example.com or any text…" rows="4">https://yadavwebtools.com</textarea>
+                <textarea id="qrText" class="qr-textarea" rows="4">https://yadavwebtools.com</textarea>
                 <span class="helper-text">Any text works — URLs, messages, codes, and so on.</span>
               </div>
             </div>
 
-            <!-- Email -->
             <div class="qr-panel" data-panel="email">
               <div class="field-group">
                 <label for="qrEmailTo">To</label>
-                <input type="email" id="qrEmailTo" placeholder="name@example.com" />
+                <input type="email" id="qrEmailTo" />
               </div>
               <div class="field-group">
                 <label for="qrEmailSubject">Subject</label>
-                <input type="text" id="qrEmailSubject" placeholder="Optional subject" />
+                <input type="text" id="qrEmailSubject" />
               </div>
               <div class="field-group" style="display:block;">
                 <label for="qrEmailBody">Body</label>
-                <textarea id="qrEmailBody" class="qr-textarea" rows="3" placeholder="Optional message body"></textarea>
+                <textarea id="qrEmailBody" class="qr-textarea" rows="3"></textarea>
               </div>
             </div>
 
-            <!-- Phone -->
             <div class="qr-panel" data-panel="phone">
               <div class="field-group">
                 <label for="qrPhone">Phone Number</label>
-                <input type="tel" id="qrPhone" placeholder="+91 98765 43210" />
+                <input type="tel" id="qrPhone" />
                 <span class="helper-text">Include country code for international dialing.</span>
               </div>
             </div>
 
-            <!-- SMS -->
             <div class="qr-panel" data-panel="sms">
               <div class="field-group">
                 <label for="qrSmsTo">Phone Number</label>
-                <input type="tel" id="qrSmsTo" placeholder="+91 98765 43210" />
+                <input type="tel" id="qrSmsTo" />
               </div>
               <div class="field-group" style="display:block;">
                 <label for="qrSmsBody">Message</label>
-                <textarea id="qrSmsBody" class="qr-textarea" rows="3" placeholder="Pre-filled SMS text"></textarea>
+                <textarea id="qrSmsBody" class="qr-textarea" rows="3"></textarea>
               </div>
             </div>
 
-            <!-- WiFi -->
             <div class="qr-panel" data-panel="wifi">
               <div class="field-group">
                 <label for="qrWifiSsid">Network Name (SSID)</label>
-                <input type="text" id="qrWifiSsid" placeholder="MyHomeWiFi" />
+                <input type="text" id="qrWifiSsid" />
               </div>
               <div class="field-group">
                 <label for="qrWifiPass">Password</label>
-                <input type="text" id="qrWifiPass" placeholder="Network password" />
+                <input type="text" id="qrWifiPass" />
               </div>
               <div class="field-group">
                 <label for="qrWifiEnc">Security</label>
@@ -556,39 +570,38 @@
               </div>
             </div>
 
-            <!-- vCard -->
             <div class="qr-panel" data-panel="vcard">
               <div class="field-group">
                 <label for="qrVcFirst">First Name</label>
-                <input type="text" id="qrVcFirst" placeholder="Jane" />
+                <input type="text" id="qrVcFirst" />
               </div>
               <div class="field-group">
                 <label for="qrVcLast">Last Name</label>
-                <input type="text" id="qrVcLast" placeholder="Doe" />
+                <input type="text" id="qrVcLast" />
               </div>
               <div class="field-group">
                 <label for="qrVcPhone">Phone</label>
-                <input type="tel" id="qrVcPhone" placeholder="+91 98765 43210" />
+                <input type="tel" id="qrVcPhone" />
               </div>
               <div class="field-group">
                 <label for="qrVcEmail">Email</label>
-                <input type="email" id="qrVcEmail" placeholder="jane@example.com" />
+                <input type="email" id="qrVcEmail" />
               </div>
               <div class="field-group">
                 <label for="qrVcOrg">Organization</label>
-                <input type="text" id="qrVcOrg" placeholder="Company name" />
+                <input type="text" id="qrVcOrg" />
               </div>
               <div class="field-group">
                 <label for="qrVcTitle">Job Title</label>
-                <input type="text" id="qrVcTitle" placeholder="Designer" />
+                <input type="text" id="qrVcTitle" />
               </div>
               <div class="field-group">
                 <label for="qrVcUrl">Website</label>
-                <input type="url" id="qrVcUrl" placeholder="https://example.com" />
+                <input type="url" id="qrVcUrl" />
               </div>
               <div class="field-group">
                 <label for="qrVcAddr">Address</label>
-                <input type="text" id="qrVcAddr" placeholder="City, Country" />
+                <input type="text" id="qrVcAddr" />
               </div>
             </div>
 
@@ -654,10 +667,27 @@
                   <div class="field-group">
                     <label for="qrMargin">Quiet Zone (margin)</label>
                     <input type="number" id="qrMargin" min="0" max="40" step="1" value="10" />
-                    <span class="helper-text">Modules of padding around the code.</span>
+                    <span class="helper-text">Modules of padding inside the QR code.</span>
                   </div>
 
-                  <div class="field-group" style="display:block;">
+                  <div class="field-group" style="display:block;margin-top:12px;">
+                    <label style="display:block;margin-bottom:8px;">Output layout</label>
+                    <div class="qr-output-grid">
+                      <div class="qr-output-field">
+                        <label for="qrOuterMargin">Outer margin (%)</label>
+                        <input type="number" id="qrOuterMargin" min="0" max="20" step="0.5" value="5" />
+                      </div>
+                      <div class="qr-output-field">
+                        <label for="qrCornerRadius">Corner radius (%)</label>
+                        <input type="number" id="qrCornerRadius" min="0" max="20" step="0.5" value="3" />
+                      </div>
+                    </div>
+                    <span class="helper-text" style="margin-top:6px;display:block;">
+                      Margin adds clean padding on all sides. Corner radius rounds the outer edge of the image.
+                    </span>
+                  </div>
+
+                  <div class="field-group" style="display:block;margin-top:12px;">
                     <label style="display:block;margin-bottom:8px;">Center Logo (optional)</label>
                     <div class="qr-logo-drop" id="qrLogoDrop">
                       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -686,8 +716,10 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 Live preview
               </span>
-              <div id="qrPreview"></div>
-              <span class="qr-preview-note" id="qrPreviewNote">300 × 300 preview</span>
+              <div class="qr-preview-stage" id="qrPreviewStage">
+                <div id="qrPreview"></div>
+              </div>
+              <span class="qr-preview-note" id="qrPreviewNote">300 × 300 preview · margin and corners applied</span>
             </div>
 
             <div class="qr-download-panel">
@@ -734,6 +766,13 @@
           same algorithm used by commercial QR software.
         </p>
         <p>
+          <strong>Outer margin</strong> adds clean padding on all four sides of the
+          downloaded image, so the code never touches the edge of the canvas or a page
+          when printed. <strong>Corner radius</strong> rounds the outer edge of the image
+          itself. Both values are percentages of the final image size — the defaults are
+          5% margin and 3% corner radius, which give a card-like appearance.
+        </p>
+        <p>
           The PNG download is lossless by definition. PNG uses DEFLATE compression, which
           is reversible, so the pixels you download are exactly the pixels that were drawn.
           At 8000 px, the file will be large (10–25 MB), but every single module will be
@@ -744,11 +783,6 @@
           when part of it is damaged, dirty, or covered by a logo. Level H (30%) is the
           right choice when you plan to place a logo in the center. Level L (7%) produces
           the least dense code, which is best for very small prints.
-        </p>
-        <p>
-          WiFi QR codes let guests join your network without typing a password. vCard codes
-          store contact details that phone cameras can add directly to the address book.
-          Email, phone, and SMS codes pre-fill the relevant app fields when scanned.
         </p>
       </div>
 
@@ -770,11 +804,11 @@
     </div>
 
     <nav class="footer-links" aria-label="Footer navigation">
-      <a href="/dav/about/index.html">About</a>
-      <a href="/dav/contact/index.html">Contact</a>
-      <a href="/dav/privacy-policy/index.html">Privacy</a>
-      <a href="/dav/disclaimer/index.html">Disclaimer</a>
-      <a href="/dav/terms/index.html">Terms</a>
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
     </nav>
 
     <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
@@ -794,41 +828,34 @@
 (function () {
   'use strict';
 
-  // ---------- LIBRARY CHECK ----------
   var libReady = !!window.QRCodeStyling;
 
   // ---------- ELEMENTS ----------
-  var form          = document.getElementById('qrForm');
   var errorBox      = document.getElementById('qrError');
 
   var tabs          = document.querySelectorAll('.qr-tab');
   var panels        = document.querySelectorAll('.qr-panel');
 
+  var previewStage  = document.getElementById('qrPreviewStage');
   var previewHost   = document.getElementById('qrPreview');
   var previewNote   = document.getElementById('qrPreviewNote');
 
-  // Text panel
   var qrText        = document.getElementById('qrText');
 
-  // Email panel
   var emailTo       = document.getElementById('qrEmailTo');
   var emailSubject  = document.getElementById('qrEmailSubject');
   var emailBody     = document.getElementById('qrEmailBody');
 
-  // Phone panel
   var phone         = document.getElementById('qrPhone');
 
-  // SMS panel
   var smsTo         = document.getElementById('qrSmsTo');
   var smsBody       = document.getElementById('qrSmsBody');
 
-  // WiFi panel
   var wifiSsid      = document.getElementById('qrWifiSsid');
   var wifiPass      = document.getElementById('qrWifiPass');
   var wifiEnc       = document.getElementById('qrWifiEnc');
   var wifiHidden    = document.getElementById('qrWifiHidden');
 
-  // vCard panel
   var vcFirst       = document.getElementById('qrVcFirst');
   var vcLast        = document.getElementById('qrVcLast');
   var vcPhone       = document.getElementById('qrVcPhone');
@@ -838,20 +865,19 @@
   var vcUrl         = document.getElementById('qrVcUrl');
   var vcAddr        = document.getElementById('qrVcAddr');
 
-  // Colors
   var fgColor       = document.getElementById('qrFgColor');
   var bgColor       = document.getElementById('qrBgColor');
   var transparentBg = document.getElementById('qrTransparentBg');
 
-  // Advanced
   var advHeader     = document.getElementById('qrAdvancedHeader');
   var advBody       = document.getElementById('qrAdvancedBody');
   var ecLevel       = document.getElementById('qrEcLevel');
   var dotStyle      = document.getElementById('qrDotStyle');
   var cornerStyle   = document.getElementById('qrCornerStyle');
   var marginInput   = document.getElementById('qrMargin');
+  var outerMarginIn = document.getElementById('qrOuterMargin');
+  var cornerRadIn   = document.getElementById('qrCornerRadius');
 
-  // Logo
   var logoDrop      = document.getElementById('qrLogoDrop');
   var logoInput     = document.getElementById('qrLogoInput');
   var logoPreview   = document.getElementById('qrLogoPreview');
@@ -859,7 +885,6 @@
   var logoName      = document.getElementById('qrLogoName');
   var logoRemove    = document.getElementById('qrLogoRemove');
 
-  // Download
   var sizeChips     = document.querySelectorAll('.qr-size-chip');
   var dlPngBtn      = document.getElementById('qrDownloadPng');
   var dlSvgBtn      = document.getElementById('qrDownloadSvg');
@@ -873,6 +898,8 @@
   var lastPayload   = '';
   var renderTimer   = null;
 
+  var PREVIEW_SIZE  = 300;
+
   // ---------- HELPERS ----------
   function showError(msg) {
     errorBox.textContent = msg;
@@ -884,10 +911,8 @@
   }
 
   function escapeWifiValue(str) {
-    // Escape backslash, semicolon, comma, colon, and double quotes per Wi-Fi QR spec
     return String(str || '').replace(/([\\;,:"])/g, '\\$1');
   }
-
   function escapeVCardValue(str) {
     return String(str || '')
       .replace(/\\/g, '\\\\')
@@ -896,12 +921,24 @@
       .replace(/\n/g, '\\n');
   }
 
+  function getOuterMarginPct() {
+    var v = parseFloat(outerMarginIn.value);
+    if (!isFinite(v) || v < 0) v = 0;
+    if (v > 20) v = 20;
+    return v;
+  }
+  function getCornerRadiusPct() {
+    var v = parseFloat(cornerRadIn.value);
+    if (!isFinite(v) || v < 0) v = 0;
+    if (v > 20) v = 20;
+    return v;
+  }
+
   // ---------- BUILD PAYLOAD ----------
   function buildPayload() {
     if (currentType === 'text') {
       return qrText.value || 'https://yadavwebtools.com';
     }
-
     if (currentType === 'email') {
       var to = (emailTo.value || '').trim();
       var subj = (emailSubject.value || '').trim();
@@ -912,19 +949,16 @@
       var query = parts.length ? '?' + parts.join('&') : '';
       return 'mailto:' + to + query;
     }
-
     if (currentType === 'phone') {
       var p = (phone.value || '').replace(/[^\d+]/g, '');
       return p ? 'tel:' + p : '';
     }
-
     if (currentType === 'sms') {
       var sp = (smsTo.value || '').replace(/[^\d+]/g, '');
       var sb = (smsBody.value || '').trim();
       if (!sp && !sb) return '';
       return 'smsto:' + sp + (sb ? ':' + sb : '');
     }
-
     if (currentType === 'wifi') {
       var ssid = escapeWifiValue(wifiSsid.value);
       var pass = escapeWifiValue(wifiPass.value);
@@ -936,7 +970,6 @@
       wifiStr += 'H:' + hid + ';;';
       return wifiStr;
     }
-
     if (currentType === 'vcard') {
       var fn = (vcFirst.value || '').trim();
       var ln = (vcLast.value || '').trim();
@@ -956,16 +989,15 @@
       lines.push('END:VCARD');
       return lines.join('\n');
     }
-
     return '';
   }
 
-  // ---------- BUILD OPTIONS ----------
-  function buildOptions(width, height) {
+  // ---------- BUILD QR OPTIONS ----------
+  function buildOptions(innerSize) {
     var bg = transparentBg.checked ? 'transparent' : bgColor.value;
     var opts = {
-      width: width,
-      height: height,
+      width: innerSize,
+      height: innerSize,
       type: 'canvas',
       data: lastPayload || 'https://yadavwebtools.com',
       margin: parseInt(marginInput.value, 10) || 0,
@@ -989,7 +1021,6 @@
         type: cornerStyle.value === 'dot' ? 'dot' : 'square'
       }
     };
-
     if (logoDataUrl) {
       opts.image = logoDataUrl;
       opts.imageOptions = {
@@ -999,11 +1030,10 @@
         hideBackgroundDots: true
       };
     }
-
     return opts;
   }
 
-  // ---------- UPDATE PREVIEW ----------
+  // ---------- PREVIEW ----------
   function updatePreview() {
     if (!libReady) {
       showError('QR library failed to load. Check your connection and refresh.');
@@ -1012,16 +1042,32 @@
 
     var payload = buildPayload();
     if (!payload) {
-      // Show a placeholder-friendly state — but still render something so layout doesn't jump
       previewHost.innerHTML = '';
       previewNote.textContent = 'Fill in the fields to generate a code.';
       return;
     }
 
     lastPayload = payload;
-    previewNote.textContent = '300 × 300 preview';
 
-    var opts = buildOptions(300, 300);
+    // Compute layout proportions
+    var marginPct = getOuterMarginPct();
+    var radiusPct = getCornerRadiusPct();
+
+    var marginPx = Math.round(PREVIEW_SIZE * marginPct / 100);
+    var radiusPx = Math.round(PREVIEW_SIZE * radiusPct / 100);
+    var innerSize = PREVIEW_SIZE - 2 * marginPx;
+    if (innerSize < 40) innerSize = 40;
+
+    // Apply stage styling to match the downloaded output
+    previewStage.style.padding = marginPx + 'px';
+    previewStage.style.borderRadius = radiusPx + 'px';
+    previewStage.classList.toggle('transparent', transparentBg.checked);
+    previewStage.style.background = transparentBg.checked ? '' : bgColor.value;
+
+    previewNote.textContent = PREVIEW_SIZE + ' × ' + PREVIEW_SIZE + ' preview · ' +
+      marginPct + '% margin · ' + radiusPct + '% corners';
+
+    var opts = buildOptions(innerSize);
 
     try {
       if (previewQR) {
@@ -1035,11 +1081,252 @@
     }
   }
 
-  // Debounced
   function schedulePreview() {
     clearError();
     if (renderTimer) clearTimeout(renderTimer);
     renderTimer = setTimeout(updatePreview, 150);
+  }
+
+  // ---------- ROUNDED RECT PATH ----------
+  function roundRectPath(ctx, x, y, w, h, r) {
+    if (r <= 0) {
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.closePath();
+      return;
+    }
+    if (r > Math.min(w, h) / 2) r = Math.min(w, h) / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // ---------- RENDER FINAL PNG (with margin + rounded corners) ----------
+  function buildFinalPngBlob() {
+    return new Promise(function (resolve, reject) {
+      var finalSize = selectedSize;
+      var marginPct = getOuterMarginPct();
+      var radiusPct = getCornerRadiusPct();
+
+      var margin = Math.round(finalSize * marginPct / 100);
+      var radius = Math.round(finalSize * radiusPct / 100);
+      var innerSize = finalSize - 2 * margin;
+      if (innerSize < 80) innerSize = 80;
+
+      var opts = buildOptions(innerSize);
+      var qr = new window.QRCodeStyling(opts);
+
+      qr.getRawData('png').then(function (blob) {
+        if (!blob) { reject(new Error('empty blob')); return; }
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var canvas = document.createElement('canvas');
+            canvas.width = finalSize;
+            canvas.height = finalSize;
+            var ctx = canvas.getContext('2d');
+
+            // Clip to rounded rect covering the entire output
+            ctx.save();
+            roundRectPath(ctx, 0, 0, finalSize, finalSize, radius);
+            ctx.clip();
+
+            // Fill background if not transparent
+            if (!transparentBg.checked) {
+              ctx.fillStyle = bgColor.value;
+              ctx.fillRect(0, 0, finalSize, finalSize);
+            }
+
+            // Draw QR at inner size, centered
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, margin, margin, innerSize, innerSize);
+
+            ctx.restore();
+
+            canvas.toBlob(function (outBlob) {
+              if (!outBlob) { reject(new Error('toBlob failed')); return; }
+              resolve(outBlob);
+            }, 'image/png');
+          } catch (e) { reject(e); }
+        };
+        img.onerror = function () { reject(new Error('image load failed')); };
+        img.src = URL.createObjectURL(blob);
+      }).catch(reject);
+    });
+  }
+
+  // ---------- RENDER FINAL SVG (with margin + rounded corners) ----------
+  function buildFinalSvgString() {
+    return new Promise(function (resolve, reject) {
+      var finalSize = selectedSize;
+      var marginPct = getOuterMarginPct();
+      var radiusPct = getCornerRadiusPct();
+
+      var margin = Math.round(finalSize * marginPct / 100);
+      var radius = Math.round(finalSize * radiusPct / 100);
+      var innerSize = finalSize - 2 * margin;
+      if (innerSize < 80) innerSize = 80;
+
+      var opts = buildOptions(innerSize);
+      opts.type = 'svg';
+      var qr = new window.QRCodeStyling(opts);
+
+      var raw = qr.getRawData('svg');
+
+      Promise.resolve(raw).then(function (data) {
+        var svgString = (data instanceof Blob) ? '' : String(data);
+
+        if (data instanceof Blob) {
+          // Read blob as text
+          var reader = new FileReader();
+          reader.onload = function (e) { resolve(wrapSvg(e.target.result, finalSize, innerSize, margin, radius)); };
+          reader.onerror = function () { reject(new Error('svg read failed')); };
+          reader.readAsText(data);
+          return;
+        }
+
+        resolve(wrapSvg(svgString, finalSize, innerSize, margin, radius));
+      }).catch(reject);
+    });
+  }
+
+  function wrapSvg(svgString, finalSize, innerSize, margin, radius) {
+    var parser = new DOMParser();
+    var doc;
+    try {
+      doc = parser.parseFromString(svgString, 'image/svg+xml');
+    } catch (e) {
+      return svgString;
+    }
+    var svg = doc.documentElement;
+    if (!svg || svg.nodeName.toLowerCase() !== 'svg') return svgString;
+
+    // Serialize all children of the inner SVG
+    var serializer = new XMLSerializer();
+    var inner = '';
+    for (var i = 0; i < svg.childNodes.length; i++) {
+      var node = svg.childNodes[i];
+      if (node.nodeType === 1 || node.nodeType === 3) {
+        inner += serializer.serializeToString(node);
+      }
+    }
+
+    var bg = transparentBg.checked ? null : bgColor.value;
+    var bgRect = bg ? '<rect x="0" y="0" width="' + finalSize + '" height="' + finalSize + '" fill="' + bg + '"/>' : '';
+
+    var out = '';
+    out += '<?xml version="1.0" encoding="UTF-8"?>\n';
+    out += '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ';
+    out += 'width="' + finalSize + '" height="' + finalSize + '" ';
+    out += 'viewBox="0 0 ' + finalSize + ' ' + finalSize + '">';
+    out += '<defs><clipPath id="ywt-qr-clip">';
+    out += '<rect x="0" y="0" width="' + finalSize + '" height="' + finalSize + '" rx="' + radius + '" ry="' + radius + '"/>';
+    out += '</clipPath></defs>';
+    out += '<g clip-path="url(#ywt-qr-clip)">';
+    out += bgRect;
+    out += '<g transform="translate(' + margin + ',' + margin + ')">';
+    out += inner;
+    out += '</g></g></svg>';
+    return out;
+  }
+
+  // ---------- DOWNLOAD PNG ----------
+  dlPngBtn.addEventListener('click', function () {
+    if (!libReady) { showError('QR library failed to load.'); return; }
+    var payload = buildPayload();
+    if (!payload) { showError('Please fill in the fields first.'); return; }
+    lastPayload = payload;
+
+    clearError();
+    setLoading(dlPngBtn, true);
+
+    setTimeout(function () {
+      buildFinalPngBlob()
+        .then(function (blob) {
+          saveBlob(blob, 'qrcode-' + selectedSize + 'px.png');
+          setLoading(dlPngBtn, false);
+        })
+        .catch(function () {
+          showError('Download failed. Try a smaller size.');
+          setLoading(dlPngBtn, false);
+        });
+    }, 30);
+  });
+
+  // ---------- DOWNLOAD SVG ----------
+  dlSvgBtn.addEventListener('click', function () {
+    if (!libReady) { showError('QR library failed to load.'); return; }
+    var payload = buildPayload();
+    if (!payload) { showError('Please fill in the fields first.'); return; }
+    lastPayload = payload;
+
+    clearError();
+    setLoading(dlSvgBtn, true);
+
+    buildFinalSvgString()
+      .then(function (svgStr) {
+        var blob = new Blob([svgStr], { type: 'image/svg+xml' });
+        saveBlob(blob, 'qrcode.svg');
+        setLoading(dlSvgBtn, false);
+      })
+      .catch(function () {
+        showError('SVG export failed.');
+        setLoading(dlSvgBtn, false);
+      });
+  });
+
+  // ---------- COPY IMAGE ----------
+  copyImgBtn.addEventListener('click', function () {
+    if (!libReady) { showError('QR library failed to load.'); return; }
+    var payload = buildPayload();
+    if (!payload) { showError('Please fill in the fields first.'); return; }
+    lastPayload = payload;
+
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      showError('Image clipboard not supported in this browser.');
+      return;
+    }
+
+    clearError();
+
+    buildFinalPngBlob().then(function (blob) {
+      return navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })]);
+    }).then(function () {
+      var original = copyImgBtn.textContent;
+      copyImgBtn.textContent = 'Copied';
+      copyImgBtn.classList.add('copied');
+      setTimeout(function () {
+        copyImgBtn.textContent = original;
+        copyImgBtn.classList.remove('copied');
+      }, 1400);
+    }).catch(function () {
+      showError('Copy failed — use Download instead.');
+    });
+  });
+
+  // ---------- HELPERS ----------
+  function saveBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+  }
+
+  function setLoading(btn, loading) {
+    if (loading) { btn.classList.add('loading'); btn.disabled = true; }
+    else { btn.classList.remove('loading'); btn.disabled = false; }
   }
 
   // ---------- TABS ----------
@@ -1051,14 +1338,10 @@
       });
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
-
-      var type = tab.getAttribute('data-type');
-      currentType = type;
-
+      currentType = tab.getAttribute('data-type');
       panels.forEach(function (p) {
-        p.classList.toggle('active', p.getAttribute('data-panel') === type);
+        p.classList.toggle('active', p.getAttribute('data-panel') === currentType);
       });
-
       schedulePreview();
     });
   });
@@ -1083,15 +1366,14 @@
   dotStyle.addEventListener('change', schedulePreview);
   cornerStyle.addEventListener('change', schedulePreview);
   marginInput.addEventListener('input', schedulePreview);
+  outerMarginIn.addEventListener('input', schedulePreview);
+  cornerRadIn.addEventListener('input', schedulePreview);
 
   // ---------- LOGO ----------
   logoInput.addEventListener('change', function () {
     var file = this.files && this.files[0];
     if (!file) return;
-    if (file.size > 1024 * 1024) {
-      showError('Logo must be under 1 MB.');
-      return;
-    }
+    if (file.size > 1024 * 1024) { showError('Logo must be under 1 MB.'); return; }
     var reader = new FileReader();
     reader.onload = function (e) {
       logoDataUrl = e.target.result;
@@ -1120,158 +1402,6 @@
     });
   });
 
-  // ---------- DOWNLOAD PNG ----------
-  dlPngBtn.addEventListener('click', function () {
-    if (!libReady) {
-      showError('QR library failed to load.');
-      return;
-    }
-    var payload = buildPayload();
-    if (!payload) {
-      showError('Please fill in the fields first.');
-      return;
-    }
-
-    clearError();
-    setLoading(dlPngBtn, true);
-
-    // Defer so the loading state paints
-    setTimeout(function () {
-      try {
-        var opts = buildOptions(selectedSize, selectedSize);
-        var dlQr = new window.QRCodeStyling(opts);
-
-        // Use getRawData for full control over filename
-        var raw = dlQr.getRawData('png');
-        if (raw && typeof raw.then === 'function') {
-          raw.then(function (blob) {
-            saveBlob(blob, 'qrcode-' + selectedSize + 'px.png');
-            setLoading(dlPngBtn, false);
-          }).catch(function () {
-            // Fallback to library download
-            dlQr.download({ name: 'qrcode-' + selectedSize + 'px', extension: 'png' });
-            setLoading(dlPngBtn, false);
-          });
-        } else {
-          dlQr.download({ name: 'qrcode-' + selectedSize + 'px', extension: 'png' });
-          setLoading(dlPngBtn, false);
-        }
-      } catch (e) {
-        showError('Download failed. Try a smaller size.');
-        setLoading(dlPngBtn, false);
-      }
-    }, 30);
-  });
-
-  // ---------- DOWNLOAD SVG ----------
-  dlSvgBtn.addEventListener('click', function () {
-    if (!libReady) {
-      showError('QR library failed to load.');
-      return;
-    }
-    var payload = buildPayload();
-    if (!payload) {
-      showError('Please fill in the fields first.');
-      return;
-    }
-
-    clearError();
-
-    try {
-      var opts = buildOptions(1000, 1000);
-      opts.type = 'svg';
-      var svgQr = new window.QRCodeStyling(opts);
-
-      var raw = svgQr.getRawData('svg');
-      if (raw && typeof raw.then === 'function') {
-        raw.then(function (data) {
-          var blob;
-          if (data instanceof Blob) blob = data;
-          else blob = new Blob([data], { type: 'image/svg+xml' });
-          saveBlob(blob, 'qrcode.svg');
-        }).catch(function () {
-          svgQr.download({ name: 'qrcode', extension: 'svg' });
-        });
-      } else {
-        svgQr.download({ name: 'qrcode', extension: 'svg' });
-      }
-    } catch (e) {
-      showError('SVG export failed.');
-    }
-  });
-
-  // ---------- COPY IMAGE ----------
-  copyImgBtn.addEventListener('click', function () {
-    if (!libReady) {
-      showError('QR library failed to load.');
-      return;
-    }
-    var payload = buildPayload();
-    if (!payload) {
-      showError('Please fill in the fields first.');
-      return;
-    }
-
-    if (!navigator.clipboard || !window.ClipboardItem) {
-      showError('Image clipboard not supported in this browser.');
-      return;
-    }
-
-    clearError();
-
-    try {
-      var opts = buildOptions(1000, 1000);
-      var copyQr = new window.QRCodeStyling(opts);
-      var raw = copyQr.getRawData('png');
-
-      if (!raw || typeof raw.then !== 'function') {
-        showError('Copy not supported — use Download instead.');
-        return;
-      }
-
-      raw.then(function (blob) {
-        if (!blob) throw new Error('no blob');
-        return navigator.clipboard.write([
-          new window.ClipboardItem({ 'image/png': blob })
-        ]);
-      }).then(function () {
-        var original = copyImgBtn.textContent;
-        copyImgBtn.textContent = 'Copied';
-        copyImgBtn.classList.add('copied');
-        setTimeout(function () {
-          copyImgBtn.textContent = original;
-          copyImgBtn.classList.remove('copied');
-        }, 1400);
-      }).catch(function () {
-        showError('Copy failed — use Download instead.');
-      });
-    } catch (e) {
-      showError('Copy failed — use Download instead.');
-    }
-  });
-
-  // ---------- HELPERS ----------
-  function saveBlob(blob, filename) {
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 200);
-  }
-
-  function setLoading(btn, loading) {
-    if (loading) {
-      btn.classList.add('loading');
-      btn.disabled = true;
-    } else {
-      btn.classList.remove('loading');
-      btn.disabled = false;
-    }
-  }
-
   // ---------- WIRE INPUTS ----------
   [qrText, emailTo, emailSubject, emailBody, phone,
    smsTo, smsBody, wifiSsid, wifiPass,
@@ -1279,16 +1409,11 @@
     if (!el) return;
     el.addEventListener('input', schedulePreview);
   });
-
-  [wifiEnc].forEach(function (el) {
-    if (!el) return;
-    el.addEventListener('change', schedulePreview);
-  });
+  if (wifiEnc) wifiEnc.addEventListener('change', schedulePreview);
   wifiHidden.addEventListener('change', schedulePreview);
 
   // ---------- INIT ----------
   if (!libReady) {
-    // Wait briefly in case the script tag is still parsing
     var waitTries = 0;
     var waitTimer = setInterval(function () {
       waitTries++;
