@@ -37,7 +37,7 @@
       .icc-grid { grid-template-columns: 1fr; gap: 20px; }
     }
 
-    /* Drop zone (reuses the shared .drop-zone look) */
+    /* Drop zone */
     .icc-drop {
       position: relative;
       border: 2px dashed var(--border);
@@ -160,6 +160,7 @@
       font-size: .85rem;
       text-align: center;
       font-weight: 600;
+      font-family: inherit;
     }
     .icc-range-value input[type="number"]:focus {
       outline: 0;
@@ -221,6 +222,7 @@
       color: var(--text);
       font-size: .9rem;
       font-variant-numeric: tabular-nums;
+      font-family: inherit;
     }
     .icc-corner-item input[type="number"]:focus {
       outline: 0;
@@ -294,13 +296,14 @@
     }
     .icc-preview-note strong { color: var(--brand); }
 
-    /* Background color for JPEG / non-transparent output */
+    /* Background color for JPEG output */
     .icc-bg-row {
-      display: flex;
+      display: none;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px 20px;
     }
+    .icc-bg-row.show { display: flex; }
     .icc-bg-item {
       display: inline-flex;
       align-items: center;
@@ -326,10 +329,12 @@
     }
     .icc-format-btn {
       display: inline-flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      flex: 1 1 auto;
       justify-content: center;
+      gap: 2px;
+      flex: 1 1 auto;
+      min-width: 110px;
       padding: 10px 14px;
       border: 2px solid var(--border);
       border-radius: var(--radius-sm);
@@ -339,6 +344,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .icc-format-btn small {
       display: block;
@@ -355,7 +361,7 @@
     }
     .icc-format-btn.active small { color: rgba(255,255,255,.78); }
 
-    /* Lossless guarantee notice */
+    /* Lossless notice */
     .icc-notice {
       display: flex;
       align-items: flex-start;
@@ -378,19 +384,17 @@
     }
     .icc-notice strong { color: var(--brand); }
 
-    /* Quality slider (JPEG only) */
+    /* Quality slider */
     .icc-quality-wrap { display: none; margin-top: 4px; }
     .icc-quality-wrap.show { display: block; }
 
-    /* Buttons row */
+    /* Actions */
     .icc-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 6px;
     }
-
-    /* Loading state on download button */
     .icc-actions .btn .btn-spinner {
       display: none;
       width: 14px; height: 14px;
@@ -447,7 +451,7 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
@@ -464,19 +468,25 @@
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
               <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
               <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
               <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
               <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
               <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
               <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
               <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
               <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
               <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
               <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
               <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -607,8 +617,8 @@
               </div>
             </div>
 
-            <!-- Background color (JPEG only, or forced opaque) -->
-            <div class="icc-bg-row" id="iccBgRow" style="display:none;">
+            <!-- Background color for JPEG -->
+            <div class="icc-bg-row" id="iccBgRow">
               <label class="icc-bg-item">
                 Corner background
                 <input type="color" id="iccBgColor" value="#ffffff" />
@@ -749,8 +759,6 @@
   'use strict';
 
   // ---------- ELEMENTS ----------
-  var form          = document.getElementById('iccForm');
-
   var drop          = document.getElementById('iccDrop');
   var fileInput     = document.getElementById('iccFileInput');
 
@@ -769,9 +777,7 @@
   var brIn          = document.getElementById('iccBR');
   var blIn          = document.getElementById('iccBL');
 
-  var formatsWrap   = document.getElementById('iccFormats');
   var formatBtns    = document.querySelectorAll('.icc-format-btn');
-
   var bgRow         = document.getElementById('iccBgRow');
   var bgColor       = document.getElementById('iccBgColor');
 
@@ -779,9 +785,8 @@
   var qualityRange  = document.getElementById('iccQualityRange');
   var qualityValue  = document.getElementById('iccQualityValue');
 
-  var preview       = document.getElementById('iccPreview');
-  var previewEmpty  = document.getElementById('iccPreviewEmpty');
   var previewImg    = document.getElementById('iccPreviewImg');
+  var previewEmpty  = document.getElementById('iccPreviewEmpty');
   var previewNote   = document.getElementById('iccPreviewNote');
 
   var downloadBtn   = document.getElementById('iccDownload');
@@ -798,8 +803,6 @@
     format: 'image/png',
     quality: 1.0
   };
-
-  var MAX_RADIUS_PREVIEW = 500;
 
   // ---------- HELPERS ----------
   function showError(msg) {
@@ -865,9 +868,7 @@
     var r = getRadii();
     var scale = 1;
 
-    // Compute the displayed size so the preview radius matches proportionally
     var dispW = previewImg.clientWidth || 0;
-    var dispH = previewImg.clientHeight || 0;
     if (state.naturalWidth && dispW) {
       scale = dispW / state.naturalWidth;
     }
@@ -906,34 +907,28 @@
       state.naturalWidth = img.naturalWidth;
       state.naturalHeight = img.naturalHeight;
 
-      // File info
       infoName.textContent = file.name;
       infoSize.textContent = formatBytes(file.size);
       infoDims.textContent = img.naturalWidth + ' x ' + img.naturalHeight + ' px';
       fileInfo.hidden = false;
 
-      // Max radius = half the shorter side (or at least 500 for the slider range)
       var maxR = maxAllowedRadius();
       radiusRange.max = Math.max(50, Math.min(5000, maxR));
       radiusInput.max = Math.max(50, Math.min(5000, maxR));
 
-      // Cap current values if they exceed the new max
       var current = clampInt(radiusInput.value, 0, Math.max(50, maxR));
       radiusInput.value = current;
       radiusRange.value = Math.min(current, parseInt(radiusRange.max, 10) || 500);
 
-      // Reset per-corner values to match the uniform one
       if (!individual.checked) {
         tlIn.value = current; trIn.value = current;
         brIn.value = current; blIn.value = current;
       }
 
-      // Preview
       previewImg.src = url;
       previewImg.hidden = false;
       previewEmpty.style.display = 'none';
 
-      // Wait one frame so the img has a rendered size
       requestAnimationFrame(function () {
         updatePreviewRadius();
       });
@@ -958,55 +953,37 @@
 
     var r = getRadii();
 
-    // Clamp radii so they never exceed half of width/height
     var maxR = Math.floor(Math.min(w, h) / 2);
     r.tl = Math.min(r.tl, maxR);
     r.tr = Math.min(r.tr, maxR);
     r.br = Math.min(r.br, maxR);
     r.bl = Math.min(r.bl, maxR);
 
-    // Canvas at exactly the original dimensions — no downscaling
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
 
-    // For JPEG output, fill the corners with the chosen background color
-    // (JPEG has no alpha channel — without this, corners turn black)
     if (state.format === 'image/jpeg') {
       ctx.fillStyle = bgColor.value || '#ffffff';
       ctx.fillRect(0, 0, w, h);
     }
 
-    // Rounded-rectangle path
     ctx.beginPath();
-    // Top-left
     ctx.moveTo(r.tl, 0);
-    // Top edge
     ctx.lineTo(w - r.tr, 0);
-    // Top-right arc
     if (r.tr > 0) ctx.quadraticCurveTo(w, 0, w, r.tr);
-    // Right edge
     ctx.lineTo(w, h - r.br);
-    // Bottom-right arc
     if (r.br > 0) ctx.quadraticCurveTo(w, h, w - r.br, h);
-    // Bottom edge
     ctx.lineTo(r.bl, h);
-    // Bottom-left arc
     if (r.bl > 0) ctx.quadraticCurveTo(0, h, 0, h - r.bl);
-    // Left edge
     ctx.lineTo(0, r.tl);
-    // Top-left arc
     if (r.tl > 0) ctx.quadraticCurveTo(0, 0, r.tl, 0);
     ctx.closePath();
 
-    // Clip to the rounded shape and draw the image at 1:1
     ctx.save();
     ctx.clip();
-
-    // Preserve full source resolution — drawImage with 5 args means src = dest size
-    // so there is no scaling at all.
-    ctx.imageSmoothingEnabled = false; // irrelevant at 1:1 but makes intent explicit
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, 0, 0, w, h);
     ctx.restore();
 
@@ -1045,7 +1022,6 @@
         if (mime === 'image/jpeg' || mime === 'image/webp') {
           canvas.toBlob(onBlob, mime, state.quality);
         } else {
-          // PNG — no quality parameter (always lossless)
           canvas.toBlob(onBlob, 'image/png');
         }
       } catch (e) {
@@ -1108,11 +1084,9 @@
   individual.addEventListener('change', function () {
     cornersGrid.classList.toggle('show', individual.checked);
     if (individual.checked) {
-      // Seed individual inputs from current uniform value
       var v = clampInt(radiusInput.value, 0, 5000);
       tlIn.value = trIn.value = brIn.value = blIn.value = v;
     } else {
-      // Collapse to uniform — take the top-left value
       var r = clampInt(tlIn.value, 0, 5000);
       radiusInput.value = r;
       radiusRange.value = Math.min(r, parseInt(radiusRange.max, 10) || 500);
@@ -1127,7 +1101,6 @@
     });
   });
 
-  // Recompute scale on window resize
   window.addEventListener('resize', updatePreviewRadius);
 
   // ---------- EVENTS: FORMAT ----------
@@ -1137,8 +1110,7 @@
       btn.classList.add('active');
       state.format = btn.getAttribute('data-format');
 
-      // Show/hide background row and quality slider
-      bgRow.style.display    = state.format === 'image/jpeg' ? 'flex' : 'none';
+      bgRow.classList.toggle('show', state.format === 'image/jpeg');
       qualityWrap.classList.toggle('show', state.format === 'image/jpeg');
     });
   });
@@ -1146,11 +1118,6 @@
   qualityRange.addEventListener('input', function () {
     state.quality = clampInt(qualityRange.value, 60, 100) / 100;
     qualityValue.textContent = clampInt(qualityRange.value, 60, 100) + '%';
-  });
-
-  bgColor.addEventListener('input', function () {
-    // No preview change needed — the rounded preview always shows transparency.
-    // The bg color only affects the final JPEG output.
   });
 
   // ---------- DOWNLOAD + RESET ----------
@@ -1182,7 +1149,7 @@
     formatBtns.forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-format') === 'image/png');
     });
-    bgRow.style.display = 'none';
+    bgRow.classList.remove('show');
     qualityWrap.classList.remove('show');
     qualityRange.value = 100;
     qualityValue.textContent = '100%';
@@ -1200,7 +1167,7 @@
   });
 
   // ---------- INIT ----------
-  bgRow.style.display = 'none';
+  bgRow.classList.remove('show');
   qualityWrap.classList.remove('show');
 
 })();
