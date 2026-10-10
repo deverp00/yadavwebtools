@@ -99,8 +99,6 @@
     .pg-batch-copy:hover { background: var(--brand-hover); }
     .pg-batch-copy.copied { background: #27ae60; }
 
-    /* Character-set label grid uses .checkbox-grid from base CSS */
-
     .pg-preset-row {
       display: flex;
       flex-wrap: wrap;
@@ -117,6 +115,7 @@
       font-weight: 500;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .pg-preset:hover { border-color: var(--brand); color: var(--brand); }
     .pg-preset.active {
@@ -124,8 +123,6 @@
       color: #fff;
       border-color: var(--brand);
     }
-
-    .pg-error { margin-top: 10px; }
 
     .pg-badge {
       display: inline-flex;
@@ -154,7 +151,6 @@
     }
     .pg-entropy strong { color: var(--brand); }
 
-    /* Batch count row */
     .pg-batch-count {
       display: inline-flex;
       align-items: center;
@@ -171,6 +167,7 @@
       color: var(--text);
       font-size: .88rem;
       text-align: center;
+      font-family: inherit;
     }
     .pg-batch-count input[type="number"]:focus {
       outline: 0;
@@ -192,7 +189,7 @@
 <!-- ===== HEADER ===== -->
 <header class="site-header" id="siteHeader" role="banner">
   <div class="header-inner">
-    <a href="/dav/index.html" class="site-title">
+    <a href="/yadavwebtools/index.html" class="site-title">
       <span class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
@@ -203,12 +200,12 @@
 
     <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
       <ul class="nav-list">
-        <li><a href="/dav/index.html">Home</a></li>
-        <li><a href="/dav/about/index.html">About</a></li>
-        <li><a href="/dav/contact/index.html">Contact</a></li>
-        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
-        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
-        <li><a href="/dav/terms/index.html">Terms</a></li>
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
       </ul>
     </nav>
 
@@ -228,29 +225,35 @@
           <div class="dropdown-section">
             <span class="dropdown-label">Quick Tools</span>
             <ul class="dropdown-list" id="quickToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
             </ul>
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-section">
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
-              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
-              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
-              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
-              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
-              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
-              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
-              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
-              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -300,7 +303,6 @@
 
       <form class="password-form" id="pgForm" novalidate onsubmit="return false;">
 
-        <!-- Presets -->
         <div class="field-group" style="align-items:flex-start;">
           <label>Preset</label>
           <div class="pg-preset-row" id="pgPresets">
@@ -311,14 +313,12 @@
           </div>
         </div>
 
-        <!-- Length -->
         <div class="field-group">
           <label for="pgLength">Length</label>
           <input type="range" id="pgLengthRange" class="password-range" min="4" max="64" step="1" value="16" aria-label="Password length slider" />
           <span class="range-value" id="pgLengthVal">16</span>
         </div>
 
-        <!-- Character sets -->
         <div class="field-group">
           <label>Characters</label>
           <div class="checkbox-grid">
@@ -338,9 +338,8 @@
           </div>
         </div>
 
-        <div class="error-msg pg-error" id="pgError" role="alert"></div>
+        <div class="error-msg" id="pgError" role="alert"></div>
 
-        <!-- Display -->
         <div class="field-group password-display-group">
           <label for="pgOutput">Password</label>
           <div class="password-display-wrapper">
@@ -357,7 +356,6 @@
           </div>
         </div>
 
-        <!-- Strength -->
         <div class="field-group strength-group pg-strength-row">
           <label class="pg-strength-label">Strength</label>
           <div class="strength-meter">
@@ -368,13 +366,11 @@
 
         <div class="pg-entropy" id="pgEntropy"></div>
 
-        <!-- Buttons -->
         <div class="btn-group">
           <button type="button" class="btn" id="pgGenerate">Generate Password</button>
           <button type="button" class="btn btn-secondary" id="pgReset">Reset</button>
         </div>
 
-        <!-- Batch -->
         <div class="field-group" style="align-items:center;">
           <label>Generate multiple</label>
           <div class="pg-batch-count">
@@ -441,11 +437,11 @@
     </div>
 
     <nav class="footer-links" aria-label="Footer navigation">
-      <a href="/dav/about/index.html">About</a>
-      <a href="/dav/contact/index.html">Contact</a>
-      <a href="/dav/privacy-policy/index.html">Privacy</a>
-      <a href="/dav/disclaimer/index.html">Disclaimer</a>
-      <a href="/dav/terms/index.html">Terms</a>
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
     </nav>
 
     <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
@@ -466,7 +462,6 @@
   'use strict';
 
   // ---------- ELEMENTS ----------
-  var form            = document.getElementById('pgForm');
   var lengthRange     = document.getElementById('pgLengthRange');
   var lengthVal       = document.getElementById('pgLengthVal');
   var cbUpper         = document.getElementById('pgUpper');
@@ -497,8 +492,8 @@
 
   // ---------- CHARACTER SETS ----------
   var SETS = {
-    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    lower: 'abcdefghijklmnopqrstuvwxyz',
+    upper:   'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lower:   'abcdefghijklmnopqrstuvwxyz',
     numbers: '0123456789',
     symbols: '!@#$%^&*()-_=+[]{};:,.<>?/~'
   };
@@ -514,22 +509,19 @@
 
     var cryptoObj = window.crypto || window.msCrypto;
     if (!cryptoObj || !cryptoObj.getRandomValues) {
-      throw new Error('Secure random not available in this browser.');
+      throw new Error('Secure random is not available in this browser.');
     }
 
-    // Smallest number of bytes needed
     var bytesNeeded = Math.ceil(Math.log2(max) / 8) || 1;
-    var maxValid = Math.floor(256 / max) * max; // largest multiple of `max` that fits in 2^(8*bytesNeeded)
-    // For > 1 byte we use 16-bit reads to keep the range wide enough.
     var bytes = new Uint8Array(bytesNeeded);
     var limit = Math.pow(256, bytesNeeded);
-    var maxValidBig = Math.floor(limit / max) * max;
+    var maxValid = Math.floor(limit / max) * max;
 
     for (var attempt = 0; attempt < 1000; attempt++) {
       cryptoObj.getRandomValues(bytes);
       var v = 0;
       for (var i = 0; i < bytesNeeded; i++) v = v * 256 + bytes[i];
-      if (v < maxValidBig) return v % max;
+      if (v < maxValid) return v % max;
     }
 
     // Fallback — astronomically unlikely
@@ -539,7 +531,6 @@
     return v2 % max;
   }
 
-  // Fisher-Yates shuffle using secure random
   function secureShuffle(arr) {
     for (var i = arr.length - 1; i > 0; i--) {
       var j = secureRandomInt(i + 1);
@@ -549,44 +540,36 @@
   }
 
   // ---------- PASSWORD GENERATION ----------
-  function buildPoolAndRequired() {
-    var required = [];
-    var pools = [];
-
-    if (cbUpper.checked)   { pools.push(applyFilters(SETS.upper));   required.push('upper'); }
-    if (cbLower.checked)   { pools.push(applyFilters(SETS.lower));   required.push('lower'); }
-    if (cbNumbers.checked) { pools.push(applyFilters(SETS.numbers)); required.push('numbers'); }
-    if (cbSymbols.checked) { pools.push(applyFilters(SETS.symbols)); required.push('symbols'); }
-
-    // Remove empty pools (all chars filtered out)
-    var nonEmpty = [];
-    for (var i = 0; i < pools.length; i++) {
-      if (pools[i].length > 0) nonEmpty.push(pools[i]);
-    }
-
-    if (!nonEmpty.length) return null;
-
-    var combined = nonEmpty.join('');
-    return { combined: combined, pools: nonEmpty };
-  }
-
-  function applyFilters(chars) {
-    var out = chars;
-    if (cbExcludeSim.checked) {
-      out = filterOut(out, SIMILAR_CHARS);
-    }
-    if (cbExcludeAmb.checked) {
-      out = filterOut(out, AMBIGUOUS_CHARS);
-    }
-    return out;
-  }
-
   function filterOut(str, removeSet) {
     var result = '';
     for (var i = 0; i < str.length; i++) {
       if (removeSet.indexOf(str[i]) === -1) result += str[i];
     }
     return result;
+  }
+
+  function applyFilters(chars) {
+    var out = chars;
+    if (cbExcludeSim.checked) out = filterOut(out, SIMILAR_CHARS);
+    if (cbExcludeAmb.checked) out = filterOut(out, AMBIGUOUS_CHARS);
+    return out;
+  }
+
+  function buildPoolAndRequired() {
+    var pools = [];
+
+    if (cbUpper.checked)   pools.push(applyFilters(SETS.upper));
+    if (cbLower.checked)   pools.push(applyFilters(SETS.lower));
+    if (cbNumbers.checked) pools.push(applyFilters(SETS.numbers));
+    if (cbSymbols.checked) pools.push(applyFilters(SETS.symbols));
+
+    var nonEmpty = [];
+    for (var i = 0; i < pools.length; i++) {
+      if (pools[i].length > 0) nonEmpty.push(pools[i]);
+    }
+    if (!nonEmpty.length) return null;
+
+    return { combined: nonEmpty.join(''), pools: nonEmpty };
   }
 
   function generateOne(length) {
@@ -597,19 +580,16 @@
     var pools = poolInfo.pools;
     var chars = [];
 
-    // Guarantee at least one from each non-empty set
     if (cbRequireEach.checked && pools.length <= length) {
       for (var p = 0; p < pools.length; p++) {
         chars.push(pools[p][secureRandomInt(pools[p].length)]);
       }
     }
 
-    // Fill the rest from the combined pool
     while (chars.length < length) {
       chars.push(combined[secureRandomInt(combined.length)]);
     }
 
-    // Shuffle to avoid predictable positions of guaranteed chars
     secureShuffle(chars);
     return chars.join('');
   }
@@ -618,7 +598,6 @@
   function computeStrength(pw) {
     if (!pw) return { score: 0, label: '—', color: 'transparent', bits: 0 };
 
-    // Estimate entropy from actual pool composition
     var poolSize = 0;
     if (/[A-Z]/.test(pw)) poolSize += 26;
     if (/[a-z]/.test(pw)) poolSize += 26;
@@ -628,19 +607,13 @@
     var bits = Math.round(pw.length * Math.log2(poolSize || 1));
 
     var score, label, color;
-    if (bits < 28)       { score = 1; label = 'Very weak'; color = '#e74c3c'; }
-    else if (bits < 40)  { score = 2; label = 'Weak';      color = '#e67e22'; }
-    else if (bits < 60)  { score = 3; label = 'Fair';      color = '#f1c40f'; }
-    else if (bits < 80)  { score = 4; label = 'Strong';    color = '#2ecc71'; }
-    else                 { score = 5; label = 'Very strong'; color = '#1a5c3a'; }
+    if (bits < 28)      { score = 1; label = 'Very weak';   color = '#e74c3c'; }
+    else if (bits < 40) { score = 2; label = 'Weak';        color = '#e67e22'; }
+    else if (bits < 60) { score = 3; label = 'Fair';        color = '#f1c40f'; }
+    else if (bits < 80) { score = 4; label = 'Strong';      color = '#2ecc71'; }
+    else                { score = 5; label = 'Very strong'; color = '#1a5c3a'; }
 
-    return {
-      score: score,
-      label: label,
-      color: color,
-      bits: bits,
-      pct: (score / 5) * 100
-    };
+    return { score: score, label: label, color: color, bits: bits, pct: (score / 5) * 100 };
   }
 
   function renderStrength(pw) {
@@ -703,12 +676,12 @@
 
   // ---------- CLIPBOARD ----------
   function copyText(text, btn, doneText, doneClass) {
-    var origText = btn.textContent;
+    var origHtml = btn.innerHTML;
     var done = function () {
       btn.textContent = doneText || 'Copied';
       if (doneClass) btn.classList.add(doneClass);
       setTimeout(function () {
-        btn.textContent = origText;
+        btn.innerHTML = origHtml;
         if (doneClass) btn.classList.remove(doneClass);
       }, 1200);
     };
@@ -798,7 +771,7 @@
       try {
         var pw = generateOne(length);
         if (pw) list.push(pw);
-      } catch (e) { /* skip */ }
+      } catch (e) {}
     }
 
     if (!list.length) {
@@ -843,7 +816,6 @@
   [cbUpper, cbLower, cbNumbers, cbSymbols,
    cbExcludeSim, cbExcludeAmb, cbRequireEach].forEach(function (cb) {
     cb.addEventListener('change', function () {
-      // Clear active preset when user customizes
       presetBtns.forEach(function (b) { b.classList.remove('active'); });
       refreshOutput();
     });
