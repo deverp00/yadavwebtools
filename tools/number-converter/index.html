@@ -26,7 +26,6 @@
   <style>
     /* --- Number Converter local styles --- */
 
-    /* Base selector pills */
     .nc-bases {
       display: flex;
       flex-wrap: wrap;
@@ -45,6 +44,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all .2s var(--ease);
+      font-family: inherit;
     }
     .nc-base-chip .nc-base-num {
       display: inline-flex;
@@ -72,7 +72,6 @@
       color: #fff;
     }
 
-    /* Input row */
     .nc-input-row {
       display: flex;
       gap: 8px;
@@ -138,7 +137,6 @@
       border-color: #27ae60;
     }
 
-    /* Custom base row */
     .nc-custom-row {
       display: none;
       flex-wrap: wrap;
@@ -160,13 +158,13 @@
       background: var(--bg-input);
       color: var(--text);
       font-size: .95rem;
+      font-family: inherit;
     }
     .nc-custom-row input[type="number"]:focus {
       outline: 0;
       border-color: var(--brand);
     }
 
-    /* Results grid */
     .nc-results {
       margin-top: 20px;
       display: grid;
@@ -229,7 +227,6 @@
       width: 15px; height: 15px;
     }
 
-    /* Info bar */
     .nc-info {
       display: flex;
       flex-wrap: wrap;
@@ -245,7 +242,6 @@
     .nc-info strong { color: var(--brand); font-weight: 600; }
     .nc-info-item { display: inline-flex; align-items: center; gap: 5px; }
 
-    /* Bit view */
     .nc-bits-wrap {
       margin-top: 14px;
       border: 1px solid var(--border);
@@ -296,7 +292,6 @@
     }
     .nc-bit-group.on { color: var(--brand); font-weight: 700; }
 
-    /* Base info line */
     .nc-base-help {
       font-size: .78rem;
       color: var(--text-muted);
@@ -325,7 +320,7 @@
 <!-- ===== HEADER ===== -->
 <header class="site-header" id="siteHeader" role="banner">
   <div class="header-inner">
-    <a href="/dav/index.html" class="site-title">
+    <a href="/yadavwebtools/index.html" class="site-title">
       <span class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m9 12 2 2 4-4"/>
@@ -336,12 +331,12 @@
 
     <nav id="primary-nav" class="primary-nav" role="navigation" aria-label="Primary navigation">
       <ul class="nav-list">
-        <li><a href="/dav/index.html">Home</a></li>
-        <li><a href="/dav/about/index.html">About</a></li>
-        <li><a href="/dav/contact/index.html">Contact</a></li>
-        <li><a href="/dav/privacy-policy/index.html">Privacy Policy</a></li>
-        <li><a href="/dav/disclaimer/index.html">Disclaimer</a></li>
-        <li><a href="/dav/terms/index.html">Terms</a></li>
+        <li><a href="/yadavwebtools/index.html">Home</a></li>
+        <li><a href="/yadavwebtools/about/index.html">About</a></li>
+        <li><a href="/yadavwebtools/contact/index.html">Contact</a></li>
+        <li><a href="/yadavwebtools/privacy-policy/index.html">Privacy Policy</a></li>
+        <li><a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a></li>
+        <li><a href="/yadavwebtools/terms/index.html">Terms</a></li>
       </ul>
     </nav>
 
@@ -354,36 +349,42 @@
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tools…" autocomplete="off" aria-label="Search tools">
+          <input type="text" id="searchInput" class="search-input" autocomplete="off" aria-label="Search tools">
         </div>
 
         <div class="search-dropdown" id="searchDropdown">
           <div class="dropdown-section">
             <span class="dropdown-label">Quick Tools</span>
             <ul class="dropdown-list" id="quickToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
             </ul>
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-section">
             <span class="dropdown-label">All Tools</span>
             <ul class="dropdown-list" id="allToolsList">
-              <li><a href="/dav/tools/age-calculator/index.html">Age Calculator</a></li>
-              <li><a href="/dav/tools/sip-calculator/index.html">SIP Calculator</a></li>
-              <li><a href="/dav/tools/pdf-editor/index.html">PDF Editor</a></li>
-              <li><a href="/dav/tools/image-resizer/index.html">Image Resizer</a></li>
-              <li><a href="/dav/tools/text-counter/index.html">Text Counter</a></li>
-              <li><a href="/dav/tools/unit-converter/index.html">Unit Converter</a></li>
-              <li><a href="/dav/tools/password-generator/index.html">Password Generator</a></li>
-              <li><a href="/dav/tools/qr-generator/index.html">QR Generator</a></li>
-              <li><a href="/dav/tools/gst-calculator/index.html">GST Calculator</a></li>
-              <li><a href="/dav/tools/number-converter/index.html">Number Converter</a></li>
-              <li><a href="/dav/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
-              <li><a href="/dav/tools/bmi-calculator/index.html">BMI Calculator</a></li>
-              <li><a href="/dav/tools/loan-calculator/index.html">Loan Calculator</a></li>
-              <li><a href="/dav/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/age-calculator/index.html">Age Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/image-resizer/index.html">Image Resizer</a></li>
+              <li><a href="/yadavwebtools/tools/sip-calculator/index.html">SIP Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/text-counter/index.html">Text Counter</a></li>
+              <li><a href="/yadavwebtools/tools/unit-converter/index.html">Unit Converter</a></li>
+              <li><a href="/yadavwebtools/tools/password-generator/index.html">Password Generator</a></li>
+              <li><a href="/yadavwebtools/tools/qr-generator/index.html">QR Generator</a></li>
+              <li><a href="/yadavwebtools/tools/gst-calculator/index.html">GST Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/number-converter/index.html">Number Converter</a></li>
+              <li><a href="/yadavwebtools/tools/image-corner-curve/index.html">Image Corner Curve</a></li>
+              <li><a href="/yadavwebtools/tools/percentage-calculator/index.html">Percentage Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/bmi-calculator/index.html">BMI Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/loan-calculator/index.html">Loan Calculator</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-editor/index.html">PDF Editor</a></li>
+              <li><a href="/yadavwebtools/tools/accessibility-tool/index.html">Accessibility Tool</a></li>
+              <li><a href="/yadavwebtools/tools/currency-converter/index.html">Currency Converter</a></li>
+              <li><a href="/yadavwebtools/tools/forex-dashboard/index.html">Forex Dashboard</a></li>
+              <li><a href="/yadavwebtools/tools/file-archiver/index.html">File Archiver</a></li>
+              <li><a href="/yadavwebtools/tools/pdf-merger/index.html">PDF Merger</a></li>
+              <li><a href="/yadavwebtools/tools/json-editor/index.html">JSON Editor</a></li>
             </ul>
           </div>
         </div>
@@ -603,11 +604,11 @@
     </div>
 
     <nav class="footer-links" aria-label="Footer navigation">
-      <a href="/dav/about/index.html">About</a>
-      <a href="/dav/contact/index.html">Contact</a>
-      <a href="/dav/privacy-policy/index.html">Privacy</a>
-      <a href="/dav/disclaimer/index.html">Disclaimer</a>
-      <a href="/dav/terms/index.html">Terms</a>
+      <a href="/yadavwebtools/about/index.html">About</a>
+      <a href="/yadavwebtools/contact/index.html">Contact</a>
+      <a href="/yadavwebtools/privacy-policy/index.html">Privacy</a>
+      <a href="/yadavwebtools/disclaimer/index.html">Disclaimer</a>
+      <a href="/yadavwebtools/terms/index.html">Terms</a>
     </nav>
 
     <p class="footer-copy">&copy; 2026 Yadav Web Tools. All Rights Reserved.</p>
@@ -628,12 +629,10 @@
   'use strict';
 
   // ---------- ELEMENTS ----------
-  var form         = document.getElementById('ncForm');
   var inputEl      = document.getElementById('ncInput');
   var errorBox     = document.getElementById('ncError');
   var validHelp    = document.getElementById('ncValidHelp');
   var baseHelp     = document.getElementById('ncBaseHelp');
-  var basesWrap    = document.getElementById('ncBases');
   var baseChips    = document.querySelectorAll('.nc-base-chip');
   var customRow    = document.getElementById('ncCustomRow');
   var customBaseIn = document.getElementById('ncCustomBase');
@@ -644,7 +643,7 @@
   var resetBtn     = document.getElementById('ncReset');
 
   var infoBar      = document.getElementById('ncInfo');
-  var decimalOut   = document.getElementById('ncDecimalOut');
+  var decimalInfo  = document.getElementById('ncDecimalOut');
   var digitsOut    = document.getElementById('ncDigitsOut');
   var bitsOut      = document.getElementById('ncBitsOut');
   var bytesOut     = document.getElementById('ncBytesOut');
@@ -668,8 +667,7 @@
   var state = {
     base: 10,
     customBase: 36,
-    decimalValue: null,
-    lastValidInput: '255'
+    decimalValue: null
   };
 
   // ---------- HELPERS ----------
@@ -681,7 +679,6 @@
   }
 
   function sanitizeInput(raw) {
-    // Strip spaces, underscores, and common separators
     return String(raw || '').replace(/[\s_,]/g, '');
   }
 
@@ -689,7 +686,6 @@
     var s = sanitizeInput(raw);
     if (!s) return { ok: false, reason: 'empty' };
     if (s.length > 512) return { ok: false, reason: 'too-long' };
-
     for (var i = 0; i < s.length; i++) {
       if (!isDigitValid(s[i], base)) {
         return { ok: false, reason: 'bad-digit', badChar: s[i], position: i };
@@ -779,20 +775,17 @@
     }
 
     state.decimalValue = decimal;
-    state.lastValidInput = v.value;
 
     var binStr  = bigIntToBase(decimal, 2);
     var octStr  = bigIntToBase(decimal, 8);
     var decStr  = decimal.toString(10);
     var hexStr  = bigIntToBase(decimal, 16);
 
-    // Group binary for readability (4-bit groups)
     binaryOut.textContent = groupBinary(binStr);
     octalOut.textContent  = octStr;
     decimalOutV.textContent = groupDecimal(decStr);
     hexOut.textContent    = groupHex(hexStr);
 
-    // Custom base
     if (state.base === state.customBase) {
       customResRow.hidden = true;
     } else {
@@ -801,11 +794,8 @@
       customResOut.textContent = bigIntToBase(decimal, state.customBase);
     }
 
-    // Info bar
     infoBar.hidden = false;
-    decimalOut.textContent = decStr.length > 24
-      ? decStr.slice(0, 21) + '…'
-      : decStr;
+    decimalInfo.textContent = decStr.length > 24 ? decStr.slice(0, 21) + '…' : decStr;
     digitsOut.textContent = v.value.length;
 
     var bitLen = binStr.length;
@@ -814,7 +804,6 @@
     var byteLen = Math.ceil(bitLen / 8);
     bytesOut.textContent = byteLen + (byteLen === 1 ? ' byte' : ' bytes');
 
-    // Bits view
     bitsWrap.hidden = false;
     renderBits(binStr);
 
@@ -822,7 +811,6 @@
   }
 
   function groupBinary(bin) {
-    // Group from the right in 4s
     var groups = [];
     var s = bin;
     while (s.length > 4) {
@@ -834,7 +822,6 @@
   }
 
   function groupHex(hex) {
-    // Group from the right in 4s
     var groups = [];
     var s = hex;
     while (s.length > 4) {
@@ -846,7 +833,6 @@
   }
 
   function groupDecimal(dec) {
-    // Indian-style grouping
     if (dec.length <= 3) return dec;
     var last3 = dec.slice(-3);
     var rest = dec.slice(0, -3);
@@ -855,7 +841,6 @@
   }
 
   function renderBits(binStr) {
-    // Render each 4-bit group as a colored span
     var padded = binStr;
     var rem = padded.length % 4;
     if (rem !== 0) {
@@ -938,12 +923,9 @@
   });
 
   // ---------- INPUT EVENTS ----------
-  inputEl.addEventListener('input', function () {
-    render();
-  });
+  inputEl.addEventListener('input', render);
 
   inputEl.addEventListener('paste', function () {
-    // Let the browser insert, then re-render on next tick
     setTimeout(render, 0);
   });
 
@@ -990,7 +972,6 @@
       var targetId = btn.getAttribute('data-copy-target');
       var target = document.getElementById(targetId);
       if (!target) return;
-      // Copy without grouping spaces
       var raw = target.textContent.replace(/\s/g, '');
       copyText(raw, btn, null);
     });
@@ -1014,7 +995,6 @@
     state.base = 10;
     state.customBase = 36;
     state.decimalValue = null;
-    state.lastValidInput = '255';
 
     baseChips.forEach(function (c) {
       c.classList.toggle('active', c.getAttribute('data-base') === '10');
