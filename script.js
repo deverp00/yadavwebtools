@@ -58,7 +58,6 @@
       }
     });
 
-    // close nav when a link inside is clicked (mobile)
     $$('a', nav).forEach(function (a) {
       a.addEventListener('click', function () {
         if (window.matchMedia('(max-width: 699px)').matches) closeNav();
@@ -151,7 +150,7 @@
     });
   }
 
-  // ---------- 3. THEME TOGGLE (persistent) ----------
+  // ---------- 3. THEME TOGGLE ----------
   var THEME_KEY = 'ywt-theme';
   var toggleBtn = $('#themeToggle');
 
@@ -164,8 +163,6 @@
   }
 
   function applyTheme(theme) {
-    // html[data-theme] drives the CSS variables,
-    // body.dark-mode keeps every legacy `.dark-mode ...` rule working.
     document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'dark') document.body.classList.add('dark-mode');
     else document.body.classList.remove('dark-mode');
@@ -218,7 +215,7 @@
     }
   }
 
-  // ---------- 6. HEADER SHADOW ON SCROLL ----------
+  // ---------- 6. HEADER SHADOW ----------
   var header = $('#siteHeader');
   if (header) {
     var onHeaderScroll = function () {
@@ -228,7 +225,7 @@
     window.addEventListener('scroll', onHeaderScroll, { passive: true });
   }
 
-  // ---------- 7. SCROLL PROGRESS BAR ----------
+  // ---------- 7. SCROLL PROGRESS ----------
   var progress = $('#scrollProgress');
   if (progress) {
     var updateProgress = function () {
@@ -315,7 +312,6 @@
       });
     });
 
-    // Section title bars get the same spotlight
     var titleBars = $$('.section-title-bar');
     titleBars.forEach(function (bar) {
       bar.addEventListener('mousemove', function (e) {
